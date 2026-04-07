@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -30,6 +30,20 @@ const queryClient = new QueryClient();
 
 const App = () => {
   console.log("Siyayya Marketplace: Application Initializing...");
+
+  useEffect(() => {
+    // Diagnostic handlers for catching and logging runtime errors in production
+    const handleError = (e: ErrorEvent) => console.error('Runtime Error:', e.message, e.filename);
+    const handleRejection = (e: PromiseRejectionEvent) => console.error('Unhandled Promise Rejection:', e.reason);
+    
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
+  }, []);
   
   return (
     <QueryClientProvider client={queryClient}>
