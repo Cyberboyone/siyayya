@@ -28,44 +28,48 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <div className="flex flex-col min-h-screen">
-            <main className="flex-grow flex flex-col">
-              <Suspense fallback={<div className="flex-grow flex items-center justify-center"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div></div>}>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/product/:id" element={<ProductDetail />} />
-                  <Route path="/services" element={<Services />} />
-                  <Route path="/service/:id" element={<ServiceDetail />} />
-                   <Route path="/requests" element={<Requests />} />
-                  <Route path="/user/:id" element={<UserProfile />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/dashboard/new" element={<NewListing />} />
-                  <Route path="/dashboard/edit/:type/:id" element={<EditListing />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/complete-signup" element={<CompleteSignup />} />
-                  <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
-
-                  <Route path="/about" element={<About />} />
-                  <Route path="/contact" element={<ContactUs />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </main>
-            <Footer />
-          </div>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  console.log("Siyayya Marketplace: Application Initializing...");
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <div className="flex flex-col min-h-screen">
+              <main className="flex-grow flex flex-col">
+                <Suspense fallback={<div className="flex-grow flex items-center justify-center"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div></div>}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/marketplace" element={<Marketplace />} />
+                    <Route path="/product/:id" element={<ProductDetail />} />
+                    <Route path="/services" element={<Services />} />
+                    <Route path="/service/:id" element={<ServiceDetail />} />
+                     <Route path="/requests" element={<Requests />} />
+                    <Route path="/user/:id" element={<UserProfile />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard/new" element={<NewListing />} />
+                    <Route path="/dashboard/edit/:type/:id" element={<EditListing />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/complete-signup" element={<CompleteSignup />} />
+                    <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+  
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<ContactUs />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </main>
+              <Footer />
+            </div>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
