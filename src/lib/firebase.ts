@@ -17,15 +17,18 @@ const firebaseConfig = {
 
 // Initialize Firebase with safety checks to prevent white screens on missing variables
 let app;
+let isFirebaseDisabled = false;
+
 try {
-  app = initializeApp(firebaseConfig);
-  if (!firebaseConfig.apiKey) {
-    console.warn("Firebase config is missing VITE_FIREBASE_API_KEY. Authentication and Database features will fail to load properly.");
+  if (firebaseConfig.apiKey && firebaseConfig.apiKey.length > 5) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    isFirebaseDisabled = true;
+    console.warn("Firebase config is missing VITE_FIREBASE_API_KEY. Authentication and Database features are disabled.");
   }
 } catch (error) {
+  isFirebaseDisabled = true;
   console.error("Firebase initialization error. Please check your environment variables:", error);
-  // Optional: you can manually construct a dummy app object here if you want to prevent all crashes,
-  // but usually `initializeApp` will just wait to throw when an actual feature is used anyway.
 }
 
 const analytics = typeof window !== 'undefined' && app ? getAnalytics(app) : null;
@@ -33,4 +36,4 @@ const auth = app ? getAuth(app) : ({} as any);
 const db = app ? getFirestore(app) : ({} as any);
 const storage = app ? getStorage(app) : ({} as any);
 
-export { app, analytics, auth, db, storage };
+export { app, analytics, auth, db, storage, isFirebaseDisabled };

@@ -8,7 +8,7 @@ import {
   deleteUser
 } from "firebase/auth";
 import { doc, getDoc, setDoc, collection, query, where, getDocs, writeBatch, deleteDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, isFirebaseDisabled } from "@/lib/firebase";
 import { User } from "@/lib/mock-data";
 import { toast } from "sonner";
 
@@ -30,30 +30,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (isFirebaseDisabled) {
+      console.log("[Auth] Firebase is disabled. Proceeding as guest.");
+      setIsLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        // Fetch custom user data from Firestore if not already set or if UID changed
-        const docRef = doc(db, "users", firebaseUser.uid);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const fetchedUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
-          setUser(fetchedUser);
-        } else {
-          // Fallback if no firestore document exists yet (common in immediate signup)
-          // But don't overwrite if we already have a user from the signup process
-          setUser(prev => {
-            if (prev && prev.id === firebaseUser.uid && prev.name !== "Unknown User") {
-              return prev;
-            }
-            return {
-              id: firebaseUser.uid,
-              name: firebaseUser.displayName || "Unknown User",
-              email: firebaseUser.email || "",
-              phone: firebaseUser.phoneNumber || "",
-              rating: 0,
-              reviewCount: 0
-            };
+        try {
+          // Fetch custom user data from Firestore if not already set or if UID changed
+          const docRef = doc(db, "users", firebaseUser.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const fetchedUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
+            setUser(fetchedUser);
+          } else {
+            // Fallback if no firestore document exists yet (common in immediate signup)
+            setUser(prev => {
+              if (prev && prev.id === firebaseUser.uid && prev.name !== "Unknown User") {
+                return prev;
+              }
+              return {
+                id: firebaseUser.uid,
+                name: firebaseUser.displayName || "Unknown User",
+                email: firebaseUser.email || "",
+                phone: firebaseUser.phoneNumber || "",
+                rating: 0,
+                reviewCount: 0
+              };
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching user data from Firestore:", error);
+          // Fallback user even if Firestore fails
+          setUser({
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || "Unknown User",
+            email: firebaseUser.email || "",
+            phone: firebaseUser.phoneNumber || "",
+            rating: 0,
+            reviewCount: 0
           });
         }
       } else {
