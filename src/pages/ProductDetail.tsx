@@ -34,7 +34,12 @@ const ProductDetail = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (!id) return;
+      if (!id) {
+        console.warn("ProductDetail: No ID provided in URL params.");
+        setIsLoading(false);
+        return;
+      }
+      console.log("Fetching product/service ID:", id);
       try {
         const docRef = doc(db, "products", id);
         const docSnap = await getDoc(docRef);
@@ -59,6 +64,7 @@ const ProductDetail = () => {
              console.error("Error fetching related products", e);
           }
         } else {
+          console.warn(`Product document not found for ID: ${id}`);
           setProduct(null);
         }
       } catch (error) {
@@ -85,11 +91,28 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container py-16 text-center">
-          <p className="text-muted-foreground">Product not found.</p>
-          <Link to="/marketplace" className="text-primary text-sm mt-2 inline-block hover:underline">
-            Back to Marketplace
-          </Link>
+        <div className="container max-w-md py-24 text-center">
+          <div className="rounded-2xl border border-border/50 bg-card/50 p-8 shadow-sm">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <span className="text-3xl">📦</span>
+            </div>
+            <h2 className="text-xl font-bold text-foreground mb-2">Product Not Found</h2>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              This product may have been removed by the seller, or the link you followed is invalid.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link to="/marketplace">
+                <Button className="w-full sm:w-auto gap-2">
+                  <ArrowLeft className="h-4 w-4" /> Browse Marketplace
+                </Button>
+              </Link>
+              <Link to="/">
+                <Button variant="outline" className="w-full sm:w-auto">
+                  Go Home
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
