@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { uploadToCloudinary } from '@/lib/cloudinary';
+import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/cloudinary';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,7 +21,7 @@ export function CloudinaryUpload({
   className,
 }: CloudinaryUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [previews, setPreviews] = useState<{ url: string; publicId: string; resourceType: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -39,11 +39,16 @@ export function CloudinaryUpload({
         const file = files[i];
         
         const uploadData = await uploadToCloudinary(file);
+        const newPreview = {
+          url: uploadData.secure_url,
+          publicId: uploadData.public_id,
+          resourceType: uploadData.resource_type
+        };
         
         if (multiple) {
-          setPreviews((prev) => [...prev, uploadData.secure_url]);
+          setPreviews((prev) => [...prev, newPreview]);
         } else {
-          setPreviews([uploadData.secure_url]);
+          setPreviews([newPreview]);
         }
         
         onUpload({
@@ -91,6 +96,32 @@ export function CloudinaryUpload({
       }
     }
   }, []);
+
+  const handleRemove = async (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const preview = previews[index];
+    if (!preview) return;
+
+    // Optional: Only delete from Cloudinary if it's not a fresh upload
+    // but here we'll delete it to keep Cloudinary clean
+    const success = await deleteFromCloudinary(preview.publicId, preview.resourceType);
+    if (success) {
+      setPreviews(prev => prev.filter((_, i) => i !== index));
+      toast({
+        title: 'Removed',
+        description: 'Media removed successfully',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete media from Cloudinary',
+        variant: 'destructive',
+      });
+      // Still remove from UI even if Cloudinary delete fails? 
+      // Usually better to let user know and maybe still remove from UI if they insist
+      setPreviews(prev => prev.filter((_, i) => i !== index));
+    }
+  };
 
   const clearPreviews = () => {
     setPreviews([]);
@@ -150,15 +181,12 @@ export function CloudinaryUpload({
           {previews.map((preview, index) => (
             <div key={index} className="relative aspect-square border rounded-md overflow-hidden bg-muted group">
                 <img
-                  src={preview}
+                  src={preview.url}
                   alt={`Preview ${index + 1}`}
                   className="object-cover w-full h-full"
                 />
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPreviews(prev => prev.filter((_, i) => i !== index));
-                }}
+                onClick={(e) => handleRemove(index, e)}
                 className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="h-3 w-3" />
