@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Logo } from "./Logo";
 
 export function Footer() {
   return (
@@ -7,8 +8,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 font-black text-xl tracking-tighter mb-5 text-textPrimary">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white text-lg font-black shadow-lg">S</span>
-              <span className="hidden sm:inline">Siyayya</span>
+              <Logo />
             </Link>
             <p className="text-sm text-textSecondary font-medium leading-relaxed mb-4">
               The official marketplace for Federal University of Kashere students and staff.

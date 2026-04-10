@@ -1,4 +1,5 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -54,9 +55,8 @@ const SignIn = () => {
 
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-10">
-          <Link to="/" className="inline-flex items-center gap-2 font-bold text-3xl tracking-tight mb-4 group">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-extrabold shadow-xl shadow-primary/25 transition-transform group-hover:scale-105 duration-300">S</span>
-            <span className="text-foreground italic">Siyayya</span>
+          <Link to="/" className="inline-flex items-center justify-center gap-2 mb-4 group">
+            <Logo textClassName="text-3xl" />
           </Link>
           <h1 className="text-2xl font-black text-foreground mb-2">Welcome to Kashere's Marketplace</h1>
           <p className="text-sm text-muted-foreground font-medium px-4">

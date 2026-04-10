@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { SearchBar } from "./SearchBar";
+import { Logo } from "./Logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,11 +54,7 @@ export function Navbar() {
       <nav className="sticky top-0 z-50 border-b border-black/5 bg-surface/80 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/40 shadow-sm transition-all duration-200">
         <div className="container flex h-16 items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2 group transition-all">
-            <div className="relative h-9 w-9 flex items-center justify-center rounded-xl bg-primary text-white shadow-lg overflow-hidden group-hover:rotate-[10deg] transition-transform duration-300">
-               <span className="font-black text-lg relative z-10">S</span>
-               <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <span className="hidden sm:inline font-black text-xl tracking-tighter text-textPrimary">Siyayya</span>
+            <Logo textClassName="text-xl sm:text-2xl" />
           </Link>
 
           <div className="hidden lg:flex items-center gap-1">

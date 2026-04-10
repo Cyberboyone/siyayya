@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import {
@@ -471,14 +472,9 @@ const Admin = () => {
         lg:translate-x-0 lg:relative lg:flex shadow-sm
       `}>
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-black/5">
-          <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center text-white font-black text-lg shadow-lg">
-            S
-          </div>
-          <div>
-            <p className="font-black text-textPrimary text-sm">Siyayya</p>
-            <p className="text-[10px] text-primary font-black uppercase tracking-widest">Admin Panel</p>
-          </div>
+        <div className="flex flex-col gap-0 px-6 py-5 border-b border-black/5">
+          <Logo textClassName="text-xl" />
+          <p className="text-[10px] text-primary font-black uppercase tracking-widest mt-0.5">Admin Panel</p>
           <button
             className="ml-auto lg:hidden text-textMuted hover:text-textPrimary transition-colors"
             onClick={() => setSidebarOpen(false)}
