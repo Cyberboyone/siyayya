@@ -135,7 +135,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       uid,
       email,
       isNewUser,
-      role: existingRole
+      role: assignedRole
     });
 
   } catch (error: any) {
