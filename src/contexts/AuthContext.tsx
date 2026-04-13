@@ -33,6 +33,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const ADMIN_EMAIL = "muhammadmusab372@gmail.com";
 
   useEffect(() => {
+    // 🔴 DEV BYPASS: Allows local testing of Admin Panel without real Sign-In
+    const shouldImpersonate = localStorage.getItem("dev_impersonate_admin") === "true";
+    if (shouldImpersonate) {
+      console.warn("[Auth] DEV MODE: Impersonating Admin muhammadmusab372@gmail.com");
+      setUser({
+        id: "dev-admin-uid",
+        name: "Dev Admin",
+        email: "muhammadmusab372@gmail.com",
+        role: "admin",
+        isVerified: true,
+        rating: 5,
+        reviewCount: 100,
+        phone: "0000000000"
+      } as User);
+      setIsLoading(false);
+      return;
+    }
+
     if (isFirebaseDisabled) {
       console.log("[Auth] Firebase is disabled. Proceeding as guest.");
       setIsLoading(false);

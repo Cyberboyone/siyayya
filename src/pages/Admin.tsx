@@ -115,41 +115,58 @@ const Admin = () => {
 
   // ── Fetch all admin data ──────────────────────────────────
   const fetchAll = useCallback(async () => {
+    if (!currentUser) {
+      console.warn("[Admin] Skipping fetch: No currentUser detected.");
+      return;
+    }
+    
     setIsLoading(true);
+    console.log("[Admin] Initializing data fetch...");
+    
     try {
-      const [usersSnap, productsSnap, servicesSnap, reportsSnap, requestsSnap] = await Promise.all([
-        getDocs(collection(db, "users")),
-        getDocs(collection(db, "products")),
-        getDocs(collection(db, "services")),
-        getDocs(collection(db, "reports")),
-        getDocs(collection(db, "requests")),
+      const fetchCollection = async (collName: string) => {
+        try {
+          const snap = await getDocs(collection(db, collName));
+          return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (e) {
+          console.error(`[Admin] Failed to fetch collection: ${collName}`, e);
+          return [];
+        }
+      };
+
+      const [rawUsers, rawProducts, rawServices, rawReports, rawRequests] = await Promise.all([
+        fetchCollection("users"),
+        fetchCollection("products"),
+        fetchCollection("services"),
+        fetchCollection("reports"),
+        fetchCollection("requests"),
       ]);
 
-      const rawUsers = usersSnap.docs.map((d) => ({ id: d.id, ...d.data() } as AdminUser));
-      const rawProducts = productsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
-      const rawServices = servicesSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Service));
-      const rawReports = reportsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Report));
-      const rawRequests = requestsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
-
       // Enrich users with listing count
-      const enriched = rawUsers.map((u) => ({
+      const enriched = (rawUsers as AdminUser[]).map((u) => ({
         ...u,
-        listingCount: rawProducts.filter((p) => p.ownerId === u.id).length +
-          rawServices.filter((s) => s.ownerId === u.id).length,
+        listingCount: (rawProducts as Product[]).filter((p) => p.ownerId === u.id).length +
+          (rawServices as Service[]).filter((s) => s.ownerId === u.id).length,
       }));
 
       setUsers(enriched);
-      setProducts(rawProducts);
-      setServices(rawServices);
-      setReports(rawReports);
+      setProducts(rawProducts as Product[]);
+      setServices(rawServices as Service[]);
+      setReports(rawReports as Report[]);
       setRequestsList(rawRequests);
+      
+      console.log("[Admin] Data load complete.", {
+        users: rawUsers.length,
+        products: rawProducts.length,
+        reports: rawReports.length
+      });
     } catch (e) {
-      console.error("Admin fetch error:", e);
-      toast.error("Failed to load admin data");
+      console.error("Critical Admin fetch error:", e);
+      toast.error("Critical error loading admin dashboard");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
