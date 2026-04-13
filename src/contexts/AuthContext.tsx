@@ -11,7 +11,6 @@ import { doc, getDoc, setDoc, collection, query, where, getDocs, writeBatch } fr
 import { auth, db, isFirebaseDisabled } from "@/lib/firebase";
 import { User } from "@/lib/mock-data";
 import { toast } from "sonner";
-import { LoadingScreen } from "@/components/LoadingScreen";
 
 interface AuthContextType {
   user: User | null;
@@ -27,10 +26,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // 🔴 4. FIX AUTH CONTEXT (STABLE STATE)
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🔴 5. NORMALIZE EMAIL COMPARISON
   const ADMIN_EMAIL = "muhammadmusab372@gmail.com";
 
   useEffect(() => {
@@ -40,14 +39,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // 🔴 1. FIX AUTH STATE MANAGEMENT
+    // 🔴 Standard Auth Listener
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      // 🔴 6. ADD DEBUG LOGGING (TEMPORARY)
-      console.log("[Auth State Change] User:", firebaseUser?.email, "Loading:", true);
+      console.log("[Auth State] Changed:", firebaseUser?.email);
       
       try {
         if (firebaseUser) {
-          // Fetch custom user data from Firestore
           const docRef = doc(db, "users", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
           
@@ -56,7 +53,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (docSnap.exists()) {
             userData = { id: firebaseUser.uid, ...docSnap.data() } as User;
           } else {
-            console.warn("[Auth] No Firestore document found. Using fallback for session.");
             userData = {
               id: firebaseUser.uid,
               name: firebaseUser.displayName || "Unknown User",
@@ -67,32 +63,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
           }
 
-          // Normalize Email & Detect Admin status consistently
-          const canonicalEmail = userData.email?.trim().toLowerCase();
-          const isAdmin = canonicalEmail === ADMIN_EMAIL.toLowerCase();
-          
-          if (isAdmin) {
+          // Strict Role Sync
+          if (userData.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
             userData.role = "admin";
           }
 
           setUser(userData);
-          console.log("[Auth State Change] Resolved User Email:", canonicalEmail, "Is Admin:", isAdmin);
         } else {
           setUser(null);
-          console.log("[Auth State Change] No authenticated user.");
         }
       } catch (error) {
-        console.error("[Auth State Change Error]:", error);
+        console.error("[Auth State Error]:", error);
         setUser(null);
       } finally {
         setIsLoading(false);
-        console.log("[Auth State Change] Loading complete.");
       }
     });
 
     return () => unsubscribe();
   }, []);
 
+  // 🔴 3. FIX GOOGLE SIGN-IN FUNCTION (NO REDIRECTS)
   const loginWithGoogle = async (): Promise<{ uid: string, isNewUser: boolean, role: string }> => {
     try {
       setIsLoading(true);
@@ -114,6 +105,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const { isNewUser, role } = await response.json();
+      
+      console.log("[Auth] Login Success. Navigating will be handled by AuthRedirectHandler.");
       return { uid: result.user.uid, isNewUser, role };
     } catch (error: any) {
       console.error("[Auth Error] Google Login failed:", error);
@@ -137,7 +130,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const uid = user.id;
     const batch = writeBatch(db);
     try {
-      // Cleanup user data
       const collections = ["products", "services", "requests"];
       for (const coll of collections) {
         const snap = await getDocs(query(collection(db, coll), where("ownerId", "==", uid)));
@@ -149,7 +141,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       toast.success("Account deleted.");
     } catch (error) {
-      console.error("Delete account error:", error);
       throw error;
     }
   };
@@ -159,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProfile = async (data: Partial<User>) => {
-    if (!user) throw new Error("No user is logged in");
+    if (!user) throw new Error("No logged in user");
     const docRef = doc(db, "users", user.id);
     await setDoc(docRef, data, { merge: true });
     setUser(prev => prev ? { ...prev, ...data } as User : null);
@@ -176,8 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       checkBusinessNameUniqueness, 
       deleteAccount 
     }}>
-      {/* 🔴 1. REQUIREMENT: The app must NOT render protected routes until loading === false */}
-      {isLoading ? <LoadingScreen /> : children}
+      {children}
     </AuthContext.Provider>
   );
 };
