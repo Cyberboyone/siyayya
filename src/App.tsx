@@ -1,11 +1,11 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Footer } from "./components/Footer";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute, AdminRoute } from "./components/RouteGuards";
 import { ScrollToTop } from "./components/ScrollToTop";
 
@@ -29,43 +29,12 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-// 🔴 2. HANDLE REDIRECT USING AUTH STATE (CORRECT APPROACH)
-// Centralized Auth Redirect Handler
-const AuthRedirectHandler = () => {
-  const { user, isLoading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ADMIN_EMAIL = "muhammadmusab372@gmail.com";
-
-  useEffect(() => {
-    // 🔴 7. DEBUG (MANDATORY)
-    console.log("[AuthRedirectHandler] Check:", { user: user?.email, isLoading, path: location.pathname });
-
-    if (!isLoading && user) {
-      const email = user.email?.trim().toLowerCase();
-      const isAdmin = email === ADMIN_EMAIL.toLowerCase();
-
-      // 🔴 5. PREVENT INFINITE REDIRECT LOOP
-      if (isAdmin && location.pathname !== "/admin" && (location.pathname === "/signin" || location.pathname === "/signup")) {
-        console.log("[AuthRedirectHandler] Admin detected on auth page, redirecting to /admin");
-        navigate("/admin", { replace: true });
-      } else if (!isAdmin && location.pathname === "/signin") {
-        console.log("[AuthRedirectHandler] User detected on auth page, redirecting to /dashboard");
-        navigate("/dashboard", { replace: true });
-      }
-    }
-  }, [user, isLoading, location.pathname, navigate]);
-
-  return null;
-};
-
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <AuthRedirectHandler />
             <Toaster />
             <Sonner />
             <ScrollToTop />
@@ -82,6 +51,7 @@ const App = () => {
                     <Route path="/request" element={<Request />} />
                     <Route path="/user/:id" element={<UserProfile />} />
                     
+                    {/* 🔴 Clean Route Protection */}
                     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                     <Route path="/dashboard/new" element={<ProtectedRoute><NewListing /></ProtectedRoute>} />
                     <Route path="/dashboard/edit/:type/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />

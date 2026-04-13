@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
+import AuthRedirect from "@/components/AuthRedirect";
 
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -89,6 +90,9 @@ const SignIn = () => {
             </Link>
         </div>
       </div>
+
+      {/* 🔴 5. USE REDIRECT HANDLER ONLY ON LOGIN PAGE */}
+      <AuthRedirect />
     </div>
   );
 };

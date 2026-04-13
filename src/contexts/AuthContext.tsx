@@ -26,7 +26,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // 🔴 4. FIX AUTH CONTEXT (STABLE STATE)
+  // 🔴 1. CENTRALIZE AUTH STATE (SINGLE SOURCE OF TRUTH)
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,10 +39,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // 🔴 Standard Auth Listener
+    // 🔴 1. Standard Auth Listener (ONLY PLACE TO SET USER)
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      console.log("[Auth State] Changed:", firebaseUser?.email);
-      
       try {
         if (firebaseUser) {
           const docRef = doc(db, "users", firebaseUser.uid);
@@ -63,17 +61,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
           }
 
-          // Strict Role Sync
-          if (userData.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+          // Step 9: Normalize & Sync Role
+          const email = userData.email?.trim().toLowerCase();
+          if (email === ADMIN_EMAIL.toLowerCase()) {
             userData.role = "admin";
           }
 
           setUser(userData);
+          
+          // 🔴 9. DEBUG (MANDATORY)
+          console.log("--- AUTH STATE SNAPSHOT ---");
+          console.log("USER:", firebaseUser.uid);
+          console.log("EMAIL:", email);
+          console.log("ROLE:", userData.role);
+          console.log("----------------------------");
         } else {
           setUser(null);
+          console.log("[Auth] No User Session.");
         }
       } catch (error) {
-        console.error("[Auth State Error]:", error);
+        console.error("[Auth Context Error]:", error);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -83,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  // 🔴 3. FIX GOOGLE SIGN-IN FUNCTION (NO REDIRECTS)
+  // 🔴 3. FIX LOGIN FUNCTION (STRICTLY NO REDIRECTS)
   const loginWithGoogle = async (): Promise<{ uid: string, isNewUser: boolean, role: string }> => {
     try {
       setIsLoading(true);
@@ -93,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await signInWithPopup(auth, provider);
       const idToken = await result.user.getIdToken();
       
+      // Sync with backend
       const response = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -106,10 +114,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const { isNewUser, role } = await response.json();
       
-      console.log("[Auth] Login Success. Navigating will be handled by AuthRedirectHandler.");
+      console.log("[Auth] Google sign-in successful. No navigation triggered here.");
       return { uid: result.user.uid, isNewUser, role };
     } catch (error: any) {
-      console.error("[Auth Error] Google Login failed:", error);
+      console.error("[Auth Error] Google Login failed:", error.message || error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -139,8 +147,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await batch.commit();
       await deleteUser(auth.currentUser);
       setUser(null);
-      toast.success("Account deleted.");
+      toast.success("Account permanently deleted.");
     } catch (error) {
+      console.error("Account deletion failed:", error);
       throw error;
     }
   };
@@ -150,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProfile = async (data: Partial<User>) => {
-    if (!user) throw new Error("No logged in user");
+    if (!user) throw new Error("No user session");
     const docRef = doc(db, "users", user.id);
     await setDoc(docRef, data, { merge: true });
     setUser(prev => prev ? { ...prev, ...data } as User : null);
