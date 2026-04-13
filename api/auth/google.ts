@@ -63,8 +63,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userDoc = await userRef.get();
 
     let isNewUser = false;
-    const existingRole = userDoc.data()?.role || "user";
-    console.log(`[Auth Verification] Handshake - Email: ${email}, Role: ${existingRole}`);
+
+    // Read admin emails from environment variable
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+    const assignedRole = adminEmails.includes(email.toLowerCase()) ? "admin" : (userDoc.data()?.role || "user");
+    console.log(`[Auth Verification] Handshake - Email: ${email}, Role: ${assignedRole}`);
  
     if (!userDoc.exists) {
       isNewUser = true;
@@ -75,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email: email,
         avatar: picture || '',
         businessName: '',
-        role: "user", // Default role for new users
+        role: assignedRole,
         status: 'active',
         rating: 0,
         reviewCount: 0,
@@ -84,11 +90,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
       console.log(`[Auth Verification] New user created: ${email}`);
     } else {
-      // Update existing user info but respect existing role
+      // Update existing user info and enforce role from config
       await userRef.update({
         name: name || userDoc.data()?.name,
         email: email || userDoc.data()?.email, 
         avatar: picture || userDoc.data()?.avatar,
+        role: assignedRole,
       });
       
       // Check if businessName is still missing

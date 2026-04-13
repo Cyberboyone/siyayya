@@ -7,10 +7,23 @@ import {
   signInWithPopup,
   deleteUser
 } from "firebase/auth";
-import { doc, getDoc, setDoc, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { auth, db, isFirebaseDisabled } from "@/lib/firebase";
 import { User } from "@/lib/mock-data";
 import { toast } from "sonner";
+
+// ── Admin email list from environment variable ──────────────
+// This is NOT hardcoded — it is read from the build-time environment config.
+// To change admins, update VITE_ADMIN_EMAILS in .env / Vercel Dashboard.
+const ADMIN_EMAILS: string[] = (import.meta.env.VITE_ADMIN_EMAILS || "")
+  .split(",")
+  .map((e: string) => e.trim().toLowerCase())
+  .filter(Boolean);
+
+function isAdminEmail(email: string | undefined | null): boolean {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.trim().toLowerCase());
+}
 
 interface AuthContextType {
   user: User | null;
@@ -18,7 +31,7 @@ interface AuthContextType {
   isLoading: boolean;
   updateProfile: (data: Partial<User>) => Promise<void>;
   logout: () => Promise<void>;
-  loginWithGoogle: () => Promise<{ uid: string, isNewUser: boolean, role: string }>;
+  loginWithGoogle: () => Promise<{ uid: string; isNewUser: boolean; role: string }>;
   checkBusinessNameUniqueness: (name: string) => Promise<boolean>;
   deleteAccount: () => Promise<void>;
 }
@@ -29,61 +42,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🔴 Professional implementation: No hardcoded admin email here.
-  // Roles are fetched exclusively from the database (Firestore).
-
   useEffect(() => {
-    // DEV BYPASS: Kept for development testing to ensure admin panel workability
-    const shouldImpersonate = localStorage.getItem("dev_impersonate_admin") === "true";
-    if (shouldImpersonate) {
+    // DEV BYPASS for local testing without Google Sign-In
+    if (localStorage.getItem("dev_impersonate_admin") === "true") {
       console.warn("[Auth] DEV MODE: Impersonating Admin");
       setUser({
         id: "dev-admin-uid",
         name: "Dev Admin",
-        email: "admin@siyayya.com",
+        email: ADMIN_EMAILS[0] || "admin@siyayya.com",
         role: "admin",
-        isVerified: true
+        isVerified: true,
       } as User);
       setIsLoading(false);
       return;
     }
 
     if (isFirebaseDisabled) {
+      console.log("[Auth] Firebase disabled — guest mode.");
       setIsLoading(false);
       return;
     }
 
-    // 🔴 1. CENTRALIZED AUTH LISTENER (SINGLE SOURCE OF TRUTH)
+    // ── Single Source of Truth: onAuthStateChanged ────────────
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       try {
-        if (firebaseUser) {
-          const docRef = doc(db, "users", firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
-          
-          let userData: User;
-          
-          if (docSnap.exists()) {
-            // Trust the database role
-            userData = { id: firebaseUser.uid, ...docSnap.data() } as User;
-          } else {
-            console.log("[Auth] New session detected, initializing local profile.");
-            userData = {
-              id: firebaseUser.uid,
-              name: firebaseUser.displayName || "Unknown User",
-              email: firebaseUser.email || "",
-              phone: firebaseUser.phoneNumber || "",
-              rating: 0,
-              reviewCount: 0,
-              role: "user" // Default role
-            };
-          }
-
-          setUser(userData);
-          console.log("[Auth State] User authenticated:", { uid: firebaseUser.uid, role: userData.role });
-        } else {
+        if (!firebaseUser) {
           setUser(null);
-          console.log("[Auth State] No active session.");
+          setIsLoading(false);
+          return;
         }
+
+        const docRef = doc(db, "users", firebaseUser.uid);
+        const docSnap = await getDoc(docRef);
+        let userData: User;
+
+        if (docSnap.exists()) {
+          userData = { id: firebaseUser.uid, ...docSnap.data() } as User;
+        } else {
+          // Fallback profile when Firestore document doesn't exist yet
+          userData = {
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || "Unknown User",
+            email: firebaseUser.email || "",
+            phone: firebaseUser.phoneNumber || "",
+            rating: 0,
+            reviewCount: 0,
+            role: "user",
+          };
+        }
+
+        // ── Self-healing admin promotion ──────────────────────
+        // If email is in the admin list but role isn't set, fix it
+        if (isAdminEmail(userData.email) && userData.role !== "admin") {
+          console.log("[Auth] Promoting user to admin (env config match).");
+          userData.role = "admin";
+          // Persist to Firestore so future logins are instant
+          try {
+            if (docSnap.exists()) {
+              await updateDoc(docRef, { role: "admin" });
+            } else {
+              await setDoc(docRef, { ...userData, role: "admin" });
+            }
+          } catch (e) {
+            console.warn("[Auth] Could not persist admin role to Firestore:", e);
+          }
+        }
+
+        setUser(userData);
+        console.log("[Auth State]", { uid: firebaseUser.uid, email: userData.email, role: userData.role });
       } catch (error) {
         console.error("[Auth Context Error]:", error);
         setUser(null);
@@ -95,65 +121,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  // 🔴 3. FIX LOGIN FLOW AND REDIRECTS
-  const loginWithGoogle = async (): Promise<{ uid: string, isNewUser: boolean, role: string }> => {
+  // ── Login with Google ──────────────────────────────────────
+  const loginWithGoogle = async (): Promise<{ uid: string; isNewUser: boolean; role: string }> => {
     try {
       setIsLoading(true);
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      
-      // Step A: Firebase Auth Popup
+      provider.setCustomParameters({ prompt: "select_account" });
+
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
       const idToken = await firebaseUser.getIdToken();
-      
-      console.log("[Auth] Firebase Sign-In successful. Starting backend synchronization...");
 
-      // Step B: Backend Synchronization (Vercel Serverless Function)
-      // This step ensures the user is created/updated in Firestore and detects their role.
       let isNewUser = false;
-      let role = "user";
+      let role = isAdminEmail(firebaseUser.email) ? "admin" : "user";
 
+      // Try backend sync, but don't crash if it fails
       try {
-        const response = await fetch('/api/auth/google', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const resp = await fetch("/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken }),
         });
-
-        if (response.ok) {
-          const syncData = await response.json();
-          isNewUser = syncData.isNewUser;
-          role = syncData.role;
-          console.log("[Auth] Backend handshake complete:", { isNewUser, role });
+        if (resp.ok) {
+          const data = await resp.json();
+          isNewUser = data.isNewUser;
+          role = data.role;
+          console.log("[Auth] Backend sync OK:", { isNewUser, role });
         } else {
-          console.warn("[Auth] Backend handshake failed. Retrying with local Firestore fetch...");
-          // Fallback: Try to fetch the role directly from Firestore if the API is down/misconfigured
-          const docRef = doc(db, "users", firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-             role = docSnap.data().role || "user";
-          }
+          console.warn("[Auth] Backend sync failed, using local role resolution.");
         }
-      } catch (syncError) {
-        console.error("[Auth] Sync error:", syncError);
-        // Fallback: Direct Firestore fetch for local/offline support
-        const docRef = doc(db, "users", firebaseUser.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-           role = docSnap.data().role || "user";
-        }
+      } catch {
+        console.warn("[Auth] Backend unreachable, using local role resolution.");
       }
 
-      toast.success(`Welcome back, ${firebaseUser.displayName || 'User'}!`);
-      
-      // We return the role so the caller (Redirect Handler) can navigate accurately
+      // Ensure admin emails always get admin role regardless of backend response
+      if (isAdminEmail(firebaseUser.email)) {
+        role = "admin";
+      }
+
+      toast.success(`Welcome, ${firebaseUser.displayName || "User"}!`);
       return { uid: firebaseUser.uid, isNewUser, role };
     } catch (error: any) {
-      console.error("[Auth Error] Login flow failed:", error);
       let msg = "Google sign-in failed.";
-      if (error.code === 'auth/popup-closed-by-user') msg = "Sign-in was cancelled.";
-      if (error.code === 'auth/popup-blocked') msg = "Popup blocked. Please check browser settings.";
+      if (error.code === "auth/popup-closed-by-user") msg = "Sign-in cancelled.";
+      else if (error.code === "auth/popup-blocked") msg = "Popup blocked — allow popups for this site.";
+      else if (error.code === "auth/unauthorized-domain") msg = "Domain not authorized in Firebase.";
       toast.error(msg);
       throw error;
     } finally {
@@ -162,11 +174,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const checkBusinessNameUniqueness = async (name: string): Promise<boolean> => {
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("businessName", "==", name));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) return true;
-    if (user && querySnapshot.docs.length === 1 && querySnapshot.docs[0].id === user.id) return true;
+    const q = query(collection(db, "users"), where("businessName", "==", name));
+    const snap = await getDocs(q);
+    if (snap.empty) return true;
+    if (user && snap.docs.length === 1 && snap.docs[0].id === user.id) return true;
     return false;
   };
 
@@ -175,10 +186,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const uid = user.id;
     const batch = writeBatch(db);
     try {
-      const collections = ["products", "services", "requests"];
-      for (const coll of collections) {
+      for (const coll of ["products", "services", "requests"]) {
         const snap = await getDocs(query(collection(db, coll), where("ownerId", "==", uid)));
-        snap.forEach(d => batch.delete(d.ref));
+        snap.forEach((d) => batch.delete(d.ref));
       }
       batch.delete(doc(db, "users", uid));
       await batch.commit();
@@ -199,29 +209,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) throw new Error("No user session");
     const docRef = doc(db, "users", user.id);
     await setDoc(docRef, data, { merge: true });
-    setUser(prev => prev ? { ...prev, ...data } as User : null);
+    setUser((prev) => (prev ? ({ ...prev, ...data } as User) : null));
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated: !!user, 
-      isLoading, 
-      logout, 
-      updateProfile, 
-      loginWithGoogle, 
-      checkBusinessNameUniqueness, 
-      deleteAccount 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        logout,
+        updateProfile,
+        loginWithGoogle,
+        checkBusinessNameUniqueness,
+        deleteAccount,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
+  return ctx;
 };
