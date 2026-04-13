@@ -1,8 +1,13 @@
 import { Navbar } from "@/components/Navbar";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const About = () => {
+  useSEO({
+    title: "About Siyayya - Nigeria's Campus Marketplace",
+    description: "Learn more about Siyayya, the dedicated marketplace for the Federal University of Kashere community.",
+  });
   return (
     <div className="min-h-screen bg-background pb-28 md:pb-0">
       <Navbar />

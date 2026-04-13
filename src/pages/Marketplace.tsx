@@ -11,6 +11,8 @@ import { useSavedItems } from "@/hooks/use-saved-items";
 import { Button } from "@/components/ui/button";
 import { useProducts, useServices } from "@/hooks/use-queries";
 import { getNumericDate } from "@/lib/utils";
+import { useSEO } from "@/hooks/useSEO";
+import { categories } from "@/lib/mock-data";
 
 const Marketplace = () => {
   const navigate = useNavigate();
@@ -31,6 +33,19 @@ const Marketplace = () => {
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
   const { data: services = [], isLoading: isLoadingServices } = useServices();
   const isLoading = isLoadingProducts || isLoadingServices;
+
+  const currentCategoryLabel = useMemo(() => {
+    if (category === "all") return "";
+    if (category === "services") return "Services";
+    return categories.find(c => c.id === category)?.label || "";
+  }, [category]);
+
+  useSEO({
+    title: currentCategoryLabel ? `${currentCategoryLabel} for Sale in Nigeria` : "Browse Products & Services",
+    description: currentCategoryLabel 
+      ? `Find the best deals on ${currentCategoryLabel} in Kashere. Browse verified listings on Siyayya.` 
+      : "Explore our wide range of products and campus services at Federal University of Kashere.",
+  });
 
   const hasActiveFilters = condition !== "all" || priceMin || priceMax || minRating > 0;
 

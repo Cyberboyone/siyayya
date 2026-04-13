@@ -13,6 +13,8 @@ import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { ReviewSection } from "@/components/ReviewSection";
 import { formatPhoneNumberForWhatsApp } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { useSEO } from "@/hooks/useSEO";
+import SchemaMarkup from "@/components/SchemaMarkup";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,6 +77,31 @@ const ServiceDetail = () => {
     };
     fetchService();
   }, [id]);
+
+  const serviceDescription = service?.description?.slice(0, 160) + (service?.description?.length > 160 ? "..." : "");
+
+  useSEO({
+    title: service ? `${service.title} - Professional Service` : "Service Details",
+    description: service ? `${serviceDescription}. Offered by ${service.ownerName || "our expert"} at Siyayya.` : "",
+    ogType: "profile",
+    ogImage: service?.image || undefined,
+  });
+
+  const serviceSchema = service ? {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": service.title,
+    "description": service.description,
+    "image": service.image,
+    "provider": {
+      "@type": "Person",
+      "name": service.ownerName
+    },
+    "brand": {
+      "@type": "Brand",
+      "name": "Siyayya"
+    }
+  } : null;
 
   if (isLoading) {
     return (
@@ -146,6 +173,7 @@ const ServiceDetail = () => {
 
   return (
     <>
+      {serviceSchema && <SchemaMarkup data={serviceSchema} />}
       <div className="min-h-screen bg-background pb-28 md:pb-0">
         <Navbar />
         <div className="container max-w-3xl py-4">

@@ -17,6 +17,8 @@ import { formatDate, formatPhoneNumberForWhatsApp } from "@/lib/utils";
 import { CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
 import { Youtube, Settings as SettingsIcon } from "lucide-react";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { useSEO } from "@/hooks/useSEO";
+import SchemaMarkup from "@/components/SchemaMarkup";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,6 +91,33 @@ const ProductDetail = () => {
     };
     fetchProduct();
   }, [id, addViewed]);
+
+  const productDescription = product?.description?.slice(0, 160) + (product?.description?.length > 160 ? "..." : "");
+
+  useSEO({
+    title: product ? `Buy ${product.title}` : "Product Details",
+    description: product ? `${productDescription}. Buy on Siyayya - Kashere's marketplace.` : "",
+    ogType: "product",
+    ogImage: product?.image || undefined,
+  });
+
+  const productSchema = product ? {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.title,
+    "description": product.description,
+    "image": product.image,
+    "offers": {
+      "@type": "Offer",
+      "price": product.price,
+      "priceCurrency": "NGN",
+      "availability": product.isSold ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
+    },
+    "brand": {
+      "@type": "Brand",
+      "name": "Siyayya"
+    }
+  } : null;
 
   if (isLoading) {
     return (
@@ -194,6 +223,7 @@ const ProductDetail = () => {
 
   return (
     <>
+      {productSchema && <SchemaMarkup data={productSchema} />}
       <div className="min-h-screen bg-background pb-28 md:pb-0">
       <Navbar />
       <div className="container max-w-3xl py-4">

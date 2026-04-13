@@ -62,6 +62,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0, is
           <img
             src={product.image || ""}
             alt={product.title}
+            width={400}
+            height={300}
             className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 ${!product.image ? "opacity-0" : ""}`}
             loading="lazy"
           />

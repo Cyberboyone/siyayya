@@ -14,6 +14,7 @@ import { useSavedItems } from "@/hooks/use-saved-items";
 import { getNumericDate } from "@/lib/utils";
 import { useProducts, useServices, useRequests } from "@/hooks/use-queries";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { useSEO } from "@/hooks/useSEO";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -25,6 +26,12 @@ const Index = () => {
   const { data: products = [] } = useProducts();
   const { data: services = [] } = useServices();
   const { data: requests = [] } = useRequests();
+
+  useSEO({
+    title: "Siyayya - Buy & Sell Easily in Nigeria",
+    description: "Federal University of Kashere's Premium Campus Marketplace. Buy and sell items, books, and hostel essentials easily within the FUK community.",
+    canonical: "https://siyayya.com/",
+  });
 
   const featured = useMemo(() => {
     return [...products]
@@ -242,6 +249,27 @@ const Index = () => {
           </div>
         </section>
       )}
+
+      {/* SEO Content Section */}
+      <section className="container pt-12 pb-20 border-t border-black/5">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-black text-textPrimary tracking-tighter mb-6 italic">The Best Online Marketplace for Federal University of Kashere (FUK)</h2>
+          <div className="prose prose-sm md:prose-base text-textSecondary font-medium leading-relaxed space-y-4">
+            <p>
+              Welcome to <strong>Siyayya.com</strong>, the most vibrant and modern <strong>online marketplace in Nigeria</strong> specifically designed for the Federal University of Kashere community. Whether you are looking to <strong>buy and sell in Nigeria</strong> or searching for specialized campus services, our platform provides a secure and stylish environment for all your trading needs.
+            </p>
+            <p>
+              Our mission is to empower student entrepreneurs and service providers in Kashere. From high-quality electronics and fashion to academic materials and professional campus services, Siyayya connects buyers and sellers within the campus ecosystem, making it the go-to <strong>campus marketplace</strong> in Gombe State.
+            </p>
+            <p>
+              Why choose Siyayya? We prioritize the safety of our users with verified badges for trusted sellers and a dedicated review system. Explore our <Link to="/marketplace" className="text-primary font-bold hover:underline">Marketplace</Link> today to find amazing deals on laptops, smartphones, hostel essentials, and more. If you're a skilled student, don't forget to list your <Link to="/services" className="text-primary font-bold hover:underline">Services</Link> to reach potential clients across the university.
+            </p>
+            <p>
+              Join the hundreds of FUK students who already trade with style. Siyayya is not just a marketplace; it's a community built on trust, excellence, and the spirit of entrepreneurship at the Federal University of Kashere.
+            </p>
+          </div>
+        </div>
+      </section>
 
     </div>
 

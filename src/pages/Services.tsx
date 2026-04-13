@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useState, useMemo, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const Services = () => {
   const [search, setSearch] = useState("");
@@ -33,6 +34,11 @@ const Services = () => {
       (s) => s.title.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
     );
   }, [search, services]);
+
+  useSEO({
+    title: "Campus Services & Experts",
+    description: "Connect with skilled campus experts at Federal University of Kashere. Find graphic designers, tutors, repairs, and more.",
+  });
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">

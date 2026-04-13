@@ -3,8 +3,14 @@ import { useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const NotFound = () => {
+  useSEO({
+    title: "Page Not Found",
+    description: "The page you are looking for could not be found on Siyayya.",
+    noindex: true,
+  });
   const location = useLocation();
 
   useEffect(() => {

@@ -3,8 +3,13 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Mail, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 
 const ContactUs = () => {
+  useSEO({
+    title: "Contact Us | Siyayya Support",
+    description: "Got questions or feedback? Contact the Siyayya support team. We're here to help the Kashere community.",
+  });
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
 
   const handleSubmit = (e: React.FormEvent) => {

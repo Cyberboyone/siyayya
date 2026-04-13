@@ -5,9 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 import AuthRedirect from "@/components/AuthRedirect";
 
 const SignIn = () => {
+  useSEO({
+    title: "Sign In | Siyayya Marketplace",
+    description: "Sign in to Siyayya, the Federal University of Kashere's exclusive verified trading community.",
+    noindex: true,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const { user, loginWithGoogle, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();

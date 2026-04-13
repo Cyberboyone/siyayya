@@ -9,8 +9,13 @@ import { collection, getDocs } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatPhoneNumberForWhatsApp } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { useSEO } from "@/hooks/useSEO";
 
 const Requests = () => {
+  useSEO({
+    title: "Community Requests - What Students Need",
+    description: "See what students at Federal University of Kashere are looking for. Help the community by providing requested items and services.",
+  });
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState<ProductRequest[]>([]);

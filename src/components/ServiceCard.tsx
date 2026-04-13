@@ -26,7 +26,14 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
 
         {service.image && (
           <div className="relative aspect-video rounded-xl overflow-hidden bg-muted/20">
-            <img src={service.image} alt={service.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+            <img 
+              src={service.image} 
+              alt={service.title} 
+              width={480}
+              height={270}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
+              loading="lazy"
+            />
             <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-0.5 rounded-lg border border-white/10">
                {formatPrice(service.price)}
             </div>
