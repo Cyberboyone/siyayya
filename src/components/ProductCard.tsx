@@ -93,12 +93,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0, is
         <div className="p-5 flex flex-col flex-1 relative bg-surface transition-all duration-200 group-hover:bg-muted/30">
            <div className="flex items-center justify-between mb-2">
               <span className="capitalize px-2.5 py-1 bg-primary/10 text-primary rounded-lg font-bold text-[9px] tracking-wider border border-primary/10">{product.category}</span>
-              {product.ownerRating && (
-                <div className="flex items-center gap-1 text-[9px] font-black bg-warning/10 text-warning px-2 py-1 rounded-lg border border-warning/10">
-                  <Star className="h-3 w-3 fill-current" />
-                  <span>{product.ownerRating}</span>
-                </div>
-              )}
+              <div className="flex gap-0.5 bg-warning/5 px-2 py-1 rounded-lg border border-warning/10">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`h-3 w-3 ${i < Math.round(product.ownerRating || 0) ? "fill-warning text-warning" : "text-textMuted/20"}`} 
+                  />
+                ))}
+                {product.ownerRating > 0 && (
+                  <span className="text-[9px] font-black text-warning ml-1 tabular-nums">{product.ownerRating}</span>
+                )}
+              </div>
            </div>
            
           <h3 className="text-sm font-bold text-textPrimary line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-200">{product.title}</h3>

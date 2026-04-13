@@ -29,36 +29,37 @@ const ContactUs = () => {
               Fill out the form, and our team will respond as soon as possible.
             </p>
 
-            <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Mail className="h-5 w-5 text-primary" />
+            <div className="grid gap-6">
+              <a href="mailto:info@siyayya.com" className="flex items-start gap-4 p-4 rounded-2xl border border-black/5 bg-surface hover:bg-muted/50 transition-all duration-300 group">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                  <Mail className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Email</h3>
-                  <p className="text-sm text-muted-foreground">support@siyayya-fuk.com</p>
+                  <h3 className="font-black text-textPrimary uppercase tracking-widest text-xs mb-1">Email Support</h3>
+                  <p className="text-sm text-textSecondary font-bold">info@siyayya.com</p>
+                  <p className="text-[10px] text-primary font-black uppercase tracking-widest mt-1">Click to email</p>
                 </div>
-              </div>
+              </a>
               
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Phone className="h-5 w-5 text-primary" />
+              <a href="tel:+2348145455720" className="flex items-start gap-4 p-4 rounded-2xl border border-black/5 bg-surface hover:bg-muted/50 transition-all duration-300 group">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                  <Phone className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Phone</h3>
-                  <p className="text-sm text-muted-foreground">+234 (0) 800 000 0000</p>
-                  <p className="text-xs text-muted-foreground mt-1">Mon-Fri from 8am to 5pm</p>
+                  <h3 className="font-black text-textPrimary uppercase tracking-widest text-xs mb-1">Call Us</h3>
+                  <p className="text-sm text-textSecondary font-bold">+234 8145455720</p>
+                  <p className="text-[10px] text-primary font-black uppercase tracking-widest mt-1">Click to call</p>
                 </div>
-              </div>
+              </a>
 
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <MapPin className="h-5 w-5 text-primary" />
+              <div className="flex items-start gap-4 p-4 rounded-2xl border border-black/5 bg-surface shadow-sm">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <MapPin className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Office</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Student Union Building,<br />
+                  <h3 className="font-black text-textPrimary uppercase tracking-widest text-xs mb-1">Office Address</h3>
+                  <p className="text-sm text-textSecondary font-bold leading-relaxed">
+                    Block K Male Hostel,<br />
                     Federal University of Kashere,<br />
                     Gombe State, Nigeria.
                   </p>

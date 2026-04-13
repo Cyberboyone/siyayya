@@ -1,6 +1,8 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { LoadingScreen } from "./LoadingScreen";
+
 
 /**
  * Wraps routes that require authentication.
@@ -31,13 +33,18 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
 
-  if (isLoading) return null; // Wait for auth to resolve
+  if (isLoading) return <LoadingScreen />;
 
   if (!isAuthenticated) {
     return <Navigate to={`/signin?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
-  if (user?.role !== "admin") {
+  // Step 2: HARD FIX - Strict Admin Detection
+  const isAdmin = user?.email?.toLowerCase() === "muhammadmusab372@gmail.com";
+  console.log("[AdminRoute] Step 2 Detection - Is Admin:", isAdmin);
+
+  if (!isAdmin) {
+    console.warn(`[AdminGuard] Unauthorized access attempt by ${user?.email}`);
     return <Navigate to="/" replace />;
   }
 

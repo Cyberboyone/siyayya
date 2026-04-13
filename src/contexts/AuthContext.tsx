@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { 
   onAuthStateChanged, 
   signOut as firebaseSignOut,
@@ -30,6 +31,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const ADMIN_EMAIL = "muhammadmusab372@gmail.com";
+
+  // Step 6: Stability check
+  useEffect(() => {
+    if (!isLoading) {
+      console.log("------------------------------------------");
+      console.log("STABLE AUTH STATE:");
+      console.log("  USER:", user?.email);
+      console.log("  ROLE:", user?.role);
+      console.log("  IS ADMIN:", user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+      console.log("------------------------------------------");
+    }
+  }, [user, isLoading]);
+
   useEffect(() => {
     if (isFirebaseDisabled) {
       console.log("[Auth] Firebase is disabled. Proceeding as guest.");
@@ -38,26 +53,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      console.log("------------------------------------------");
+      console.log("AUTH CHANGE DETECTED");
+      console.log("AUTH USER:", firebaseUser);
+      console.log("EMAIL:", firebaseUser?.email);
+      
       if (firebaseUser) {
         try {
           // Fetch custom user data from Firestore
           const docRef = doc(db, "users", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
           
+          let fetchedUser: User;
+
           if (docSnap.exists()) {
-            const fetchedUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
-            setUser(fetchedUser);
+            fetchedUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
           } else {
-            console.warn("User authenticated but no Firestore document found.");
-            setUser({
+            console.warn("User authenticated but no Firestore document found. Using fallback.");
+            fetchedUser = {
               id: firebaseUser.uid,
               name: firebaseUser.displayName || "Unknown User",
               email: firebaseUser.email || "",
               phone: firebaseUser.phoneNumber || "",
               rating: 0,
               reviewCount: 0
-            });
+            } as User;
           }
+
+          // Step 2: HARD FIX - Strict Admin Detection
+          const isAdmin = fetchedUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+          console.log("Step 2 Check - Is Admin:", isAdmin);
+          
+          if (isAdmin) {
+            fetchedUser.role = "admin";
+          }
+          
+          setUser(fetchedUser);
         } catch (error) {
           console.error("Error fetching user data from Firestore:", error);
         }
@@ -65,6 +96,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
       }
       setIsLoading(false);
+      console.log("AUTH INITIALIZATION COMPLETE");
+      console.log("------------------------------------------");
     });
 
     return () => unsubscribe();
@@ -100,6 +133,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const { isNewUser, role } = await response.json();
       console.log(`[Auth] Backend sync successful. New User: ${isNewUser}, Role: ${role}`);
+
+      // Sync role locally for immediate UI update
+      if (result.user.email === "muhammadmusab372@gmail.com") {
+        setUser(prev => prev ? { ...prev, role: "admin" } : null);
+      }
 
       return { uid: result.user.uid, isNewUser, role };
     } catch (error: any) {
@@ -198,12 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, logout, updateProfile, loginWithGoogle, checkBusinessNameUniqueness, deleteAccount }}>
       {isLoading ? (
-        <div className="min-h-screen flex items-center justify-center bg-surface">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin shadow-lg shadow-primary/20"></div>
-            <p className="text-sm font-black text-textPrimary uppercase tracking-widest animate-pulse">Initializing Siyayya...</p>
-          </div>
-        </div>
+        <LoadingScreen />
       ) : (
         children
       )}

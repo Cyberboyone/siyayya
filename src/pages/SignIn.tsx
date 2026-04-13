@@ -16,18 +16,21 @@ const SignIn = () => {
     // If user is authenticated, handle redirection based on their status
     if (user && !authLoading) {
       const urlParams = new URLSearchParams(location.search);
+      const from = urlParams.get('from') || "/";
       const isNewUserParam = urlParams.get('new') === 'true';
       const isNewUser = isNewUserParam || (user.businessName === "" || !user.businessName);
 
       if (isNewUser) {
         toast.info("Welcome! Please set your Business Name to continue.");
-        navigate("/complete-signup", { replace: true });
-      } else if (user.role === "admin") {
-        toast.success(`Welcome back, Admin ${user.name}!`);
+        navigate(`/complete-signup?from=${encodeURIComponent(from)}`, { replace: true });
+      } else if (user.email?.toLowerCase() === "muhammadmusab372@gmail.com") {
+        // Step 4: HARD FIX - Immediate Admin Redirect
+        console.log("[SignIn] Admin detected, forcing redirect to /admin");
+        toast.success(`Welcome back, Admin ${user.name || "User"}!`);
         navigate("/admin", { replace: true });
       } else {
         toast.success("Signed in successfully!");
-        navigate("/", { replace: true });
+        navigate(from, { replace: true });
       }
     }
   }, [user, authLoading, navigate, location.search]);

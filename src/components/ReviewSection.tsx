@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Star, Loader2, Send } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from "firebase/firestore";
+import { Star, Loader2, Send, Edit2, Trash2, X, Check } from "lucide-react";
+import { db, auth } from "@/lib/firebase";
+import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, deleteDoc, doc as firestoreDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -34,6 +34,13 @@ export function ReviewSection({ listingId, ownerId }: ReviewSectionProps) {
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Edit State
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState(0);
+  const [editHoverRating, setEditHoverRating] = useState(0);
+  const [editComment, setEditComment] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -100,6 +107,61 @@ export function ReviewSection({ listingId, ownerId }: ReviewSectionProps) {
       toast.error("Failed to submit review.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = async (reviewId: string) => {
+    if (!auth.currentUser) return;
+    setIsUpdating(true);
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch(`/api/reviews?id=${reviewId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ rating: editRating, comment: editComment.trim() }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update review");
+
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, rating: editRating, comment: editComment.trim() } : r));
+      setEditingReviewId(null);
+      toast.success("Review updated successfully!");
+    } catch (error) {
+      console.error("Error updating review:", error);
+      toast.error("Failed to update review.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDelete = async (reviewId: string) => {
+    if (!auth.currentUser) return;
+    if (!window.confirm("Are you sure you want to delete this review?")) return;
+
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch(`/api/reviews?id=${reviewId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Backend API not found. Please ensure you are running with 'npx vercel dev' to enable API features locally.");
+        }
+        throw new Error("Failed to delete review");
+      }
+
+      setReviews(prev => prev.filter(r => r.id !== reviewId));
+      toast.success("Review deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      toast.error("Failed to delete review.");
     }
   };
 
@@ -184,7 +246,7 @@ export function ReviewSection({ listingId, ownerId }: ReviewSectionProps) {
       ) : reviews.length > 0 ? (
         <div className="space-y-4">
           {reviews.map((r) => (
-            <div key={r.id} className="p-6 rounded-[2rem] border border-black/5 bg-surface hover:bg-muted/30 transition-all duration-300 shadow-sm">
+            <div key={r.id} className="p-6 rounded-[2rem] border border-black/5 bg-surface hover:bg-muted/30 transition-all duration-300 shadow-sm relative group">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black border border-primary/20">
@@ -195,16 +257,93 @@ export function ReviewSection({ listingId, ownerId }: ReviewSectionProps) {
                     <p className="text-[10px] text-textMuted font-bold uppercase tracking-widest mt-0.5">Verified User</p>
                   </div>
                 </div>
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`h-4 w-4 ${star <= r.rating ? "fill-warning text-warning" : "text-textMuted/20"}`}
-                    />
-                  ))}
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${i < r.rating ? "fill-warning text-warning" : "text-textMuted/20"}`}
+                      />
+                    ))}
+                  </div>
+                  
+                  {user?.id === r.userId && editingReviewId !== r.id && (
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => {
+                          setEditingReviewId(r.id);
+                          setEditRating(r.rating);
+                          setEditComment(r.comment);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-muted text-textSecondary transition-colors"
+                        title="Edit Review"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(r.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition-colors"
+                        title="Delete Review"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-              <p className="text-sm text-textSecondary font-medium leading-relaxed italic border-l-2 border-primary/20 pl-4 py-1">{r.comment}</p>
+
+              {editingReviewId === r.id ? (
+                <div className="mt-2 animate-in fade-in slide-in-from-top-1">
+                  <div className="flex gap-2 mb-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onMouseEnter={() => setEditHoverRating(star)}
+                        onMouseLeave={() => setEditHoverRating(0)}
+                        onClick={() => setEditRating(star)}
+                        className="p-0.5"
+                      >
+                        <Star
+                          className={`h-5 w-5 transition-colors ${
+                            star <= (editHoverRating || editRating)
+                              ? "fill-warning text-warning"
+                              : "text-textMuted/30"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={editComment}
+                    onChange={(e) => setEditComment(e.target.value)}
+                    className="w-full rounded-xl border border-black/5 bg-background p-3 text-sm font-medium text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none min-h-[100px] mb-3"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setEditingReviewId(null)}
+                      disabled={isUpdating}
+                    >
+                      <X className="h-3.5 w-3.5 mr-1" /> Cancel
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleEdit(r.id)}
+                      disabled={isUpdating}
+                    >
+                      {isUpdating ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <><Check className="h-3.5 w-3.5 mr-1" /> Update</>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-textSecondary font-medium leading-relaxed italic border-l-2 border-primary/20 pl-4 py-1">{r.comment}</p>
+              )}
             </div>
           ))}
         </div>

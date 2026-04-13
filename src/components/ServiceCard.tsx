@@ -39,12 +39,24 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
         </p>
 
         <div className="flex items-center justify-between pt-3 border-t border-black/5 mt-auto pr-10">
-          <div className="flex items-center gap-2">
-             <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary border border-primary/20 shrink-0">
-               {(service.ownerName || "U").charAt(0)}
-             </div>
-             <span className="text-[10px] font-bold text-textSecondary truncate max-w-[80px]">{service.ownerName || "User"}</span>
-             {service.ownerIsVerified && <VerifiedBadge />}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+               <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-black text-primary border border-primary/20 shrink-0">
+                 {(service.ownerName || "U").charAt(0)}
+               </div>
+               <span className="text-[10px] font-bold text-textSecondary truncate max-w-[80px]">{service.ownerName || "User"}</span>
+               {service.ownerIsVerified && <VerifiedBadge />}
+            </div>
+            {service.ownerRating > 0 && (
+              <div className="flex gap-0.5 mt-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`h-3 w-3 ${i < Math.round(service.ownerRating) ? "fill-warning text-warning" : "text-textMuted/20"}`} 
+                  />
+                ))}
+              </div>
+            )}
           </div>
           <div className="h-7 w-7 rounded-full bg-secondary/10 flex items-center justify-center text-secondary group-hover:bg-secondary/20 transition-all active:scale-95">
              <ArrowRight className="h-4 w-4" />

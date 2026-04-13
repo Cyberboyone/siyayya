@@ -289,10 +289,17 @@ const Dashboard = () => {
                       {user.isVerified && <VerifiedBadge />}
                     </div>
                     <p className="text-sm font-bold text-textSecondary mt-0.5">{user.department}</p>
-                    <div className="flex items-center justify-center sm:justify-start gap-2 mt-2 bg-background/50 w-fit sm:mx-0 mx-auto px-3 py-1 rounded-full border border-black/5">
-                      <Star className="h-4 w-4 fill-warning text-warning" />
-                      <span className="text-sm font-bold text-textPrimary">{user.rating}</span>
-                      <span className="text-xs text-textSecondary">({user.reviewCount || 0} reviews)</span>
+                    <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-2 bg-background/50 w-fit sm:mx-0 mx-auto px-3.5 py-1.5 rounded-full border border-black/5">
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star 
+                            key={i} 
+                            className={`h-3.5 w-3.5 ${i < Math.round(user.rating) ? "fill-warning text-warning" : "text-textMuted/20"}`} 
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm font-black text-textPrimary tabular-nums ml-1">{user.rating}</span>
+                      <span className="text-[10px] text-textSecondary font-bold uppercase tracking-widest ml-1 opacity-60">({user.reviewCount || 0})</span>
                     </div>
                   </div>
                   <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
@@ -494,8 +501,11 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="flex gap-0.5">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <Star key={s} className={`h-3.5 w-3.5 ${s <= r.rating ? "fill-warning text-warning" : "text-black/10"}`} />
+                          {Array.from({ length: 5 }).map((_, s) => (
+                            <Star 
+                              key={s} 
+                              className={`h-3.5 w-3.5 ${s < r.rating ? "fill-warning text-warning" : "text-textMuted/20"}`} 
+                            />
                           ))}
                         </div>
                       </div>
@@ -580,7 +590,12 @@ const Dashboard = () => {
                     ))}
                     <div className="space-y-1.5">
                       <label className="text-xs font-black uppercase tracking-widest text-textPrimary ml-1">Email Address <span className="text-[10px] text-textSecondary font-bold">(read-only)</span></label>
-                      <Input type="email" value={profileData.email} disabled className="bg-muted opacity-70 cursor-not-allowed border-black/5 text-textPrimary font-bold" />
+                      <Input 
+                        type="email" 
+                        value={profileData.email || "No email available"} 
+                        disabled 
+                        className="bg-muted opacity-80 cursor-not-allowed border-black/5 text-textPrimary font-bold italic" 
+                      />
                     </div>
                   </div>
                 </div>

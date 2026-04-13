@@ -63,7 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userDoc = await userRef.get();
 
     let isNewUser = false;
-    const assignedRole = email === "muhammadmusab372@gmail.com" ? "admin" : "user";
+    const assignedRole = email.toLowerCase() === "muhammadmusab372@gmail.com" ? "admin" : "user";
+    console.log(`[Auth Verification] Step 5 Enforcement - Email: ${email}, Role: ${assignedRole}`);
 
     if (!userDoc.exists) {
       isNewUser = true;
@@ -73,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         name: name || 'Unknown User',
         email: email,
         avatar: picture || '',
-        businessName: '', // Mandatory field to be filled later
+        businessName: '',
         role: assignedRole,
         status: 'active',
         rating: 0,
@@ -86,6 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Update existing user info and enforce role
       await userRef.update({
         name: name || userDoc.data()?.name,
+        email: email || userDoc.data()?.email, // Ensure email is never lost
         avatar: picture || userDoc.data()?.avatar,
         role: assignedRole
       });
