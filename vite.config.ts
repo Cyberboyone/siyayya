@@ -12,6 +12,19 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000", // Placeholder for local backend if running
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, "/api"),
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('API Proxy Error (Normal in local dev if no backend):', err.message);
+            // Optionally handle 404s cleanly here if needed
+          });
+        },
+      },
+    },
   },
   plugins: [react()],
   resolve: {

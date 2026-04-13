@@ -24,6 +24,14 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
   // 🔴 6. Normalize & Validate Admin identity
   const isAdmin = user.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
+  // 🔴 LOGGING FOR DEBUGGING
+  console.log("[AdminGuard Check]", {
+    email: user.email,
+    role: user.role,
+    isAdmin,
+    isLoading: loading
+  });
+
   // 🔴 6. If not admin, redirect to home
   if (!isAdmin) {
     console.warn(`[AdminGuard] Unauthorized access attempt by ${user.email}`);
