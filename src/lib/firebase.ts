@@ -22,13 +22,9 @@ let isFirebaseDisabled = false;
 try {
   const isProduction = import.meta.env.PROD;
   console.log(`[Firebase Init] Environment: ${isProduction ? 'Production' : 'Development'}`);
-  console.log("ENV CHECK:", { 
-    hasApiKey: !!import.meta.env.VITE_FIREBASE_API_KEY, 
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID 
-  });
+  console.log("ENV CHECK:", import.meta.env);
   
-  if (firebaseConfig.apiKey && firebaseConfig.apiKey.length > 5) {
+  if (firebaseConfig.apiKey) {
     app = initializeApp(firebaseConfig);
     console.log("[Firebase Init] Success: Firebase client SDK initialized.");
   } else {

@@ -67,9 +67,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           let fetchedUser: User;
 
           if (docSnap.exists()) {
-            fetchedUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
-          } else {
-            console.warn("User authenticated but no Firestore document found. Using fallback.");
+            const fetchedUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
+            setUser(fetchedUser);
+            
+            // Step 6: Step 6 Verification Logging
+            const isAdmin = fetchedUser.email?.toLowerCase() === "muhammadmusab372@gmail.com";
+            console.log("--- AUTH VERIFICATION ---");
+            console.log("AUTH USER:", firebaseUser.uid);
+            console.log("EMAIL:", fetchedUser.email);
+            console.log("IS ADMIN:", isAdmin);
+            console.log("ROLE IN FIRESTORE:", fetchedUser.role);
+            console.log("--------------------------");
+          } else {console.warn("User authenticated but no Firestore document found. Using fallback.");
             fetchedUser = {
               id: firebaseUser.uid,
               name: firebaseUser.displayName || "Unknown User",
