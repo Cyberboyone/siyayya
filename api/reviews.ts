@@ -70,10 +70,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!reviewDoc.exists) return res.status(404).json({ message: 'Review not found.' });
 
       const data = reviewDoc.data();
-      // Allow the review owner OR an admin to delete
-      const isAdmin = decodedToken.email === "muhammadmusab372@gmail.com"; 
       
-      if (data?.userId !== uid && !isAdmin) {
+      // Allow the review owner OR an admin to delete
+      const adminEmails = (process.env.ADMIN_EMAILS || "")
+        .split(",")
+        .map(e => e.trim().toLowerCase())
+        .filter(Boolean);
+      const isUserAdmin = adminEmails.includes(decodedToken.email?.toLowerCase() || "");
+      
+      if (data?.userId !== uid && !isUserAdmin) {
         return res.status(403).json({ message: 'Forbidden. You can only delete your own reviews.' });
       }
 

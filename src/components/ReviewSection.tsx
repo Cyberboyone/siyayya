@@ -6,6 +6,7 @@ import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, deleteDoc, doc as firestoreDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { isAdmin } from "@/lib/config";
 
 interface Review {
   id: string;
@@ -267,26 +268,30 @@ export function ReviewSection({ listingId, ownerId }: ReviewSectionProps) {
                     ))}
                   </div>
                   
-                  {user?.id === r.userId && editingReviewId !== r.id && (
+                  {editingReviewId !== r.id && (user?.id === r.userId || isAdmin(user?.email)) && (
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => {
-                          setEditingReviewId(r.id);
-                          setEditRating(r.rating);
-                          setEditComment(r.comment);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-muted text-textSecondary transition-colors"
-                        title="Edit Review"
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(r.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition-colors"
-                        title="Delete Review"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {user?.id === r.userId && (
+                        <button 
+                          onClick={() => {
+                            setEditingReviewId(r.id);
+                            setEditRating(r.rating);
+                            setEditComment(r.comment);
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-muted text-textSecondary transition-colors"
+                          title="Edit Review"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      {(user?.id === r.userId || isAdmin(user?.email)) && (
+                        <button 
+                          onClick={() => handleDelete(r.id)}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition-colors"
+                          title="Delete Review"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
