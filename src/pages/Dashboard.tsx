@@ -77,11 +77,6 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/signin");
-      return;
-    }
-
     const fetchDashboardData = async () => {
       if (!user) return;
       try {
@@ -123,7 +118,7 @@ const Dashboard = () => {
     };
     
     fetchDashboardData();
-  }, [isAuthenticated, navigate, user, savedIds]);
+  }, [user, savedIds]);
   
   // Keep profile form in sync if user loads after mount
   useEffect(() => {

@@ -12,28 +12,7 @@ const SignIn = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    // If user is authenticated, handle redirection based on their status
-    if (user && !authLoading) {
-      const urlParams = new URLSearchParams(location.search);
-      const from = urlParams.get('from') || "/";
-      const isNewUserParam = urlParams.get('new') === 'true';
-      const isNewUser = isNewUserParam || (user.businessName === "" || !user.businessName);
-
-      if (isNewUser) {
-        toast.info("Welcome! Please set your Business Name to continue.");
-        navigate(`/complete-signup?from=${encodeURIComponent(from)}`, { replace: true });
-      } else if (user.email?.toLowerCase() === "muhammadmusab372@gmail.com") {
-        // Step 4: HARD FIX - Immediate Admin Redirect
-        console.log("[SignIn] Admin detected, forcing redirect to /admin");
-        toast.success(`Welcome back, Admin ${user.name || "User"}!`);
-        navigate("/admin", { replace: true });
-      } else {
-        toast.success("Signed in successfully!");
-        navigate(from, { replace: true });
-      }
-    }
-  }, [user, authLoading, navigate, location.search]);
+  // 🔴 Manual redirect removed. Handled by GuestRoute in App.tsx.
 
   const handleGoogleSignIn = async () => {
     try {

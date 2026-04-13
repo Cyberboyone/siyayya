@@ -1,50 +1,41 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import { LoadingScreen } from "./LoadingScreen";
 
+// 🔴 5. NORMALIZE EMAIL COMPARISON
+const ADMIN_EMAIL = "muhammadmusab372@gmail.com";
 
 /**
- * Wraps routes that require authentication.
- * Redirects unauthenticated users to /signin.
- */
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user } = useAuth();
-  const location = useLocation();
-
-  if (!isAuthenticated) {
-    return <Navigate to={`/signin?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
-  }
-
-  // Strict check for business name completion
-  const isCompletingSignup = location.pathname === "/complete-signup";
-  if (user && !isCompletingSignup && (!user.businessName || user.businessName === "" || user.businessName === "Unknown User")) {
-    return <Navigate to={`/complete-signup?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
-  }
-
-  return <>{children}</>;
-}
-
-/**
+ * 🔴 2. IMPLEMENT PROPER ADMIN ROUTE GUARD
  * Wraps admin-only routes.
- * Redirects non-admins to / with an error toast.
+ * Redirects non-admins to / with state-aware logic.
  */
 export function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user, isLoading } = useAuth();
-  const location = useLocation();
+  const { user, isLoading } = useAuth();
 
-  if (isLoading) return <LoadingScreen />;
-
-  if (!isAuthenticated) {
-    return <Navigate to={`/signin?from=${encodeURIComponent(location.pathname)}`} replace />;
+  // 🔴 Waits for auth to finish loading
+  if (isLoading) {
+    return <LoadingScreen />;
   }
 
-  // Step 2: HARD FIX - Strict Admin Detection
-  const isAdmin = user?.email?.toLowerCase() === "muhammadmusab372@gmail.com";
-  console.log("[AdminRoute] Step 2 Detection - Is Admin:", isAdmin);
+  // 🔴 Validates user existence
+  if (!user) {
+    return <Navigate to="/signin" replace />;
+  }
+
+  // 🔴 5. NORMALIZE EMAIL COMPARISON
+  // Confirms admin identity
+  const isAdmin = user.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+  // 🔴 6. ADD DEBUG LOGGING (TEMPORARY)
+  console.log("[AdminRoute Check]", {
+    email: user.email,
+    isAdmin,
+    isLoading
+  });
 
   if (!isAdmin) {
-    console.warn(`[AdminGuard] Unauthorized access attempt by ${user?.email}`);
+    console.warn(`[AdminRoute] Unauthorized access attempt by ${user.email}`);
     return <Navigate to="/" replace />;
   }
 
@@ -52,30 +43,50 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Wraps auth pages (signin/signup).
- * Redirects already-authenticated users based strictly on their role.
+ * Wraps routes that require general authentication.
+ * Redirects unauthenticated users to /signin.
  */
-export function GuestRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user, isLoading } = useAuth();
+export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
 
-  if (isLoading) return null; // Wait for auth to resolve
+  // 🔴 4. FIX PREMATURE REDIRECTS: Wait for auth to finish loading
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
-  if (isAuthenticated) {
-    const role = user?.role || "user";
-    let redirectPath = "/";
+  if (!isAuthenticated || !user) {
+    return <Navigate to={`/signin?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  // Strict check for business name completion
+  const isCompletingSignup = location.pathname === "/complete-signup";
+  const needsProfileSetup = !user.businessName || user.businessName === "" || user.businessName === "Unknown User";
+
+  if (!isCompletingSignup && needsProfileSetup) {
+    return <Navigate to={`/complete-signup?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+/**
+ * Wraps auth pages (signin/signup).
+ * Redirects already-authenticated users to their appropriate dashboard.
+ */
+export function GuestRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading, isAuthenticated } = useAuth();
+
+  // 🔴 Wait for auth to resolve
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (isAuthenticated && user) {
+    const isAdmin = user.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const redirectPath = isAdmin ? "/admin" : "/dashboard";
     
-    if (role === "admin") {
-      redirectPath = "/admin";
-    }
-
-    console.log(`[AuthRedirect] User: ${user?.email}, Role: ${role}, Redirecting to: ${redirectPath}`);
-
-    // Prevent infinite redirect loops if redirectPath is current location somehow (should not happen for Guest routes but safe)
-    if (redirectPath === location.pathname) {
-      return <Navigate to="/" replace />;
-    }
-
+    console.log(`[GuestRoute] Authenticated user ${user.email} redirecting to ${redirectPath}`);
     return <Navigate to={redirectPath} replace />;
   }
 
