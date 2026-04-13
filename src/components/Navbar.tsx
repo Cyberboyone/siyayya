@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { SearchBar } from "./SearchBar";
 import { Logo } from "./Logo";
+import { isAdmin } from "@/lib/config";
 import {
   DropdownMenu,
   DropdownMenuContent,
