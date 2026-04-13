@@ -8,16 +8,6 @@ if (!admin.apps.length) {
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-    console.log("[Auth Admin] Diagnostics - Project ID:", !!projectId);
-    console.log("[Auth Admin] Diagnostics - Client Email:", !!clientEmail);
-    console.log("[Auth Admin] Diagnostics - Private Key Present:", !!privateKey);
-
-    if (!privateKey || privateKey.length < 100) {
-      console.error('[Auth Admin] FIREBASE_PRIVATE_KEY is missing or too short. Check Vercel environment variables.');
-    } else {
-      console.log("[Auth Admin] Private Key found, length:", privateKey.length);
-    }
-
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId,
@@ -57,21 +47,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`[Auth Verification] token verified for: ${email}`);
 
-    // 2. Create or update user in Firestore
+    // 2. Create or update user in Firestore (SIMPLIFIED)
+    // We no longer manage roles here. Roles are handled by the frontend whitelist.
     const db = admin.firestore();
     const userRef = db.collection('users').doc(uid);
     const userDoc = await userRef.get();
 
     let isNewUser = false;
 
-    // Read admin emails from environment variable
-    const adminEmails = (process.env.ADMIN_EMAILS || "")
-      .split(",")
-      .map(e => e.trim().toLowerCase())
-      .filter(Boolean);
-    const assignedRole = adminEmails.includes(email.toLowerCase()) ? "admin" : (userDoc.data()?.role || "user");
-    console.log(`[Auth Verification] Handshake - Email: ${email}, Role: ${assignedRole}`);
- 
     if (!userDoc.exists) {
       isNewUser = true;
       
@@ -81,7 +64,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email: email,
         avatar: picture || '',
         businessName: '',
-        role: assignedRole,
         status: 'active',
         rating: 0,
         reviewCount: 0,
@@ -90,29 +72,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
       console.log(`[Auth Verification] New user created: ${email}`);
     } else {
-      // Update existing user info and enforce role from config
+      // Update basic profile info only
       await userRef.update({
         name: name || userDoc.data()?.name,
         email: email || userDoc.data()?.email, 
         avatar: picture || userDoc.data()?.avatar,
-        role: assignedRole,
       });
       
       // Check if businessName is still missing
       if (!userDoc.data()?.businessName) {
         isNewUser = true;
       }
-      console.log(`[Auth Verification] Existing user session refreshed: ${email}`);
+      console.log(`[Auth Verification] Profile updated: ${email}`);
     }
- 
-    // 3. Claim Guest Requests (Reuse logic from callback)
+
+    // 3. Claim Guest Requests
     try {
       const requestsRef = db.collection('requests');
       const guestRequestsQuery = await requestsRef
         .where('isGuest', '==', true)
         .where('guestEmail', '==', email)
         .get();
- 
+
       if (!guestRequestsQuery.empty) {
         const batch = db.batch();
         guestRequestsQuery.docs.forEach((doc) => {
@@ -124,18 +105,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         });
         await batch.commit();
-        console.log(`Successfully claimed ${guestRequestsQuery.size} guest requests for ${email}`);
       }
     } catch (claimError) {
       console.error('Error claiming guest requests:', claimError);
     }
- 
-    // 4. Return success response
+
+    // 4. Return success response (Simplified)
     return res.status(200).json({
       uid,
       email,
-      isNewUser,
-      role: assignedRole
+      isNewUser
     });
 
   } catch (error: any) {

@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { isAdmin } from "@/lib/config";
 
 /**
- * 🔴 2. ROLE-BASED REDIRECT HANDLER
- * This component is used EXCLUSIVELY on the login page.
- * It routes the user to the correct dashboard based on their database-assigned role.
+ * 🔴 2. WHITELIST REDIRECT HANDLER
+ * Ensures that admins are instantly routed to the dashboard upon login.
  */
 const AuthRedirect = () => {
   const { user, isLoading } = useAuth();
@@ -16,9 +16,9 @@ const AuthRedirect = () => {
 
     if (!user) return;
 
-    // 🔴 3. Proper Redirect Strategy
-    if (user.role === "admin") {
-      console.log("[AuthRedirect] Admin detected via database role, redirecting to /admin");
+    // 🔴 Step 2: Immediate Whitelist Check
+    if (isAdmin(user.email)) {
+      console.log("[AuthRedirect] Admin whitelist match detected, redirecting to /admin");
       navigate("/admin", { replace: true });
     } else {
       console.log("[AuthRedirect] Regular user detected, redirecting Home");
