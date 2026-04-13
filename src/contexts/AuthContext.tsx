@@ -29,75 +29,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🔴 HARDCODE ADMIN EMAIL FOR ABSOLUTE ENFORCEMENT
-  const ADMIN_EMAIL = "muhammadmusab372@gmail.com";
+  // 🔴 Professional implementation: No hardcoded admin email here.
+  // Roles are fetched exclusively from the database (Firestore).
 
   useEffect(() => {
-    // 🔴 DEV BYPASS: Allows local testing of Admin Panel without real Sign-In
+    // DEV BYPASS: Kept for development testing to ensure admin panel workability
     const shouldImpersonate = localStorage.getItem("dev_impersonate_admin") === "true";
     if (shouldImpersonate) {
-      console.warn("[Auth] DEV MODE: Impersonating Admin muhammadmusab372@gmail.com");
+      console.warn("[Auth] DEV MODE: Impersonating Admin");
       setUser({
         id: "dev-admin-uid",
         name: "Dev Admin",
-        email: "muhammadmusab372@gmail.com",
+        email: "admin@siyayya.com",
         role: "admin",
-        isVerified: true,
-        rating: 5,
-        reviewCount: 100,
-        phone: "0000000000"
+        isVerified: true
       } as User);
       setIsLoading(false);
       return;
     }
 
     if (isFirebaseDisabled) {
-      console.log("[Auth] Firebase is disabled. Proceeding as guest.");
       setIsLoading(false);
       return;
     }
 
+    // 🔴 1. CENTRALIZED AUTH LISTENER (SINGLE SOURCE OF TRUTH)
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       try {
         if (firebaseUser) {
-          console.log("[Auth State Change] User personalizing:", firebaseUser.email);
-          
           const docRef = doc(db, "users", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
           
           let userData: User;
           
           if (docSnap.exists()) {
+            // Trust the database role
             userData = { id: firebaseUser.uid, ...docSnap.data() } as User;
           } else {
-            console.log("[Auth State Change] No Firestore doc; using fallback profile.");
+            console.log("[Auth] New session detected, initializing local profile.");
             userData = {
               id: firebaseUser.uid,
               name: firebaseUser.displayName || "Unknown User",
               email: firebaseUser.email || "",
               phone: firebaseUser.phoneNumber || "",
               rating: 0,
-              reviewCount: 0
+              reviewCount: 0,
+              role: "user" // Default role
             };
           }
 
-          // 🔴 1. DIRECT ADMIN ENFORCEMENT
-          const canonicalEmail = userData.email?.trim().toLowerCase();
-          if (canonicalEmail === ADMIN_EMAIL.toLowerCase()) {
-            console.log("[Auth State Change] Admin Identity Verified by Email.");
-            userData.role = "admin";
-          }
-
           setUser(userData);
-          
-          console.log("--- AUTH STATE UPDATED ---");
-          console.log("USER:", firebaseUser.uid);
-          console.log("EMAIL:", canonicalEmail);
-          console.log("ROLE:", userData.role);
-          console.log("----------------------------");
+          console.log("[Auth State] User authenticated:", { uid: firebaseUser.uid, role: userData.role });
         } else {
           setUser(null);
-          console.log("[Auth State Change] No active session.");
+          console.log("[Auth State] No active session.");
         }
       } catch (error) {
         console.error("[Auth Context Error]:", error);
@@ -110,24 +95,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  // 🔴 2. FAIL-SAFE LOGIN WITH "SOFT" BACKEND SYNC
+  // 🔴 3. FIX LOGIN FLOW AND REDIRECTS
   const loginWithGoogle = async (): Promise<{ uid: string, isNewUser: boolean, role: string }> => {
     try {
       setIsLoading(true);
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       
+      // Step A: Firebase Auth Popup
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
       const idToken = await firebaseUser.getIdToken();
       
-      console.log("[Auth] Signed in via Firebase. Attempting backend sync...");
+      console.log("[Auth] Firebase Sign-In successful. Starting backend synchronization...");
 
+      // Step B: Backend Synchronization (Vercel Serverless Function)
+      // This step ensures the user is created/updated in Firestore and detects their role.
       let isNewUser = false;
       let role = "user";
 
       try {
-        // Attempt backend sync, but don't let it crash the frontend if it fails
         const response = await fetch('/api/auth/google', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -138,39 +125,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const syncData = await response.json();
           isNewUser = syncData.isNewUser;
           role = syncData.role;
-          console.log("[Auth] Backend sync successful.");
+          console.log("[Auth] Backend handshake complete:", { isNewUser, role });
         } else {
-          const errorText = await response.text();
-          console.warn("[Auth] Backend sync failed with status:", response.status, errorText);
-          // Fallback logic enabled
+          console.warn("[Auth] Backend handshake failed. Retrying with local Firestore fetch...");
+          // Fallback: Try to fetch the role directly from Firestore if the API is down/misconfigured
+          const docRef = doc(db, "users", firebaseUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+             role = docSnap.data().role || "user";
+          }
         }
       } catch (syncError) {
-        console.warn("[Auth] Backend sync unavailable (Local Dev / Offline?):", syncError);
-        // Fallback logic enabled
+        console.error("[Auth] Sync error:", syncError);
+        // Fallback: Direct Firestore fetch for local/offline support
+        const docRef = doc(db, "users", firebaseUser.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+           role = docSnap.data().role || "user";
+        }
       }
 
-      // 🔴 1. DIRECT ADMIN ENFORCEMENT (Fallback + Verification)
-      if (firebaseUser.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-        role = "admin";
-        console.log("[Auth] Admin Role Enforced via Frontend Logic.");
-      }
-
-      toast.success(`Welcome, ${firebaseUser.displayName || 'User'}!`);
+      toast.success(`Welcome back, ${firebaseUser.displayName || 'User'}!`);
+      
+      // We return the role so the caller (Redirect Handler) can navigate accurately
       return { uid: firebaseUser.uid, isNewUser, role };
     } catch (error: any) {
-      console.error("[Auth Error] Google Login failed:", error);
-      
-      // Parse common Firebase errors into user-friendly messages
-      let errorMessage = "Authentication failed. Please try again.";
-      if (error.code === 'auth/popup-blocked') {
-        errorMessage = "Sign-in popup was blocked. Please allow popups for this site.";
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        errorMessage = "Sign-in was cancelled.";
-      } else if (error.code === 'auth/unauthorized-domain') {
-        errorMessage = "This domain is not authorized for Google Sign-In. Check Firebase settings.";
-      }
-      
-      toast.error(errorMessage);
+      console.error("[Auth Error] Login flow failed:", error);
+      let msg = "Google sign-in failed.";
+      if (error.code === 'auth/popup-closed-by-user') msg = "Sign-in was cancelled.";
+      if (error.code === 'auth/popup-blocked') msg = "Popup blocked. Please check browser settings.";
+      toast.error(msg);
       throw error;
     } finally {
       setIsLoading(false);

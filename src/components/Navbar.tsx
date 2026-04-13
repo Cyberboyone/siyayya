@@ -148,7 +148,7 @@ export function Navbar() {
                       <FileText className="mr-3 h-4 w-4 text-primary" />
                       <span>My Requests</span>
                     </DropdownMenuItem>
-                    {user?.email?.toLowerCase() === "muhammadmusab372@gmail.com" && (
+                    {user?.role === "admin" && (
                       <DropdownMenuItem onClick={() => navigate("/admin")} className="cursor-pointer rounded-xl p-2.5 font-bold mb-1 focus:bg-purple-500/10 text-purple-600">
                         <Shield className="mr-3 h-4 w-4" />
                         <span>Admin Panel</span>
@@ -182,7 +182,7 @@ export function Navbar() {
             </Button>
           </div>
         </div>
-
+ 
         {mobileOpen && (
           <div className="lg:hidden border-t border-black/5 bg-surface px-4 pb-6 pt-3 animate-fade-in shadow-xl">
             <div className="grid grid-cols-1 gap-1">
@@ -201,7 +201,7 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              {user?.email?.toLowerCase() === "muhammadmusab372@gmail.com" && (
+              {user?.role === "admin" && (
                 <Link
                   to="/admin"
                   onClick={() => setMobileOpen(false)}

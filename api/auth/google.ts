@@ -63,9 +63,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userDoc = await userRef.get();
 
     let isNewUser = false;
-    const assignedRole = email.toLowerCase() === "muhammadmusab372@gmail.com" ? "admin" : "user";
-    console.log(`[Auth Verification] Step 5 Enforcement - Email: ${email}, Role: ${assignedRole}`);
-
+    const existingRole = userDoc.data()?.role || "user";
+    console.log(`[Auth Verification] Handshake - Email: ${email}, Role: ${existingRole}`);
+ 
     if (!userDoc.exists) {
       isNewUser = true;
       
@@ -75,30 +75,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email: email,
         avatar: picture || '',
         businessName: '',
-        role: assignedRole,
+        role: "user", // Default role for new users
         status: 'active',
         rating: 0,
         reviewCount: 0,
-        isVerified: true,
+        isVerified: false,
         joinedAt: new Date().toISOString(),
       });
       console.log(`[Auth Verification] New user created: ${email}`);
     } else {
-      // Update existing user info and enforce role
+      // Update existing user info but respect existing role
       await userRef.update({
         name: name || userDoc.data()?.name,
-        email: email || userDoc.data()?.email, // Ensure email is never lost
+        email: email || userDoc.data()?.email, 
         avatar: picture || userDoc.data()?.avatar,
-        role: assignedRole
       });
       
       // Check if businessName is still missing
       if (!userDoc.data()?.businessName) {
         isNewUser = true;
       }
-      console.log(`[Auth Verification] Existing user updated: ${email}`);
+      console.log(`[Auth Verification] Existing user session refreshed: ${email}`);
     }
-
+ 
     // 3. Claim Guest Requests (Reuse logic from callback)
     try {
       const requestsRef = db.collection('requests');
@@ -106,7 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .where('isGuest', '==', true)
         .where('guestEmail', '==', email)
         .get();
-
+ 
       if (!guestRequestsQuery.empty) {
         const batch = db.batch();
         guestRequestsQuery.docs.forEach((doc) => {
@@ -114,7 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ownerId: uid,
             ownerName: name || 'Unknown User',
             isGuest: false,
-            ownerIsVerified: true
+            ownerIsVerified: false
           });
         });
         await batch.commit();
@@ -123,13 +122,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (claimError) {
       console.error('Error claiming guest requests:', claimError);
     }
-
+ 
     // 4. Return success response
     return res.status(200).json({
       uid,
       email,
       isNewUser,
-      role: assignedRole
+      role: existingRole
     });
 
   } catch (error: any) {

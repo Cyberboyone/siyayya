@@ -2,11 +2,9 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingScreen } from "./LoadingScreen";
 
-const ADMIN_EMAIL = "muhammadmusab372@gmail.com";
-
 /**
- * 🔴 6. REBUILD ADMIN ROUTE (CLEAN)
- * It should ONLY guard, not redirect based on login flow.
+ * 🔴 4. PROFESSIONAL ADMIN ROUTE PROTECTION
+ * Only allows access if the user is authenticated AND has role 'admin' in Firestore.
  */
 export function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading: loading } = useAuth();
@@ -16,25 +14,17 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
     return <LoadingScreen />;
   }
 
-  // 🔴 6. If no user, redirect to sign-in
+  // If no user, redirect to sign-in and save this location
   if (!user) {
+    console.log("[AdminGuard] No user found, redirecting to signin.");
     return <Navigate to={`/signin?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
-  // 🔴 6. Normalize & Validate Admin identity
-  const isAdmin = user.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  // 🔴 Check for 'admin' role directly from the authenticated user object
+  const isAdmin = user.role === "admin";
 
-  // 🔴 LOGGING FOR DEBUGGING
-  console.log("[AdminGuard Check]", {
-    email: user.email,
-    role: user.role,
-    isAdmin,
-    isLoading: loading
-  });
-
-  // 🔴 6. If not admin, redirect to home
   if (!isAdmin) {
-    console.warn(`[AdminGuard] Unauthorized access attempt by ${user.email}`);
+    console.warn(`[AdminGuard] Unauthorized access by ${user.email}. Role: ${user.role}`);
     return <Navigate to="/" replace />;
   }
 
@@ -56,7 +46,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to={`/signin?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   }
 
-  // Strict check for profile completion
   const isCompletingSignup = location.pathname === "/complete-signup";
   const needsProfileSetup = !user.businessName || user.businessName === "" || user.businessName === "Unknown User";
 
