@@ -229,7 +229,9 @@ const Dashboard = () => {
       <div className="container py-8 max-w-6xl">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black text-textPrimary tracking-tighter capitalize">{user?.businessName || user?.name}'s Dashboard</h1>
+            <h1 className="text-3xl font-black text-textPrimary tracking-tighter capitalize">
+              {user?.businessName || user?.name || "Member"}'s Dashboard
+            </h1>
             <p className="text-sm font-bold text-textSecondary uppercase tracking-widest mt-1">Manage your campus trade profile</p>
           </div>
           <Link to="/dashboard/new">
@@ -275,13 +277,15 @@ const Dashboard = () => {
                     {(user as any)?.photoUrl ? (
                       <img src={(user as any).photoUrl} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
-                      (user?.businessName || user.name).charAt(0)
+                      (user?.businessName || user?.name || "U").charAt(0)
                     )}
                   </div>
                   <div className="text-center sm:text-left z-10">
                     <div className="flex items-center justify-center sm:justify-start gap-1">
-                      <h2 className="text-2xl font-black text-textPrimary">{user?.businessName || user.name}</h2>
-                      {user.isVerified && <VerifiedBadge />}
+                      <h2 className="text-2xl font-black text-textPrimary">
+                        {user?.businessName || user?.name || "Verified Member"}
+                      </h2>
+                      {user?.isVerified && <VerifiedBadge />}
                     </div>
                     <p className="text-sm font-bold text-textSecondary mt-0.5">{user.department}</p>
                     <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-2 bg-background/50 w-fit sm:mx-0 mx-auto px-3.5 py-1.5 rounded-full border border-black/5">

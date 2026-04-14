@@ -83,7 +83,7 @@ export function ReviewSection({ listingId, ownerId }: ReviewSectionProps) {
         listingId,
         ownerId,
         userId: user?.id,
-        userName: user?.name,
+        userName: user?.businessName || user?.name || "Member",
         rating,
         comment: comment.trim(),
         createdAt: serverTimestamp(),

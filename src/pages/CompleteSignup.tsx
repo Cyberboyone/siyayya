@@ -170,7 +170,7 @@ const CompleteSignup = () => {
            <p className="text-xs text-muted-foreground font-bold italic">
              Signed in as <span className="text-foreground">{user?.email}</span>
            </p>
-           <button onClick={() => updateProfile({ businessName: "", phone: "" })} className="mt-2 text-[10px] text-primary/50 hover:text-primary transition-colors uppercase font-black tracking-widest underline underline-offset-4">Sign out</button>
+           <button onClick={() => logout()} className="mt-2 text-[10px] text-primary/50 hover:text-primary transition-colors uppercase font-black tracking-widest underline underline-offset-4">Sign out</button>
         </div>
       </div>
     </div>

@@ -49,9 +49,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   const isCompletingSignup = location.pathname === "/complete-signup";
-  const needsProfileSetup = !user.businessName || user.businessName === "" || user.businessName === "Unknown User";
+  const hasBusinessName = user.businessName && user.businessName !== "" && user.businessName !== "Unknown User";
+  const needsProfileSetup = !hasBusinessName;
 
   if (!isCompletingSignup && needsProfileSetup) {
+    console.log(`[ProtectedRoute] User ${user.email} needs profile setup. Redirecting to /complete-signup`);
     return <Navigate to={`/complete-signup?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   }
 

@@ -123,7 +123,9 @@ export function Navbar() {
                   <DropdownMenuLabel className="font-normal p-2">
                     <div className="flex flex-col space-y-1">
                       <div className="flex items-center gap-1">
-                        <p className="text-sm font-black leading-none text-textPrimary">{user?.businessName || user?.name}</p>
+                        <p className="text-sm font-black leading-none text-textPrimary">
+                          {user?.businessName || user?.name || "Member"}
+                        </p>
                         {user?.isVerified && <VerifiedBadge />}
                       </div>
                       <p className="text-[10px] leading-none text-textMuted font-bold">

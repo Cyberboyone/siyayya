@@ -49,7 +49,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           let userData: User;
           
           if (docSnap.exists()) {
-            userData = { id: firebaseUser.uid, ...docSnap.data() } as User;
+            userData = { 
+              id: firebaseUser.uid, 
+              ...docSnap.data(),
+              businessName: docSnap.data().businessName || "" // Ensure businessName is at least an empty string
+            } as User;
           } else {
             console.log("[Auth] New user profile initialization required.");
             userData = {
@@ -57,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               name: firebaseUser.displayName || "Unknown User",
               email: firebaseUser.email || "",
               phone: firebaseUser.phoneNumber || "",
+              businessName: "", // Initialize as empty string
               rating: 0,
               reviewCount: 0
             };
@@ -127,12 +132,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const checkBusinessNameUniqueness = async (name: string): Promise<boolean> => {
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("businessName", "==", name));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) return true;
-    if (user && querySnapshot.docs.length === 1 && querySnapshot.docs[0].id === user.id) return true;
-    return false;
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("businessName", "==", name));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) return true;
+      
+      // If there are results, check if they belong to the current user
+      // We use auth.currentUser.uid to be absolutely sure we're comparing against the current session
+      const currentUid = auth.currentUser?.uid;
+      const isOwnedByCurrentUser = querySnapshot.docs.every(doc => doc.id === currentUid);
+      
+      return isOwnedByCurrentUser;
+    } catch (error) {
+      console.error("Uniqueness check failed:", error);
+      return false; // Error defaults to "taken" for safety
+    }
   };
 
   const deleteAccount = async () => {
