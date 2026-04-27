@@ -85,35 +85,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name: data.name || firebaseUser.displayName || "Unknown User",
             businessName: data.businessName || ""
           } as User;
+          if (updatedUser.isBanned) {
+            toast.error("Your account has been banned.");
+            await firebaseSignOut(auth);
+            setUser(null);
+            return { isNewUser: false };
+          }
           setUser(updatedUser);
         }
         return { isNewUser };
       } else {
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        if (isLocalhost && response.status === 404) {
-          console.warn("[Auth] API endpoint not found on localhost. This is normal if not running 'vercel dev'. Attempting to continue with direct Firestore fetch...");
+        // 🛡️ PRODUCTION FALLBACK: 
+        // If the API fails (cold start, server error, etc.), we fall back to direct Firestore fetch.
+        // This ensures the user isn't stuck at the login page if the serverless function is acting up.
+        if (response.status >= 400) {
+          console.warn(`[Auth] API sync issue (${response.status}). Falling back to direct Firestore fetch...`);
           
           const docRef = doc(db, "users", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
-          
           if (docSnap.exists()) {
             const data = docSnap.data();
-            setUser({ 
+            const userData = { 
               id: firebaseUser.uid, 
               ...data,
               email: data.email || firebaseUser.email || "",
               name: data.name || firebaseUser.displayName || "Unknown User",
               businessName: data.businessName || ""
-            } as User);
-            return { isNewUser: !data.businessName };
+            } as User;
+
+            if (userData.isBanned) {
+              toast.error("Your account has been banned.");
+              await firebaseSignOut(auth);
+              setUser(null);
+              return { isNewUser: false };
+            }
+
+            setUser(userData);
+            return { isNewUser: !userData.businessName };
+          } else {
+             // Truly a new user without a profile yet
+             return { isNewUser: true };
           }
         }
 
         const errorData = await response.json().catch(() => ({}));
         console.error("[Auth] Profile sync failed:", response.status, errorData);
-        toast.error("Profile sync issue", {
-          description: errorData.message || "Please refresh the page."
-        });
         return { isNewUser: false };
       }
     } catch (error) {
@@ -141,44 +157,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (firebaseUser) {
           console.log(`[Auth Context] User detected: uid=${firebaseUser.uid}, email=${firebaseUser.email}`);
           
-          await syncUserProfile(firebaseUser);
+          // 🚀 OPTIMISTIC UPDATE: 
+          // Set a minimal user object immediately so the UI/Guards know we are authenticated
+          // while the full profile sync happens in the background.
+          const minimalUser: User = {
+             id: firebaseUser.uid,
+             email: firebaseUser.email || "",
+             name: firebaseUser.displayName || "User",
+             businessName: "Unknown User", // Temporary value to trigger /complete-signup if needed
+             rating: 0,
+             reviewCount: 0
+          };
+          setUser(minimalUser);
           
-          const docRef = doc(db, "users", firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
+          const { isNewUser } = await syncUserProfile(firebaseUser);
           
-          let userData: User;
-          
-          if (docSnap.exists()) {
-            console.log(`[Auth Context] Profile found in Firestore for ${firebaseUser.uid}`);
-            const data = docSnap.data();
-            userData = { 
-              id: firebaseUser.uid, 
-              ...data,
-              email: data.email || firebaseUser.email || "", 
-              name: data.name || firebaseUser.displayName || "Unknown User",
-              businessName: data.businessName || "" 
-            } as User;
-          } else {
-            console.log(`[Auth Context] No profile found for ${firebaseUser.uid}. Initializing temp state.`);
-            userData = {
-              id: firebaseUser.uid,
-              name: firebaseUser.displayName || "Unknown User",
-              email: firebaseUser.email || "",
-              phone: firebaseUser.phoneNumber || "",
-              businessName: "", 
-              rating: 0,
-              reviewCount: 0
-            };
-          }
-
-          if (userData.isBanned) {
-            toast.error("Your account has been banned.");
-            await firebaseSignOut(auth);
-            setUser(null);
-            return;
-          }
-
-          setUser(userData);
+          // The syncUserProfile internal logic will call setUser with the full profile data
+          // once it's fetched from either the API or direct Firestore.
+          console.log(`[Auth Context] Profile sync finished. isNewUser: ${isNewUser}`);
         } else {
           setUser(null);
           console.log("[Auth Context] No active session.");
