@@ -5,11 +5,9 @@ import {
   User as FirebaseUser,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
   setPersistence,
   browserLocalPersistence,
-  deleteUser,
-  getRedirectResult
+  deleteUser
 } from "firebase/auth";
 import { doc, getDoc, setDoc, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { auth, db, isFirebaseDisabled } from "@/lib/firebase";
@@ -124,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const hasHandledRedirect = useRef(false);
 
   useEffect(() => {
     if (isFirebaseDisabled) {
@@ -132,41 +129,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // Handle Redirect Result on Load
-    const handleRedirect = async () => {
-      if (hasHandledRedirect.current) return;
-      
-      // Only attempt to handle redirect if we are not on localhost (which uses popups)
-      // OR if we specifically want to check for a redirect result.
-      // However, it's safer to always check but handle the "no result" case quickly.
-      hasHandledRedirect.current = true;
-
-      try {
-        console.log("[Auth] Checking redirect result...");
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          console.log("[Auth] Redirect sign-in successful:", result.user.uid);
-          await syncUserProfile(result.user);
-          toast.success(`Welcome back, ${result.user.displayName || 'User'}!`);
-        } else {
-          console.log("[Auth] No redirect result found.");
-        }
-      } catch (error: any) {
-        console.error("[Auth] Redirect error:", error);
-        if (error.code !== 'auth/no-auth-event' && error.code !== 'auth/operation-not-supported-in-this-environment') {
-          toast.error("Login session could not be completed. Please try again.", {
-            description: "Try opening the site in your main browser (Chrome/Safari) instead of an in-app browser."
-          });
-        }
-      } finally {
-        // Ensure loading is released
-        setIsLoading(false);
-      }
-    };
-
-    handleRedirect();
-
-    // 🔴 SAFETY TIMEOUT: Ensure loading state doesn't stay stuck forever
     const loadingTimeout = setTimeout(() => {
       console.warn("[Auth] Loading state was stuck for 10s. Forcing release.");
       setIsLoading(false);
