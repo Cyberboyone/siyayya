@@ -239,15 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
 
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
       await setPersistence(auth, browserLocalPersistence);
-
-      if (isMobile) {
-        await signInWithRedirect(auth, provider);
-        return;
-      }
-
       const result = await signInWithPopup(auth, provider);
       return result.user;
     } catch (error: any) {
