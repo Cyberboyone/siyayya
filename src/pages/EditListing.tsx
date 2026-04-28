@@ -138,6 +138,10 @@ const EditListing = () => {
        toast.error("Price cannot be negative.");
        return;
     }
+    if (images.length > 5) {
+       toast.error("You can only upload up to 5 images.");
+       return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -228,6 +232,8 @@ const EditListing = () => {
                   setMediaData(prev => [...prev, data]);
                 }}
                 multiple={type === "products"}
+                maxFiles={5}
+                currentCount={images.length}
                 label={type === "products" ? "Add More Images" : "Update Service Image/Video"}
                 accept={type === "services" ? "image/*,video/*" : "image/*"}
               />

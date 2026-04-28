@@ -8,6 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 interface CloudinaryUploadProps {
   onUpload: (data: { url: string; publicId: string; resourceType: string }) => void;
   multiple?: boolean;
+  maxFiles?: number;
+  currentCount?: number;
   label?: string;
   accept?: string;
   className?: string;
@@ -16,6 +18,8 @@ interface CloudinaryUploadProps {
 export function CloudinaryUpload({
   onUpload,
   multiple = false,
+  maxFiles = 5,
+  currentCount = 0,
   label = 'Upload Media',
   accept = 'image/*',
   className,
@@ -30,12 +34,29 @@ export function CloudinaryUpload({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    // Check limit
+    const availableSlots = maxFiles - currentCount;
+    
+    if (files.length > availableSlots) {
+      toast({
+        title: 'Limit Exceeded',
+        description: `You can only upload up to ${maxFiles} images.`,
+        variant: 'destructive',
+      });
+      
+      if (availableSlots <= 0) {
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+    }
+
     setIsUploading(true);
     setError(null);
 
     try {
       // Process files sequentially or in parallel; we'll do sequential for simplicity
-      for (let i = 0; i < files.length; i++) {
+      const uploadLimit = Math.min(files.length, availableSlots);
+      for (let i = 0; i < uploadLimit; i++) {
         const file = files[i];
         
         const uploadData = await uploadToCloudinary(file);

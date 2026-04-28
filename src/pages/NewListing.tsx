@@ -95,6 +95,10 @@ const NewListing = () => {
        toast.error("Please upload at least one image for your product.");
        return;
     }
+    if (images.length > 5) {
+       toast.error("You can only upload up to 5 images.");
+       return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -276,6 +280,8 @@ const NewListing = () => {
                   setMediaData(prev => [...prev, data]);
                 }}
                 multiple={type === "product"}
+                maxFiles={5}
+                currentCount={images.length}
                 label={type === "product" ? "Upload Product Images" : "Upload Service Image/Video"}
                 accept="image/*"
               />
