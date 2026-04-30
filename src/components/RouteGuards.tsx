@@ -52,13 +52,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // Only force redirect if they are on the wrong landing page
-  // We allow admins to access other protected routes (like /dashboard/edit)
-  if (targetPath === "/admin" && currentPath === "/dashboard") {
-    redirectPathRef.current = "/admin";
-    return <Navigate to="/admin" replace />;
-  }
-  
+  // Only force redirect for users who MUST complete signup
   if (targetPath === "/complete-signup" && currentPath !== "/complete-signup") {
     redirectPathRef.current = "/complete-signup";
     return <Navigate to="/complete-signup" replace />;

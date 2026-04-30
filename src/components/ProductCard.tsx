@@ -54,7 +54,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0, is
             width={400}
             height={300}
             crossOrigin="anonymous"
-            className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 ${!product.image ? "opacity-0" : ""}`}
+            className={`h-full w-full object-contain p-2 transition-transform duration-700 group-hover:scale-105 ${!product.image ? "opacity-0" : ""}`}
             loading="lazy"
           />
           {!product.image && (

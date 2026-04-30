@@ -184,7 +184,7 @@ const ServiceDetail = () => {
 
           {service.image ? (
             <div className="relative aspect-video rounded-2xl overflow-hidden bg-secondary shadow-sm mb-6">
-              <img src={service.image} alt={service.title} className="h-full w-full object-cover" />
+              <img src={service.image} alt={service.title} className="h-full w-full object-contain p-4" />
             </div>
           ) : (
             <div className="relative aspect-video rounded-2xl overflow-hidden bg-muted/40 backdrop-blur-sm shadow-sm mb-6 flex items-center justify-center border-2 border-dashed border-border/50">
