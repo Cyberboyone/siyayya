@@ -71,18 +71,36 @@ export function formatPhoneNumberForWhatsApp(phone: string): string {
 }
 /**
  * Extract YouTube Video ID from various URL formats.
+ * Supports:
+ * - https://www.youtube.com/watch?v=VIDEO_ID
+ * - https://youtu.be/VIDEO_ID
+ * - https://www.youtube.com/shorts/VIDEO_ID
+ * - https://youtube.com/shorts/VIDEO_ID
+ * - Handles extra parameters (?si=, &t=, etc.)
  */
 export function extractYouTubeId(url: string): string | null {
   if (!url) return null;
-  const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
+  
+  const trimmedUrl = url.trim();
+  const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+  const match = trimmedUrl.match(regExp);
+  
   return (match && match[2].length === 11) ? match[2] : null;
+}
+
+/**
+ * Converts any YouTube URL into a valid embed URL.
+ * Returns null if the URL is invalid.
+ */
+export function getYouTubeEmbedUrl(url: string): string | null {
+  const videoId = extractYouTubeId(url);
+  if (!videoId) return null;
+  return `https://www.youtube.com/embed/${videoId}`;
 }
 
 /**
  * Validates if the given string is a valid YouTube URL.
  */
 export function isValidYouTubeUrl(url: string): boolean {
-  if (!url) return false;
   return extractYouTubeId(url) !== null;
 }

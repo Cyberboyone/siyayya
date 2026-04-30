@@ -49,10 +49,12 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // 🔴 LOOP GUARD: Prevent infinite navigation if we've already redirected to this path
   if (redirectPathRef.current === currentPath) {
     console.warn(`[ProtectedRoute] Loop detected/prevented: Already on ${currentPath}`);
+    return <>{children}</>;
   }
 
-  // Only redirect if the current path isn't the target path
-  if (targetPath === "/admin" && !currentPath.startsWith("/admin")) {
+  // Only force redirect if they are on the wrong landing page
+  // We allow admins to access other protected routes (like /dashboard/edit)
+  if (targetPath === "/admin" && currentPath === "/dashboard") {
     redirectPathRef.current = "/admin";
     return <Navigate to="/admin" replace />;
   }

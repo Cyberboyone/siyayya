@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard, Users, Package, Flag, Loader2,
-  Trash2, Ban, CheckCircle, Search, RefreshCw, Menu, X, ExternalLink
+  Trash2, Ban, CheckCircle, Search, RefreshCw, Menu, X, ExternalLink, Edit
 } from "lucide-react";
 
 import { ADMIN_EMAILS } from "@/lib/config";
@@ -335,7 +335,7 @@ const AdminDashboard = () => {
                                  }}
                                  title="Edit"
                                >
-                                 <RefreshCw className="h-4 w-4" />
+                                 <Edit className="h-4 w-4" />
                                </Button>
                                <Button 
                                  variant="ghost" 
