@@ -240,7 +240,7 @@ const ProductDetail = () => {
               url={(product.images?.length ? product.images : [product.image])[currentImageIndex]} 
               alt={product.title}
               containerClassName="rounded-2xl shadow-sm"
-              className="transition-transform duration-700 hover:scale-105"
+              className="transition-transform duration-700"
               objectFit="contain"
             />
             

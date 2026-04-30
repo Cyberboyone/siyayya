@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Youtube, Play, Loader2 } from "lucide-react";
-import { cn, getYouTubeEmbedUrl } from "@/lib/utils";
+import { cn, getYouTubeEmbedUrl, extractYouTubeId } from "@/lib/utils";
 
 interface MediaRendererProps {
   url: string;
@@ -29,7 +29,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   useEffect(() => {
     // Auto-detect type if not provided
     if (!initialType) {
-      if (url.includes("youtube.com") || url.includes("youtu.be")) {
+      if (url.includes("youtube.com") || url.includes("youtu.be") || url.length === 11) {
         setType("youtube");
       } else if (url.match(/\.(mp4|webm|ogg|mov)$|^data:video/i)) {
         setType("video");
@@ -58,7 +58,10 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   };
 
   if (type === "youtube") {
-    const embedUrl = getYouTubeEmbedUrl(url);
+    if (!url) return null;
+    // Handle both full URLs and raw Video IDs
+    const videoId = url.length === 11 ? url : (extractYouTubeId(url) || url);
+    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
     const isShort = url.includes("/shorts/");
     
     return (
@@ -87,6 +90,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
   }
 
   if (type === "video") {
+    if (!url) return null;
     return (
       <div 
         className={cn(
@@ -144,7 +148,7 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
         className={cn(
           "w-full h-full transition-all duration-700",
           objectFit === "cover" ? "object-cover" : "object-contain",
-          !isLoaded ? "opacity-0 scale-105" : "opacity-100 scale-100",
+          !isLoaded ? "opacity-0" : "opacity-100",
           className
         )}
         onLoad={handleImageLoad}
