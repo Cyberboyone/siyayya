@@ -235,7 +235,7 @@ const ProductDetail = () => {
         {/* Image Gallery */}
         <div className="space-y-3">
           <div className={`relative aspect-[4/3] md:aspect-video rounded-2xl overflow-hidden bg-secondary shadow-sm ${product.isSold ? "opacity-60 grayscale-[50%]" : ""}`}>
-            <img src={(product.images?.length ? product.images : [product.image])[currentImageIndex]} alt={product.title} className="h-full w-full object-contain p-4 transition-transform duration-700 hover:scale-105" loading="lazy" />
+            <img src={(product.images?.length ? product.images : [product.image])[currentImageIndex]} alt={product.title} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
             
             {(product.images?.length || 0) > 1 && (
               <>
