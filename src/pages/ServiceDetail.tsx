@@ -15,6 +15,7 @@ import { formatPhoneNumberForWhatsApp } from "@/lib/utils";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useSEO } from "@/hooks/useSEO";
 import SchemaMarkup from "@/components/SchemaMarkup";
+import { MediaRenderer } from "@/components/MediaRenderer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -183,9 +184,12 @@ const ServiceDetail = () => {
           </button>
 
           {service.image ? (
-            <div className="relative aspect-video rounded-2xl overflow-hidden bg-secondary shadow-sm mb-6">
-              <img src={service.image} alt={service.title} className="h-full w-full object-cover" />
-            </div>
+            <MediaRenderer 
+              url={service.image} 
+              alt={service.title}
+              containerClassName="rounded-2xl shadow-sm mb-6"
+              objectFit="contain"
+            />
           ) : (
             <div className="relative aspect-video rounded-2xl overflow-hidden bg-muted/40 backdrop-blur-sm shadow-sm mb-6 flex items-center justify-center border-2 border-dashed border-border/50">
               <div className="flex flex-col items-center gap-2">
@@ -240,19 +244,12 @@ const ServiceDetail = () => {
                 <Youtube className="h-5 w-5 text-[#FF0000]" />
                 Service Showcase
               </h2>
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-border/50">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={`https://www.youtube.com/embed/${service.videoId}?rel=0`}
-                  title={`${service.title} video`}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="absolute inset-0"
-                  loading="lazy"
-                ></iframe>
-              </div>
+              <MediaRenderer 
+                url={`https://www.youtube.com/watch?v=${service.videoId}`} 
+                type="youtube"
+                alt={`${service.title} video`}
+                containerClassName="rounded-2xl shadow-2xl border border-border/50"
+              />
             </div>
           )}
 

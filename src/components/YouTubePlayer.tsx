@@ -1,5 +1,5 @@
 import React from "react";
-import { getYouTubeEmbedUrl } from "@/lib/utils";
+import { getYouTubeEmbedUrl, cn } from "@/lib/utils";
 
 interface YouTubePlayerProps {
   url: string;
@@ -29,10 +29,16 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     );
   }
 
+  const isShort = url.includes("/shorts/");
+
   return (
-    <div className={`relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 group ${className}`}>
+    <div className={cn(
+      "relative w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 group bg-muted transition-all duration-500",
+      isShort ? "aspect-[9/16] max-w-[350px] mx-auto" : "aspect-video",
+      className
+    )}>
       {/* Decorative background pulse */}
-      <div className="absolute inset-0 bg-primary/5 animate-pulse -z-10" />
+      {!embedUrl && <div className="absolute inset-0 bg-primary/5 animate-pulse -z-10" />}
       
       <iframe
         className="absolute inset-0 w-full h-full"

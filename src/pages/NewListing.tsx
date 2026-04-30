@@ -16,6 +16,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { MediaRenderer } from "@/components/MediaRenderer";
 
 
 type ListingType = "product" | "service" | "request";
@@ -397,18 +398,13 @@ const NewListing = () => {
                 <p className="text-[10px] text-destructive font-medium italic">Please enter a valid YouTube link</p>
               )}
               {videoId && (
-                <div className="relative aspect-video rounded-xl overflow-hidden border-2 border-primary/20 bg-muted group">
-                  <img 
-                    src={`https://img.youtube.com/vi/${videoId}/0.jpg`} 
-                    alt="Video Thumbnail" 
-                    className="w-full h-full object-cover"
+                <div className="rounded-xl overflow-hidden border-2 border-primary/20 bg-muted group relative">
+                  <MediaRenderer 
+                    url={youtubeUrl}
+                    type="youtube"
+                    containerClassName="w-full"
                   />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                     <div className="h-12 w-12 rounded-full bg-red-600 flex items-center justify-center text-white shadow-xl scale-110">
-                        <Youtube className="h-6 w-6" />
-                     </div>
-                  </div>
-                  <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-white backdrop-blur-md">
+                  <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-white backdrop-blur-md z-10">
                     Video ID: {videoId}
                   </div>
                 </div>

@@ -34,7 +34,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
               width={480}
               height={360}
               crossOrigin="anonymous"
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
+              className="h-full w-full object-contain transition-transform duration-700 group-hover:scale-110" 
               loading="lazy"
             />
             <ShareCardButton cardRef={cardRef} title={service.title} urlPath={`/service/${service.id || service._id}`} />

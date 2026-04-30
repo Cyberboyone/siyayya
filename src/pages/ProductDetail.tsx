@@ -19,6 +19,7 @@ import { Youtube, Settings as SettingsIcon } from "lucide-react";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useSEO } from "@/hooks/useSEO";
 import SchemaMarkup from "@/components/SchemaMarkup";
+import { MediaRenderer } from "@/components/MediaRenderer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -234,8 +235,14 @@ const ProductDetail = () => {
 
         {/* Image Gallery */}
         <div className="space-y-3">
-          <div className={`relative aspect-[4/3] md:aspect-video rounded-2xl overflow-hidden bg-secondary shadow-sm ${product.isSold ? "opacity-60 grayscale-[50%]" : ""}`}>
-            <img src={(product.images?.length ? product.images : [product.image])[currentImageIndex]} alt={product.title} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
+          <div className={product.isSold ? "opacity-60 grayscale-[50%]" : ""}>
+            <MediaRenderer 
+              url={(product.images?.length ? product.images : [product.image])[currentImageIndex]} 
+              alt={product.title}
+              containerClassName="rounded-2xl shadow-sm"
+              className="transition-transform duration-700 hover:scale-105"
+              objectFit="contain"
+            />
             
             {(product.images?.length || 0) > 1 && (
               <>
@@ -248,7 +255,6 @@ const ProductDetail = () => {
               </>
             )}
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none z-10" />
             
             {product.isSold && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-sm z-20">
@@ -353,20 +359,12 @@ const ProductDetail = () => {
               <Youtube className="h-5 w-5 text-[#FF0000]" />
               Video Demonstration
             </h2>
-            <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-border/50">
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${product.videoId}?rel=0`}
-                title={`${product.title} video`}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-                className="absolute inset-0"
-                loading="lazy"
-              ></iframe>
-            </div>
+            <MediaRenderer 
+              url={`https://www.youtube.com/watch?v=${product.videoId}`} 
+              type="youtube"
+              alt={`${product.title} video`}
+              containerClassName="rounded-2xl shadow-2xl border border-border/50"
+            />
           </div>
         )}
 

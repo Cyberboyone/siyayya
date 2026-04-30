@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MediaRenderer } from "@/components/MediaRenderer";
 
 type ListingType = "products" | "services" | "requests";
 
@@ -242,14 +243,19 @@ const EditListing = () => {
               {images.length > 0 && (
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {images.map((url, idx) => (
-                    <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-border group bg-muted">
-                      <img src={url} alt="" className="h-full w-full object-cover" />
+                    <div key={idx} className="relative rounded-lg overflow-hidden border border-border group bg-muted">
+                      <MediaRenderer 
+                        url={url} 
+                        alt={`Preview ${idx + 1}`}
+                        objectFit="cover"
+                        containerClassName="aspect-square"
+                      />
                       <button
                         onClick={() => {
                           setImages(prev => prev.filter((_, i) => i !== idx));
                           setMediaData(prev => prev.filter((_, i) => i !== idx));
                         }}
-                        className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error"
+                        className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error z-20"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -367,18 +373,13 @@ const EditListing = () => {
                 <p className="text-[10px] text-destructive font-medium italic">Please enter a valid YouTube link</p>
               )}
               {videoId && (
-                <div className="relative aspect-video rounded-xl overflow-hidden border-2 border-primary/20 bg-muted group">
-                  <img 
-                    src={`https://img.youtube.com/vi/${videoId}/0.jpg`} 
-                    alt="Video Thumbnail" 
-                    className="w-full h-full object-cover"
+                <div className="rounded-xl overflow-hidden border-2 border-primary/20 bg-muted group relative">
+                  <MediaRenderer 
+                    url={youtubeUrl}
+                    type="youtube"
+                    containerClassName="w-full"
                   />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                     <div className="h-12 w-12 rounded-full bg-red-600 flex items-center justify-center text-white shadow-xl scale-110">
-                        <Youtube className="h-6 w-6" />
-                     </div>
-                  </div>
-                  <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-white backdrop-blur-md">
+                  <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-[10px] text-white backdrop-blur-md z-10">
                     Video ID: {videoId}
                   </div>
                 </div>
