@@ -21,22 +21,7 @@ const CompleteSignup = () => {
   const navigate = useNavigate();
 
 
-  // If already has business name, redirect away
-  useEffect(() => {
-    if (user?.businessName && user.businessName !== "" && user.businessName !== "Unknown User") {
-        const isWhitelisted = isAdmin(user.email);
-        const redirectPath = isWhitelisted ? "/admin" : "/";
-        console.log(`[AuthRedirect CompleteSignup Effect] User: ${user?.email}, Admin: ${isWhitelisted}, Redirecting to: ${redirectPath}`);
-        navigate(redirectPath, { replace: true });
-    }
-  }, [user, navigate]);
-
-  // If not authenticated, redirect to signin
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/signin");
-    }
-  }, [isAuthenticated, navigate]);
+  // Redundant redirects removed. Handled by ProtectedRoute in App.tsx.
 
   const handleBusinessNameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

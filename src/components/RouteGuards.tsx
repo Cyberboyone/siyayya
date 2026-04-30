@@ -2,6 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingScreen } from "./LoadingScreen";
 import { isAdmin } from "@/lib/config";
+import { useRef, useEffect } from "react";
 
 /**
  * 🎯 SMART REDIRECT LOGIC
@@ -31,6 +32,7 @@ export const getSmartRedirectPath = (user: any) => {
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
+  const redirectPathRef = useRef<string | null>(null);
 
   if (isLoading) return <LoadingScreen />;
 
@@ -42,38 +44,51 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Intelligence: Redirect if they are on the wrong protected page
   // e.g. An admin trying to access the user dashboard, or a new user skipping signup.
   const targetPath = getSmartRedirectPath(user);
-  
-  // Only redirect if the current path isn't the target path
   const currentPath = location.pathname;
-  
+
+  // 🔴 LOOP GUARD: Prevent infinite navigation if we've already redirected to this path
+  if (redirectPathRef.current === currentPath) {
+    console.warn(`[ProtectedRoute] Loop detected/prevented: Already on ${currentPath}`);
+  }
+
+  // Only redirect if the current path isn't the target path
   if (targetPath === "/admin" && !currentPath.startsWith("/admin")) {
-     return <Navigate to="/admin" replace />;
+    redirectPathRef.current = "/admin";
+    return <Navigate to="/admin" replace />;
   }
   
   if (targetPath === "/complete-signup" && currentPath !== "/complete-signup") {
-     return <Navigate to="/complete-signup" replace />;
+    redirectPathRef.current = "/complete-signup";
+    return <Navigate to="/complete-signup" replace />;
   }
   
   if (targetPath === "/dashboard" && currentPath === "/complete-signup") {
-     return <Navigate to="/dashboard" replace />;
+    redirectPathRef.current = "/dashboard";
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
 }
 
 /**
- * 🔓 GUEST ROUTE
+ * 🔓 PUBLIC ROUTE
  * Prevents logged-in users from seeing sign-in pages.
  */
-export function GuestRoute({ children }: { children: React.ReactNode }) {
+export function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
+  const hasRedirected = useRef(false);
 
   if (isLoading) return <LoadingScreen />;
 
-  if (user) {
+  if (user && !hasRedirected.current) {
     const targetPath = getSmartRedirectPath(user);
-    console.log(`[GuestRoute] Authenticated user detected: Redirecting to ${targetPath}`);
-    return <Navigate to={targetPath} replace />;
+    // Don't redirect if we are already where we need to be
+    if (location.pathname !== targetPath) {
+      console.log(`[PublicRoute] Authenticated user detected: Redirecting to ${targetPath}`);
+      hasRedirected.current = true;
+      return <Navigate to={targetPath} replace />;
+    }
   }
 
   return <>{children}</>;

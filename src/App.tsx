@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Footer } from "./components/Footer";
 import { AuthProvider } from "./contexts/AuthContext";
-import { ProtectedRoute, GuestRoute } from "./components/RouteGuards";
+import { ProtectedRoute, PublicRoute } from "./components/RouteGuards";
 import { AdminRoute } from "./pages/admin/AdminRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -58,7 +58,7 @@ const App = () => {
                     <Route path="/dashboard/new" element={<ProtectedRoute><NewListing /></ProtectedRoute>} />
                     <Route path="/dashboard/edit/:type/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
                     
-                    <Route path="/signin" element={<GuestRoute><SignIn /></GuestRoute>} />
+                    <Route path="/signin" element={<PublicRoute><SignIn /></PublicRoute>} />
                     <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
                     
                     <Route path="/admin" element={

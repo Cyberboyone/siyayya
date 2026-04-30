@@ -19,7 +19,7 @@ const SignIn = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 🔴 Manual redirect removed. Handled by GuestRoute in App.tsx.
+  // 🔴 Manual redirect removed. Handled by PublicRoute in App.tsx.
 
   const handleGoogleSignIn = async () => {
     try {
