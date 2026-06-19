@@ -22,8 +22,8 @@ export const useSEO = ({
   twitterCard = "summary_large_image",
 }: SEOProps = {}) => {
   const siteName = "Siyayya";
-  const fullTitle = title ? `${title} | ${siteName}` : "Siyayya - Buy & Sell Easily in Nigeria";
-  const defaultDescription = "Your Campus's Premium Marketplace. Buy, sell, and find services easily within the community.";
+  const fullTitle = title ? `${title} | ${siteName}` : "Siyayya.com : Your Campus Marketplace";
+  const defaultDescription = "Buy, sell, and discover products and services across Nigerian university campuses. Your campus marketplace.";
 
   useEffect(() => {
     // Update Title

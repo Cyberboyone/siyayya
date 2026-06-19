@@ -5,8 +5,8 @@ import { useSEO } from "@/hooks/useSEO";
 
 const About = () => {
   useSEO({
-    title: "About Siyayya - Nigeria's Campus Marketplace",
-    description: "Learn more about Siyayya, the dedicated marketplace for your campus community.",
+    title: "About Siyayya - Your Campus Marketplace",
+    description: "Learn more about Siyayya, your campus marketplace for buying, selling, and discovering services across Nigerian universities.",
   });
   return (
     <div className="min-h-screen bg-background pb-28 md:pb-0">

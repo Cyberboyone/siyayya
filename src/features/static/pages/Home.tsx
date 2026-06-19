@@ -57,10 +57,9 @@ const Home = () => {
   const selectedCampus = selectedCampusId ? getCampusById(selectedCampusId) : null;
 
   // SEO
-  const campusName = nearestCampus?.shortName || "Campus";
   useSEO({
-    title: `Siyayya – Campus Marketplace | Buy & Sell Near ${campusName}`,
-    description: `Discover products near ${nearestCampus?.name || "your campus"}. Buy and sell electronics, fashion, books & more with students at northern Nigerian universities.`,
+    title: `Siyayya.com : Your Campus Marketplace`,
+    description: `Buy, sell, and discover products near ${nearestCampus?.name || "your campus"}. Electronics, fashion, books & more across Nigerian university campuses.`,
   });
 
   const handleToggleSave = (id: string) => {
