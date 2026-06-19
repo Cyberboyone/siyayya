@@ -1,0 +1,457 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for syy site/siyayya-main/src/lib/campus.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../../prettify.css" />
+    <link rel="stylesheet" href="../../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../../index.html">All files</a> / <a href="index.html">syy site/siyayya-main/src/lib</a> campus.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/124</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/124</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >export interface Campus {</span></span></span>
+<span class="cstat-no" title="statement not covered" >  id: string;</span>
+<span class="cstat-no" title="statement not covered" >  name: string;</span>
+<span class="cstat-no" title="statement not covered" >  shortName: string;</span>
+<span class="cstat-no" title="statement not covered" >  location: string;</span>
+<span class="cstat-no" title="statement not covered" >  lat: number;</span>
+<span class="cstat-no" title="statement not covered" >  lng: number;</span>
+<span class="cstat-no" title="statement not covered" >  region: "north" | "south";</span>
+<span class="cstat-no" title="statement not covered" >  type: "federal" | "state" | "private";</span>
+<span class="cstat-no" title="statement not covered" >  state?: string;</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >export const CAMPUSES: Campus[] = [</span>
+<span class="cstat-no" title="statement not covered" >  // FEDERAL UNIVERSITIES</span>
+<span class="cstat-no" title="statement not covered" >  { id: "abu", name: "Ahmadu Bello University", shortName: "ABU", location: "Zaria", lat: 11.1516, lng: 7.6531, region: "north", type: "federal" , state: "Kaduna" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "buk", name: "Bayero University Kano", shortName: "BUK", location: "Kano", lat: 11.9800, lng: 8.4239, region: "north", type: "federal" , state: "Kano" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "unimaid", name: "University of Maiduguri", shortName: "UNIMAID", location: "Maiduguri", lat: 11.8105, lng: 13.1953, region: "north", type: "federal" , state: "Borno" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "udus", name: "Usmanu Danfodiyo University", shortName: "UDUS", location: "Sokoto", lat: 13.1360, lng: 5.2120, region: "north", type: "federal" , state: "Sokoto" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "unilorin", name: "University of Ilorin", shortName: "UNILORIN", location: "Ilorin", lat: 8.4799, lng: 4.6769, region: "north", type: "federal" , state: "Kwara" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "unijos", name: "University of Jos", shortName: "UNIJOS", location: "Jos", lat: 9.9571, lng: 8.8909, region: "north", type: "federal" , state: "Plateau" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "uniabuja", name: "University of Abuja", shortName: "UNIABUJA", location: "Abuja", lat: 8.9784, lng: 7.1750, region: "north", type: "federal" , state: "FCT" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "atbu", name: "Abubakar Tafawa Balewa University", shortName: "ATBU", location: "Bauchi", lat: 10.3158, lng: 9.8442, region: "north", type: "federal" , state: "Bauchi" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "futminna", name: "Federal University of Technology Minna", shortName: "FUTMINNA", location: "Minna", lat: 9.5367, lng: 6.4544, region: "north", type: "federal" , state: "Niger" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "mau", name: "Modibbo Adama University", shortName: "MAU", location: "Yola", lat: 9.3361, lng: 12.4975, region: "north", type: "federal" , state: "Adamawa" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fud", name: "Federal University Dutse", shortName: "FUD", location: "Dutse", lat: 11.7589, lng: 9.3400, region: "north", type: "federal" , state: "Jigawa" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fudma", name: "Federal University Dutsin-Ma", shortName: "FUDMA", location: "Dutsin-Ma", lat: 12.4539, lng: 7.4971, region: "north", type: "federal" , state: "Katsina" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fuk", name: "Federal University Kashere", shortName: "FUK", location: "Kashere", lat: 10.0827, lng: 11.1666, region: "north", type: "federal" , state: "Gombe" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fulafia", name: "Federal University Lafia", shortName: "FULAFIA", location: "Lafia", lat: 8.4632, lng: 8.5218, region: "north", type: "federal" , state: "Nasarawa" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fulokoja", name: "Federal University Lokoja", shortName: "FULOKOJA", location: "Lokoja", lat: 7.8286, lng: 6.7410, region: "north", type: "federal" , state: "Kogi" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fuwukari", name: "Federal University Wukari", shortName: "FUWUKARI", location: "Wukari", lat: 7.8596, lng: 9.7766, region: "north", type: "federal" , state: "Taraba" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fubk", name: "Federal University Birnin Kebbi", shortName: "FUBK", location: "Birnin Kebbi", lat: 12.4539, lng: 4.1975, region: "north", type: "federal" , state: "Kebbi" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fuga", name: "Federal University Gashua", shortName: "FUGA", location: "Gashua", lat: 12.8718, lng: 11.0428, region: "north", type: "federal" , state: "Yobe" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fugusau", name: "Federal University Gusau", shortName: "FUGUSAU", location: "Gusau", lat: 12.1704, lng: 6.6642, region: "north", type: "federal" , state: "Zamfara" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "nda", name: "Nigerian Defence Academy", shortName: "NDA", location: "Kaduna", lat: 10.6014, lng: 7.4265, region: "north", type: "federal" , state: "Kaduna" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "npa", name: "Nigeria Police Academy", shortName: "NPA", location: "Wudil", lat: 11.7946, lng: 8.8471, region: "north", type: "federal" , state: "Kano" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "afit", name: "Air Force Institute of Technology", shortName: "AFIT", location: "Kaduna", lat: 10.5898, lng: 7.4429, region: "north", type: "federal" , state: "Kaduna" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "naub", name: "Nigerian Army University Biu", shortName: "NAUB", location: "Biu", lat: 10.6120, lng: 12.1946, region: "north", type: "federal" , state: "Borno" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fuhso", name: "Federal University of Health Sciences Otukpo", shortName: "FUHSO", location: "Otukpo", lat: 7.1923, lng: 8.1360, region: "north", type: "federal" , state: "Benue" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fuhsa", name: "Federal University of Health Sciences Azare", shortName: "FUHSA", location: "Azare", lat: 11.6745, lng: 10.1914, region: "north", type: "federal" , state: "Bauchi" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "fuaz", name: "Federal University of Agriculture Zuru", shortName: "FUAZ", location: "Zuru", lat: 11.4338, lng: 5.2341, region: "north", type: "federal" , state: "Kebbi" },</span>
+<span class="cstat-no" title="statement not covered" >  </span>
+<span class="cstat-no" title="statement not covered" >  // STATE UNIVERSITIES</span>
+<span class="cstat-no" title="statement not covered" >  { id: "adsu", name: "Adamawa State University", shortName: "ADSU", location: "Mubi", lat: 10.2644, lng: 13.2662, region: "north", type: "state" , state: "Adamawa" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "basug", name: "Bauchi State University", shortName: "BASUG", location: "Gadau", lat: 11.8344, lng: 10.1581, region: "north", type: "state" , state: "Bauchi" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "bsum", name: "Benue State University", shortName: "BSUM", location: "Makurdi", lat: 7.7348, lng: 8.5448, region: "north", type: "state" , state: "Benue" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "bosu", name: "Borno State University", shortName: "BOSU", location: "Maiduguri", lat: 11.8483, lng: 13.1256, region: "north", type: "state" , state: "Borno" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "gsu", name: "Gombe State University", shortName: "GSU", location: "Gombe", lat: 10.3010, lng: 11.1623, region: "north", type: "state" , state: "Gombe" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "slu", name: "Sule Lamido University", shortName: "SLU", location: "Kafin Hausa", lat: 12.2286, lng: 9.9142, region: "north", type: "state" , state: "Jigawa" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "kasu", name: "Kaduna State University", shortName: "KASU", location: "Kaduna", lat: 10.5186, lng: 7.4357, region: "north", type: "state" , state: "Kaduna" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "adustw", name: "Aliko Dangote University of Science and Technology", shortName: "ADUSTW", location: "Wudil", lat: 11.8103, lng: 8.9784, region: "north", type: "state" , state: "Kano" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "yumsuk", name: "Yusuf Maitama Sule University", shortName: "YUMSUK", location: "Kano", lat: 11.9749, lng: 8.5218, region: "north", type: "state" , state: "Kano" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "umyu", name: "Umaru Musa Yar'Adua University", shortName: "UMYU", location: "Katsina", lat: 12.9234, lng: 7.6253, region: "north", type: "state" , state: "Katsina" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "ksusta", name: "Kebbi State University of Science and Technology", shortName: "KSUSTA", location: "Aliero", lat: 12.3025, lng: 4.4967, region: "north", type: "state" , state: "Kebbi" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "paau", name: "Prince Abubakar Audu University", shortName: "PAAU", location: "Anyigba", lat: 7.4930, lng: 7.1729, region: "north", type: "state" , state: "Kogi" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "kwasu", name: "Kwara State University", shortName: "KWASU", location: "Malete", lat: 8.7147, lng: 4.4754, region: "north", type: "state" , state: "Kwara" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "nsuk", name: "Nasarawa State University", shortName: "NSUK", location: "Keffi", lat: 8.8489, lng: 7.8736, region: "north", type: "state" , state: "Nasarawa" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "ibbu", name: "Ibrahim Badamasi Babangida University", shortName: "IBBU", location: "Lapai", lat: 8.9959, lng: 6.5796, region: "north", type: "state" , state: "Niger" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "plasu", name: "Plateau State University", shortName: "PLASU", location: "Bokkos", lat: 9.2942, lng: 8.9950, region: "north", type: "state" , state: "Plateau" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "ssu", name: "Sokoto State University", shortName: "SSU", location: "Sokoto", lat: 13.0033, lng: 5.2155, region: "north", type: "state" , state: "Sokoto" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "tsu", name: "Taraba State University", shortName: "TSU", location: "Jalingo", lat: 8.9000, lng: 11.3556, region: "north", type: "state" , state: "Taraba" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "ysu", name: "Yobe State University", shortName: "YSU", location: "Damaturu", lat: 11.7470, lng: 11.9550, region: "north", type: "state" , state: "Yobe" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "zasu", name: "Zamfara State University", shortName: "ZASU", location: "Talata Mafara", lat: 12.5694, lng: 6.0461, region: "north", type: "state" , state: "Zamfara" },</span>
+<span class="cstat-no" title="statement not covered" >  </span>
+<span class="cstat-no" title="statement not covered" >  // PRIVATE UNIVERSITIES</span>
+<span class="cstat-no" title="statement not covered" >  { id: "alqalam", name: "Al-Qalam University", shortName: "ALQALAM", location: "Katsina", lat: 12.9804, lng: 7.5759, region: "north", type: "private" , state: "Katsina" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "aun", name: "American University of Nigeria", shortName: "AUN", location: "Yola", lat: 9.2315, lng: 12.4497, region: "north", type: "private" , state: "Adamawa" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "baze", name: "Baze University", shortName: "BAZE", location: "Abuja", lat: 9.0146, lng: 7.4111, region: "north", type: "private" , state: "FCT" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "bingham", name: "Bingham University", shortName: "BINGHAM", location: "Karu", lat: 9.0069, lng: 7.6253, region: "north", type: "private" , state: "Nasarawa" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "sun", name: "Skyline University Nigeria", shortName: "SUN", location: "Kano", lat: 11.9772, lng: 8.5284, region: "north", type: "private" , state: "Kano" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "nile", name: "Nile University of Nigeria", shortName: "NILE", location: "Abuja", lat: 9.0284, lng: 7.4261, region: "north", type: "private" , state: "FCT" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "veritas", name: "Veritas University", shortName: "VERITAS", location: "Abuja", lat: 9.2891, lng: 7.3777, region: "north", type: "private" , state: "FCT" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "salem", name: "Salem University", shortName: "SALEM", location: "Lokoja", lat: 7.8540, lng: 6.7214, region: "north", type: "private" , state: "Kogi" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "kwararafa", name: "Kwararafa University", shortName: "KWARARAFA", location: "Wukari", lat: 7.8686, lng: 9.7766, region: "north", type: "private" , state: "Taraba" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "ccuk", name: "Capital City University", shortName: "CCUK", location: "Kano", lat: 11.9667, lng: 8.5333, region: "north", type: "private" , state: "Kano" },</span>
+<span class="cstat-no" title="statement not covered" >  { id: "maaun", name: "Maryam Abacha American University of Nigeria", shortName: "MAAUN", location: "Kano", lat: 11.9780, lng: 8.5024, region: "north", type: "private" , state: "Kano" }</span>
+<span class="cstat-no" title="statement not covered" >];</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >/** Set of all northern campus IDs for fast lookup */</span>
+<span class="cstat-no" title="statement not covered" >export const NORTHERN_CAMPUS_IDS = new Set&lt;string&gt;(</span>
+<span class="cstat-no" title="statement not covered" >  CAMPUSES.filter(c =&gt; c.region === "north").map(c =&gt; c.id)</span>
+<span class="cstat-no" title="statement not covered" >);</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >/** Get only northern campuses */</span>
+<span class="cstat-no" title="statement not covered" >export const getNorthernCampuses = (): Campus[] =&gt;</span>
+<span class="cstat-no" title="statement not covered" >  CAMPUSES.filter(c =&gt; c.region === "north");</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >/** Haversine distance between two points in km */</span>
+<span class="cstat-no" title="statement not covered" >export const getDistanceKm = (</span>
+<span class="cstat-no" title="statement not covered" >  lat1: number, lng1: number,</span>
+<span class="cstat-no" title="statement not covered" >  lat2: number, lng2: number</span>
+<span class="cstat-no" title="statement not covered" >): number =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  const R = 6371; // Earth's radius in km</span>
+<span class="cstat-no" title="statement not covered" >  const dLat = ((lat2 - lat1) * Math.PI) / 180;</span>
+<span class="cstat-no" title="statement not covered" >  const dLng = ((lng2 - lng1) * Math.PI) / 180;</span>
+<span class="cstat-no" title="statement not covered" >  const a =</span>
+<span class="cstat-no" title="statement not covered" >    Math.sin(dLat / 2) * Math.sin(dLat / 2) +</span>
+<span class="cstat-no" title="statement not covered" >    Math.cos((lat1 * Math.PI) / 180) *</span>
+<span class="cstat-no" title="statement not covered" >      Math.cos((lat2 * Math.PI) / 180) *</span>
+<span class="cstat-no" title="statement not covered" >      Math.sin(dLng / 2) *</span>
+<span class="cstat-no" title="statement not covered" >      Math.sin(dLng / 2);</span>
+<span class="cstat-no" title="statement not covered" >  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));</span>
+<span class="cstat-no" title="statement not covered" >  return R * c;</span>
+<span class="cstat-no" title="statement not covered" >};</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >/** Get nearest campuses sorted by distance from a given point */</span>
+<span class="cstat-no" title="statement not covered" >export const getNearestCampuses = (</span>
+<span class="cstat-no" title="statement not covered" >  lat: number,</span>
+<span class="cstat-no" title="statement not covered" >  lng: number,</span>
+<span class="cstat-no" title="statement not covered" >  count: number = 5</span>
+<span class="cstat-no" title="statement not covered" >): (Campus &amp; { distanceKm: number })[] =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  return getNorthernCampuses()</span>
+<span class="cstat-no" title="statement not covered" >    .map(campus =&gt; ({</span>
+<span class="cstat-no" title="statement not covered" >      ...campus,</span>
+<span class="cstat-no" title="statement not covered" >      distanceKm: getDistanceKm(lat, lng, campus.lat, campus.lng),</span>
+<span class="cstat-no" title="statement not covered" >    }))</span>
+<span class="cstat-no" title="statement not covered" >    .sort((a, b) =&gt; a.distanceKm - b.distanceKm)</span>
+<span class="cstat-no" title="statement not covered" >    .slice(0, count);</span>
+<span class="cstat-no" title="statement not covered" >};</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >/** Get campus by slug (id) */</span>
+<span class="cstat-no" title="statement not covered" >export const getCampusBySlug = (slug: string): Campus | undefined =&gt;</span>
+<span class="cstat-no" title="statement not covered" >  CAMPUSES.find(c =&gt; c.id === slug.toLowerCase());</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >export const getCampusById = (id: string) =&gt; CAMPUSES.find(c =&gt; c.id === id);</span>
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-06-11T14:25:07.770Z
+            </div>
+        <script src="../../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../../sorter.js"></script>
+        <script src="../../../../block-navigation.js"></script>
+    </body>
+</html>
+    

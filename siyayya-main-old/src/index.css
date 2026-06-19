@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 225 25% 98%;
+    --foreground: 0 0% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+
+    --primary: 24 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 24 100% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 92%;
+    --input: 0 0% 92%;
+    --ring: 24 100% 50%;
+
+    --radius: 1.25rem;
+
+    --surface-1: 0 0% 100%;
+    --surface-2: 0 0% 98%;
+    --surface-3: 0 0% 96%;
+
+    --card-shadow: 0 10px 40px -15px rgba(255, 92, 0, 0.1);
+    --modal-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark {
+    /* Keeping dark mode consistent with the new palette but darker shades */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    
+    --card: 240 12% 8%;
+    --card-foreground: 0 0% 98%;
+    
+    --primary: 24 100% 55%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --accent: 24 100% 55%;
+    --accent-foreground: 0 0% 100%;
+    
+    --border: 240 10% 16%;
+    --ring: 24 100% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased overflow-x-hidden;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-black tracking-tight text-textPrimary;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-lg;
+  }
+
+  .glass-dark {
+    @apply bg-black/40 backdrop-blur-md border border-white/10;
+  }
+
+  .btn-premium {
+    @apply relative overflow-hidden transition-all duration-200 hover:bg-primaryDark active:scale-95 bg-primary text-white rounded-xl shadow-sm hover:shadow-lg font-bold;
+  }
+
+  .neon-glow {
+    box-shadow: 0 0 15px -3px rgba(255, 92, 0, 0.4);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#FF5C00] to-[#262626];
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.02];
+  }
+
+  .item-hover {
+    @apply transition-all duration-200 hover:bg-muted rounded-xl;
+  }
+
+  .button-hover {
+    @apply transition-all duration-200 hover:bg-primaryDark;
+  }
+}
+
+/* Redefined animations */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 3s ease-in-out infinite;
+}
+
+/* Section staggered loading */
+.stagger-1 { animation-delay: 100ms; }
+.stagger-2 { animation-delay: 200ms; }
+.stagger-3 { animation-delay: 300ms; }
+
+/* Selection color update */
+::selection {
+  @apply bg-primary/30 text-textPrimary;
+}
+
