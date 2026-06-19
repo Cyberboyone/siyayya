@@ -57,11 +57,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const missingOauthVars = requiredOauthVars.filter(v => !process.env[v]);
   if (missingOauthVars && missingOauthVars.length > 0) {
     console.error(`[Auth Configuration] Missing required OAuth variables: ${missingOauthVars.join(', ')}`);
-    // Depending on the setup, missing NEXTAUTH_URL etc might not strictly prevent firebase ID token verification,
-    // but the requirements explicitly ask to return a descriptive error and not crash.
     return res.status(500).json({
-      message: 'Server configuration error: Missing required OAuth variables',
-      missing: missingOauthVars
+      message: 'Server configuration error. Please contact support.'
     });
   }
 

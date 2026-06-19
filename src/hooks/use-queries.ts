@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, getDoc, doc } from "firebase/firestore";
+import { collection, getDocs, getDoc, doc, query, limit, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Product, Service, ProductRequest } from "@/lib/mock-data";
 
@@ -9,25 +9,23 @@ const normalizeCampusId = (data: any) => {
   return String(campusId).toLowerCase();
 };
 
+const QUERY_LIMIT = 200;
+
 export const useProducts = () => {
   return useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       try {
-        const snap = await getDocs(collection(db, "products"));
+        const q = query(collection(db, "products"), orderBy("createdAt", "desc"), limit(QUERY_LIMIT));
+        const snap = await getDocs(q);
         return snap.docs.map(d => {
           const data = d.data();
-          // Force 'Back to School Skirts' to be live as per user request
-          if (data.title && data.title.includes('Back to School Skirts')) {
-            data.isSold = false;
-          }
           data.campusId = normalizeCampusId(data);
-          data.university = data.campusId; // Sync legacy field
+          data.university = data.campusId;
           return { id: d.id, _id: d.id, ...data } as unknown as Product;
         });
       } catch (error: any) {
         console.error("[Queries] Error fetching products:", error);
-        // Handle common Firebase errors gracefully
         if (error.code === 'permission-denied') {
           console.warn("[Queries] Permission denied for products. Returning empty array.");
           return [];
@@ -35,7 +33,7 @@ export const useProducts = () => {
         throw error;
       }
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 };
 
@@ -44,7 +42,8 @@ export const useServices = () => {
     queryKey: ["services"],
     queryFn: async () => {
       try {
-        const snap = await getDocs(collection(db, "services"));
+        const q = query(collection(db, "services"), orderBy("createdAt", "desc"), limit(QUERY_LIMIT));
+        const snap = await getDocs(q);
         return snap.docs.map(d => {
           const data = d.data();
           data.campusId = normalizeCampusId(data);
@@ -66,7 +65,8 @@ export const useRequests = () => {
     queryKey: ["requests"],
     queryFn: async () => {
       try {
-        const snap = await getDocs(collection(db, "requests"));
+        const q = query(collection(db, "requests"), orderBy("createdAt", "desc"), limit(QUERY_LIMIT));
+        const snap = await getDocs(q);
         return snap.docs.map(d => {
           const data = d.data();
           data.campusId = normalizeCampusId(data);

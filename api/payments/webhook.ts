@@ -9,13 +9,22 @@ if (!admin.apps.length) {
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId,
-        clientEmail,
-        privateKey: privateKey?.replace(/\\n/g, '\n'),
-      }),
-    });
+    if (!projectId || !clientEmail || !privateKey) {
+      const missing = [
+        !projectId && 'FIREBASE_PROJECT_ID',
+        !clientEmail && 'FIREBASE_CLIENT_EMAIL',
+        !privateKey && 'FIREBASE_PRIVATE_KEY',
+      ].filter(Boolean);
+      console.error(`[Webhook API] Missing Firebase env vars: ${missing.join(', ')}. Admin SDK not initialized.`);
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey: privateKey.replace(/\\n/g, '\n'),
+        }),
+      });
+    }
   } catch (error) {
     console.error('[Webhook API] Firebase initialization error:', error);
   }

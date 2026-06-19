@@ -22,6 +22,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState<'details' | 'payment' | 'success'>('details');
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [paymentReference, setPaymentReference] = useState<string>('');
   
   const [buyerDetails, setBuyerDetails] = useState({
     name: user?.name || '',
@@ -37,9 +38,9 @@ export default function CheckoutPage() {
   }, [items, navigate, step]);
 
   const config = {
-    reference: (new Date()).getTime().toString(),
+    reference: paymentReference,
     email: user?.email || "guest@siyayya.com",
-    amount: totalPrice * 100, // Paystack uses Kobo
+    amount: totalPrice * 100,
     publicKey: PAYSTACK_PUBLIC_KEY,
     metadata: {
       order_id: pendingOrderId,
@@ -63,7 +64,7 @@ export default function CheckoutPage() {
   const proceedToPayment = async () => {
     setIsProcessing(true);
     try {
-      // Create pending order FIRST
+      const freshReference = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       const orderId = await createOrder({
         buyerId: user?.id || 'guest',
         buyerName: buyerDetails.name,
@@ -73,9 +74,10 @@ export default function CheckoutPage() {
         deliveryInstructions: buyerDetails.instructions,
         items,
         totalAmount: totalPrice,
-        paymentReference: '',
-        status: 'pending' // Webhook will update to 'paid'
+        paymentReference: freshReference,
+        status: 'pending'
       });
+      setPaymentReference(freshReference);
       setPendingOrderId(orderId);
       setStep('payment');
     } catch (error) {

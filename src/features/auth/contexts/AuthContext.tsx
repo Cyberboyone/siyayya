@@ -6,6 +6,7 @@ import {
   User as FirebaseUser,
   GoogleAuthProvider,
   signInWithPopup,
+  reauthenticateWithPopup,
   setPersistence,
   browserLocalPersistence,
   deleteUser,
@@ -213,8 +214,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const loginWithGoogle = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       await setPersistence(auth, browserLocalPersistence);
@@ -226,16 +227,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return { user: result.user, isNewUser };
     } catch (error: any) {
+      setIsLoading(false);
       console.error("[Auth Error] Google Login failed:", error);
+      if (error.code === 'auth/cancelled-popup-request') throw error;
       let msg = "Login failed.";
       if (error.code === 'auth/popup-closed-by-user') msg = "Login was cancelled.";
-      else if (error.code === 'auth/cancelled-popup-request') return;
-      
       toast.error(msg);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
+    // No finally setIsLoading(false) on success — onAuthStateChanged handles it
   };
 
   const loginWithPhoneLite = async (name: string, phone: string) => {
@@ -283,16 +283,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteAccount = async () => {
     if (!user || !auth.currentUser) throw new Error("No authenticated user");
+
+    // Re-authenticate before deletion — Firebase requires a recent sign-in
+    try {
+      if (!auth.currentUser.isAnonymous) {
+        const provider = new GoogleAuthProvider();
+        await reauthenticateWithPopup(auth.currentUser, provider);
+      }
+    } catch (reAuthError: any) {
+      if (reAuthError.code !== 'auth/cancelled-popup-request') {
+        console.error("Re-authentication failed:", reAuthError);
+        toast.error("Please sign in again before deleting your account.");
+        throw reAuthError;
+      }
+      throw reAuthError;
+    }
+
     const uid = user.id;
-    const batch = writeBatch(db);
     try {
       const collections = ["products", "services", "requests"];
+      const allRefs: any[] = [];
+
       for (const coll of collections) {
         const snap = await getDocs(query(collection(db, coll), where("ownerId", "==", uid)));
-        snap.forEach(d => batch.delete(d.ref));
+        snap.forEach(d => allRefs.push(d.ref));
       }
-      batch.delete(doc(db, "users", uid));
-      await batch.commit();
+
+      // Firestore batches are limited to 500 operations — commit in chunks
+      const BATCH_LIMIT = 499;
+      for (let i = 0; i < allRefs.length; i += BATCH_LIMIT) {
+        const chunk = allRefs.slice(i, i + BATCH_LIMIT);
+        const batch = writeBatch(db);
+        chunk.forEach(ref => batch.delete(ref));
+        await batch.commit();
+      }
+
+      // Delete the user document
+      const userBatch = writeBatch(db);
+      userBatch.delete(doc(db, "users", uid));
+      await userBatch.commit();
+
       await deleteUser(auth.currentUser);
       setUser(null);
       toast.success("Account deleted.");

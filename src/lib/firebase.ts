@@ -51,17 +51,17 @@ try {
 const analytics = typeof window !== 'undefined' && app ? getAnalytics(app) : null;
 
 if (!app) {
-  throw new Error("Firebase is not properly configured. Check environment variables.");
+  console.error("[Firebase Init] Firebase is not properly configured. Check environment variables. App will run in degraded mode.");
+  isFirebaseDisabled = true;
 }
 
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+const auth = app ? getAuth(app) : (null as unknown as ReturnType<typeof getAuth>);
+const db = app ? getFirestore(app) : (null as unknown as ReturnType<typeof getFirestore>);
+const storage = app ? getStorage(app) : (null as unknown as ReturnType<typeof getStorage>);
 
 let messaging: any = null;
 if (app && typeof window !== 'undefined') {
   try {
-    // Only initialize in browser environment
     messaging = getMessaging(app);
     console.log("[Firebase Init] Messaging initialized.");
   } catch (error) {
@@ -69,9 +69,10 @@ if (app && typeof window !== 'undefined') {
   }
 }
 
-// 🔴 Set Persistence to Local
-setPersistence(auth, browserLocalPersistence)
-  .then(() => console.log("[Firebase Init] Auth persistence set to local."))
-  .catch((error) => console.error("[Firebase Init] Persistence error:", error));
+if (app) {
+  setPersistence(auth, browserLocalPersistence)
+    .then(() => console.log("[Firebase Init] Auth persistence set to local."))
+    .catch((error) => console.error("[Firebase Init] Persistence error:", error));
+}
 
 export { app, analytics, auth, db, storage, messaging, isFirebaseDisabled };
