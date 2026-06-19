@@ -152,6 +152,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Open shopping cart"
               className="relative h-12 w-12 rounded-2xl border border-black/5 hover:border-primary/20 transition-all"
               onClick={() => setIsCartOpen(true)}
             >
@@ -237,6 +238,8 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
               className="lg:hidden text-muted-foreground h-12 w-12 rounded-2xl border border-black/5"
               onClick={() => setMobileOpen(!mobileOpen)}
             >

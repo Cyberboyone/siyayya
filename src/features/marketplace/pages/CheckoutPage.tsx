@@ -30,6 +30,7 @@ export default function CheckoutPage() {
     address: '',
     instructions: ''
   });
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (items.length === 0 && step !== 'success') {
@@ -59,6 +60,10 @@ export default function CheckoutPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setBuyerDetails(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setTouched(prev => ({ ...prev, [e.target.name]: true }));
   };
 
   const proceedToPayment = async () => {
@@ -133,16 +138,19 @@ export default function CheckoutPage() {
                   
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-textSecondary uppercase tracking-widest">Full Name</label>
-                      <Input name="name" value={buyerDetails.name} onChange={handleInputChange} placeholder="John Doe" className="h-12 rounded-xl" />
+                      <label className="text-xs font-bold text-textSecondary uppercase tracking-widest">Full Name <span className="text-destructive">*</span></label>
+                      <Input name="name" value={buyerDetails.name} onChange={handleInputChange} onBlur={handleBlur} placeholder="John Doe" className={`h-12 rounded-xl ${touched.name && !buyerDetails.name ? "border-destructive focus-visible:ring-destructive/30" : ""}`} />
+                      {touched.name && !buyerDetails.name && <p className="text-[11px] text-destructive font-bold">Please enter your full name</p>}
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-textSecondary uppercase tracking-widest">Phone Number</label>
-                      <Input name="phone" value={buyerDetails.phone} onChange={handleInputChange} placeholder="08012345678" className="h-12 rounded-xl" />
+                      <label className="text-xs font-bold text-textSecondary uppercase tracking-widest">Phone Number <span className="text-destructive">*</span></label>
+                      <Input name="phone" value={buyerDetails.phone} onChange={handleInputChange} onBlur={handleBlur} placeholder="08012345678" className={`h-12 rounded-xl ${touched.phone && !buyerDetails.phone ? "border-destructive focus-visible:ring-destructive/30" : ""}`} />
+                      {touched.phone && !buyerDetails.phone && <p className="text-[11px] text-destructive font-bold">Please enter a phone number</p>}
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-textSecondary uppercase tracking-widest">Delivery Address</label>
-                      <Textarea name="address" value={buyerDetails.address} onChange={handleInputChange} placeholder="Enter your full campus address or hostel" className="min-h-[100px] rounded-xl resize-none" />
+                      <label className="text-xs font-bold text-textSecondary uppercase tracking-widest">Delivery Address <span className="text-destructive">*</span></label>
+                      <Textarea name="address" value={buyerDetails.address} onChange={handleInputChange} onBlur={handleBlur} placeholder="Enter your full campus address or hostel" className={`min-h-[100px] rounded-xl resize-none ${touched.address && !buyerDetails.address ? "border-destructive focus-visible:ring-destructive/30" : ""}`} />
+                      {touched.address && !buyerDetails.address && <p className="text-[11px] text-destructive font-bold">Please enter a delivery address</p>}
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-textSecondary uppercase tracking-widest">Special Instructions (Optional)</label>
@@ -151,8 +159,12 @@ export default function CheckoutPage() {
                   </div>
 
                   <Button 
-                    onClick={proceedToPayment}
-                    disabled={!buyerDetails.name || !buyerDetails.phone || !buyerDetails.address || isProcessing}
+                    onClick={() => {
+                      setTouched({ name: true, phone: true, address: true });
+                      if (!buyerDetails.name || !buyerDetails.phone || !buyerDetails.address) return;
+                      proceedToPayment();
+                    }}
+                    disabled={isProcessing}
                     className="w-full h-14 bg-black hover:bg-black/90 text-white rounded-2xl uppercase tracking-widest text-[10px] font-black mt-8 shadow-xl"
                   >
                     {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Continue to Payment"}

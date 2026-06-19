@@ -174,15 +174,22 @@ const Dashboard = () => {
     });
   };
 
-  const handleMarkSold = async (id: string) => {
-    try {
-      await updateDoc(doc(db, "products", id), { isSold: true });
-      setMyProducts(prev => prev.map(p => p.id === id ? { ...p, isSold: true } : p));
-      toast.success("Product marked as sold");
-    } catch (error) {
-      console.error("Error updating listing:", error);
-      toast.error("Failed to update product status");
-    }
+  const handleMarkSold = (id: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "Mark as Sold",
+      desc: "Mark this product as sold? It will appear as unavailable to buyers. You can mark it as available again anytime.",
+      action: async () => {
+        try {
+          await updateDoc(doc(db, "products", id), { isSold: true });
+          setMyProducts(prev => prev.map(p => p.id === id ? { ...p, isSold: true } : p));
+          toast.success("Product marked as sold");
+        } catch (error) {
+          console.error("Error updating listing:", error);
+          toast.error("Failed to update product status");
+        }
+      }
+    });
   };
 
   const handleMarkLive = async (id: string) => {
@@ -250,21 +257,24 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Sidebar Tabs */}
           <div className="md:col-span-3">
-            <div className="glass rounded-[2.5rem] p-4 flex md:flex-col gap-2 overflow-x-auto scrollbar-none border-white/20 shadow-xl w-full max-w-[calc(100vw-3rem)] md:max-w-none">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`flex items-center gap-4 rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-500 shrink-0 ${
-                    tab === t.id
-                      ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
-                      : "text-textMuted/60 hover:bg-black/5 hover:text-textPrimary"
-                  }`}
-                >
-                  <t.icon className={`h-4 w-4 ${tab === t.id ? "text-white" : ""}`} />
-                  {t.label}
-                </button>
-              ))}
+            <div className="relative">
+              <div className="glass rounded-[2.5rem] p-4 flex md:flex-col gap-2 overflow-x-auto scrollbar-none border-white/20 shadow-xl w-full max-w-[calc(100vw-3rem)] md:max-w-none">
+                {tabs.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setTab(t.id)}
+                    className={`flex items-center gap-4 rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-500 shrink-0 ${
+                      tab === t.id
+                        ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
+                        : "text-textMuted/60 hover:bg-black/5 hover:text-textPrimary"
+                    }`}
+                  >
+                    <t.icon className={`h-4 w-4 ${tab === t.id ? "text-white" : ""}`} />
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              <div className="absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white/80 dark:from-black/80 to-transparent rounded-r-[2.5rem] pointer-events-none md:hidden" />
             </div>
           </div>
 

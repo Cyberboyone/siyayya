@@ -178,6 +178,15 @@ const ChatRoomPage = () => {
           <ChatContextCard context={conversation?.context} />
 
           <div className="flex-1 flex flex-col py-4 justify-end">
+            {!isLoadingMessages && messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center flex-1 py-20 gap-4 text-center">
+                <div className="h-16 w-16 rounded-[2rem] bg-primary/10 flex items-center justify-center text-3xl select-none">
+                  💬
+                </div>
+                <p className="text-sm font-black uppercase tracking-widest text-textPrimary">Start the conversation</p>
+                <p className="text-xs text-textMuted font-medium max-w-[200px]">Send a message to kick things off!</p>
+              </div>
+            )}
             {messages.map((msg, i) => {
               const prevMsg = messages[i - 1];
               const isSameSender = prevMsg?.senderId === msg.senderId;

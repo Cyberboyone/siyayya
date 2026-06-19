@@ -501,7 +501,10 @@ const ProductDetail = () => {
             <Button
               variant="outline"
               className="h-14 border-primary/20 text-primary hover:bg-primary/10 active:scale-95 transition-all gap-2 text-[10px] font-black uppercase tracking-widest rounded-2xl w-full"
-              onClick={() => addToCart(product)}
+              onClick={() => {
+                addToCart(product);
+                toast.success(`Added to cart!`, { description: product.title });
+              }}
             >
               <ShoppingCart className="h-4 w-4" />
               {items.find(i => i.id === product.id) ? 'Add More' : 'Add to Cart'}

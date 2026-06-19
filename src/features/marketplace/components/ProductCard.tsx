@@ -172,14 +172,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
       <div className="px-2 pb-2 pt-1 flex gap-1 mt-auto">
         <button
           onClick={handleChatSeller}
-          className="flex-1 h-8 rounded-lg bg-primary text-white flex items-center justify-center gap-1.5 hover:bg-primary/90 active:scale-95 transition-all shadow-sm text-[9px] font-black uppercase tracking-widest"
+          aria-label={`Chat with seller about ${product.title}`}
+          className="flex-1 h-10 rounded-xl bg-primary text-white flex items-center justify-center gap-1.5 hover:bg-primary/90 active:scale-95 transition-all shadow-sm text-[10px] font-black uppercase tracking-widest"
         >
           <MessageCircle className="h-3.5 w-3.5" />
           Chat
         </button>
         <button
           onClick={handleBuyNow}
-          className="flex-1 h-8 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all shadow-sm text-[9px] font-black uppercase tracking-widest"
+          aria-label={`Buy ${product.title} now`}
+          className="flex-1 h-10 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all shadow-sm text-[10px] font-black uppercase tracking-widest"
         >
           <CreditCard className="h-3.5 w-3.5" />
           Buy
