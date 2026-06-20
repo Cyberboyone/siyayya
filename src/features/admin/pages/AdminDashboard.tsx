@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Users, Package, Flag, Loader2,
-  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, MessageSquare, ChevronDown, BarChart3
+  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3
 } from "lucide-react";
 
 import { ADMIN_EMAILS } from "@/lib/config";
@@ -20,29 +20,24 @@ import { ADMIN_EMAILS } from "@/lib/config";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user: currentUser, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "orders" | "conversations" | "analytics">("analytics");
+  const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "orders" | "analytics">("analytics");
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [conversations, setConversations] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedConversation, setSelectedConversation] = useState<any>(null);
-  const [conversationMessages, setConversationMessages] = useState<any[]>([]);
-  const [loadingMessages, setLoadingMessages] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [usersSnap, productsSnap, servicesSnap, reportsSnap, ordersSnap, convSnap] = await Promise.all([
+      const [usersSnap, productsSnap, servicesSnap, reportsSnap, ordersSnap] = await Promise.all([
         getDocs(collection(db, "users")),
         getDocs(collection(db, "products")),
         getDocs(collection(db, "services")),
         getDocs(collection(db, "reports")),
         getDocs(collection(db, "orders")),
-        getDocs(collection(db, "conversations"))
       ]);
 
       setUsers(usersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -62,12 +57,6 @@ const AdminDashboard = () => {
       setOrders(ordersSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
         const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
         const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-        return (dateB as any) - (dateA as any);
-      }));
-
-      setConversations(convSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
-        const dateA = a.updatedAt?.toDate ? a.updatedAt.toDate() : new Date(a.updatedAt || 0);
-        const dateB = b.updatedAt?.toDate ? b.updatedAt.toDate() : new Date(b.updatedAt || 0);
         return (dateB as any) - (dateA as any);
       }));
       
@@ -191,87 +180,66 @@ const AdminDashboard = () => {
     }
   };
 
-  const loadConversationMessages = async (convId: string) => {
-    setLoadingMessages(true);
-    setConversationMessages([]);
-    try {
-      // Need a proper query to fetch subcollection. Let's getDocs
-      const msgsQuery = query(collection(db, "conversations", convId, "messages"));
-      const msgsSnap = await getDocs(msgsQuery);
-      setConversationMessages(msgsSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-        return (dateA as any) - (dateB as any);
-      }));
-    } catch (e) {
-      toast.error("Failed to load messages");
-    } finally {
-      setLoadingMessages(false);
-    }
-  };
+  const adminTabs = [
+    { id: "analytics" as const, label: "Analytics", icon: BarChart3 },
+    { id: "users" as const, label: `Users (${users.length})`, icon: Users },
+    { id: "listings" as const, label: `Listings (${listings.length})`, icon: Package },
+    { id: "reports" as const, label: `Reports (${reports.length})`, icon: Flag },
+    { id: "orders" as const, label: `Orders (${orders.length})`, icon: ShoppingBag },
+  ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="bg-surface border-b border-black/5 px-6 py-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-xl">
-        <div className="flex items-center gap-4">
-          <Logo textClassName="text-xl" />
-          <span className="bg-primary/10 text-primary text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">Admin Panel</span>
+      <header className="bg-surface border-b border-black/5 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-50 backdrop-blur-xl">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Logo textClassName="text-lg sm:text-xl" />
+          <span className="bg-primary/10 text-primary text-[9px] sm:text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest">Admin</span>
         </div>
-        <div className="flex items-center gap-3">
-           <Button variant="ghost" size="sm" onClick={fetchData} disabled={isLoading}>
-             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+        <div className="flex items-center gap-2 sm:gap-3">
+           <Button variant="ghost" size="sm" onClick={fetchData} disabled={isLoading} className="h-8 px-3">
+             <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+             <span className="hidden sm:inline">Refresh</span>
            </Button>
            <Link to="/" className="text-xs font-bold text-textSecondary hover:text-primary flex items-center gap-1">
-             <ExternalLink className="h-3 w-3" /> Site
+             <ExternalLink className="h-3 w-3" /> <span className="hidden sm:inline">Site</span>
            </Link>
         </div>
       </header>
 
-      <div className="flex-grow flex">
-        <aside className="w-64 bg-surface border-r border-black/5 p-4 flex flex-col gap-2">
-          <button 
-            onClick={() => setActiveTab("users")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'users' ? 'bg-primary text-white' : 'hover:bg-muted text-textSecondary'}`}
-          >
-            <Users className="h-4 w-4" /> Users ({users.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab("listings")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'listings' ? 'bg-primary text-white' : 'hover:bg-muted text-textSecondary'}`}
-          >
-            <Package className="h-4 w-4" /> Listings ({listings.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab("reports")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'reports' ? 'bg-primary text-white' : 'hover:bg-muted text-textSecondary'}`}
-          >
-            <Flag className="h-4 w-4" /> Reports ({reports.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab("orders")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'orders' ? 'bg-primary text-white' : 'hover:bg-muted text-textSecondary'}`}
-          >
-            <ShoppingBag className="h-4 w-4" /> Orders ({orders.length})
-          </button>
-          <button 
-            onClick={() => { setActiveTab("conversations"); setSelectedConversation(null); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'conversations' ? 'bg-primary text-white' : 'hover:bg-muted text-textSecondary'}`}
-          >
-            <MessageSquare className="h-4 w-4" /> Conversations ({conversations.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab("analytics")}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'analytics' ? 'bg-primary text-white' : 'hover:bg-muted text-textSecondary'}`}
-          >
-            <BarChart3 className="h-4 w-4" /> Analytics
-          </button>
+      {/* Mobile tab bar */}
+      <div className="md:hidden overflow-x-auto border-b border-black/5 bg-surface">
+        <div className="flex gap-1 px-3 py-2 min-w-max">
+          {adminTabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest whitespace-nowrap transition-all ${activeTab === tab.id ? 'bg-primary text-white' : 'hover:bg-muted text-textSecondary'}`}
+            >
+              <tab.icon className="h-3.5 w-3.5 flex-shrink-0" /> {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-grow flex flex-col md:flex-row">
+        {/* Desktop sidebar */}
+        <aside className="hidden md:flex w-56 lg:w-64 bg-surface border-r border-black/5 p-4 flex-col gap-2 shrink-0">
+          {adminTabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm ${activeTab === tab.id ? 'bg-primary text-white' : 'hover:bg-muted text-textSecondary'}`}
+            >
+              <tab.icon className="h-4 w-4 flex-shrink-0" /> {tab.label}
+            </button>
+          ))}
         </aside>
 
-        <main className="flex-grow p-8 bg-muted/20">
-          <div className="max-w-6xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-black text-textPrimary capitalize">{activeTab} Management</h1>
-              <div className="relative w-64">
+        <main className="flex-grow p-4 md:p-8 bg-muted/20 min-w-0">
+          <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h1 className="text-lg md:text-2xl font-black text-textPrimary capitalize">{activeTab} Management</h1>
+              <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-textMuted" />
                 <Input 
                    placeholder={`Search ${activeTab}...`} 
@@ -290,7 +258,8 @@ const AdminDashboard = () => {
             ) : (
               <div className="bg-surface rounded-[2rem] border border-black/5 overflow-hidden shadow-sm">
                 {activeTab === 'users' && (
-                  <table className="w-full text-left border-collapse">
+                  <div className="overflow-x-auto">
+                  <table className="min-w-[700px] w-full text-left border-collapse">
                     <thead className="bg-muted/30 border-b border-black/5">
                       <tr>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">User</th>
@@ -342,10 +311,12 @@ const AdminDashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
 
                 {activeTab === 'listings' && (
-                   <table className="w-full text-left border-collapse">
+                  <div className="overflow-x-auto">
+                  <table className="min-w-[700px] w-full text-left border-collapse">
                     <thead className="bg-muted/30 border-b border-black/5">
                       <tr>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Listing</th>
@@ -434,6 +405,7 @@ const AdminDashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
 
                 {activeTab === 'reports' && reports.length === 0 && (
@@ -458,7 +430,8 @@ const AdminDashboard = () => {
                   <div className="p-20 text-center text-textSecondary font-bold italic">No orders yet</div>
                 )}
                 {activeTab === 'orders' && orders.length > 0 && (
-                  <table className="w-full text-left border-collapse">
+                  <div className="overflow-x-auto">
+                  <table className="min-w-[900px] w-full text-left border-collapse">
                     <thead className="bg-muted/30 border-b border-black/5">
                       <tr>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest w-8"></th>
@@ -634,81 +607,11 @@ const AdminDashboard = () => {
                       })}
                     </tbody>
                   </table>
-                )}
-
-                {activeTab === 'conversations' && !selectedConversation && conversations.length === 0 && (
-                  <div className="p-20 text-center text-textSecondary font-bold italic">No conversations found</div>
-                )}
-                {activeTab === 'conversations' && !selectedConversation && conversations.length > 0 && (
-                  <div className="p-0">
-                    {conversations.map(c => (
-                      <div 
-                        key={c.id} 
-                        className="p-6 border-b border-black/5 hover:bg-muted/10 transition-colors cursor-pointer flex items-start justify-between group"
-                        onClick={() => { setSelectedConversation(c); loadConversationMessages(c.id); }}
-                      >
-                        <div>
-                          <div className="flex gap-2 mb-2">
-                             {Object.values(c.participants || {}).map((p: any) => (
-                               <div key={p.uid} className="flex items-center gap-1 bg-black/5 rounded-full px-2 py-1">
-                                 <span className="text-xs font-bold text-textPrimary">{p.displayName || 'Unknown'}</span>
-                               </div>
-                             ))}
-                          </div>
-                          {c.lastMessage && (
-                            <p className="text-sm text-textSecondary italic line-clamp-1 group-hover:text-textPrimary transition-colors">
-                               "{c.lastMessage.text}"
-                            </p>
-                          )}
-                          <p className="text-[9px] text-textMuted uppercase tracking-widest mt-2">
-                            Updated: {c.updatedAt?.toDate ? c.updatedAt.toDate().toLocaleString() : 'N/A'}
-                          </p>
-                        </div>
-                        <ChevronDown className="h-4 w-4 text-textMuted group-hover:text-textPrimary transition-colors -rotate-90" />
-                      </div>
-                    ))}
                   </div>
                 )}
 
-                {activeTab === 'conversations' && selectedConversation && (
-                  <div className="flex flex-col h-[600px] bg-white">
-                    <div className="p-4 border-b border-black/5 flex items-center justify-between bg-muted/10">
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-1">Viewing Conversation</p>
-                        <div className="flex gap-2">
-                           {Object.values(selectedConversation.participants || {}).map((p: any) => (
-                             <span key={p.uid} className="text-sm font-bold text-textPrimary">{p.displayName || 'Unknown'}</span>
-                           ))}
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedConversation(null)}>Back to list</Button>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-black/[0.02]">
-                      {loadingMessages ? (
-                        <div className="flex justify-center p-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                      ) : conversationMessages.length === 0 ? (
-                        <div className="text-center p-10 text-textSecondary italic">No messages</div>
-                      ) : (
-                        conversationMessages.map(m => {
-                          const sender = selectedConversation.participants[m.senderId]?.displayName || 'Unknown';
-                          return (
-                            <div key={m.id} className="flex flex-col gap-1 items-start max-w-[80%]">
-                              <span className="text-[9px] font-black uppercase tracking-widest text-textSecondary ml-1">{sender}</span>
-                              <div className="bg-white border border-black/5 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
-                                <p className="text-sm text-textPrimary">{m.text}</p>
-                              </div>
-                              <span className="text-[8px] font-bold text-textMuted uppercase ml-1">
-                                {m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString() : ''}
-                              </span>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
                 {activeTab === 'analytics' && (
-                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
                       <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Total Revenue</p>
                       <h3 className="text-3xl font-black text-textPrimary">
@@ -722,10 +625,6 @@ const AdminDashboard = () => {
                     <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
                       <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Active Listings</p>
                       <h3 className="text-3xl font-black text-textPrimary">{listings.filter(l => l.status === 'approved').length}</h3>
-                    </div>
-                    <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                      <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Total Conversations</p>
-                      <h3 className="text-3xl font-black text-textPrimary">{conversations.length}</h3>
                     </div>
                     <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
                       <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Pending Orders</p>

@@ -164,7 +164,7 @@ const Home = () => {
               </span>
             </h1>
             <p className="text-base md:text-lg text-textSecondary mt-6 max-w-2xl mx-auto font-medium leading-relaxed">
-              The premium student marketplace in Northern Nigeria. Find unbeatable deals, join campus discussions, and connect with your community securely.
+              The premium student marketplace in Northern Nigeria. Buy, sell, and discover the best campus deals — fast, safe, and 100% student-driven.
             </p>
           </motion.div>
 

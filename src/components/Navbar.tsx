@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Plus, User as UserIcon, Menu, X, Home, ShoppingBag, Wrench, LayoutDashboard, LogOut, Package, Heart, FileText, Shield, MessageSquare, Sparkles, Download } from "lucide-react";
+import { Search, Plus, User as UserIcon, Menu, X, Home, ShoppingBag, Wrench, LayoutDashboard, LogOut, Package, Heart, Shield, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
@@ -8,8 +8,6 @@ import { VerifiedBadge } from "./VerifiedBadge";
 import { SearchBar } from "./SearchBar";
 import { Logo } from "./Logo";
 import { isAdmin } from "@/lib/config";
-import { useMessagingStore } from "@/features/messaging/store/useMessagingStore";
-import { useConversations } from "@/features/messaging/hooks/useConversations";
 import { BottomNav } from "./BottomNav";
 import { motion, AnimatePresence } from "framer-motion";
 import { NotificationDropdown } from "@/features/notifications/components/NotificationDropdown";
@@ -30,8 +28,6 @@ const navLinks = [
   { to: "/", label: "Home", icon: Home },
   { to: "/marketplace", label: "Market", icon: ShoppingBag },
   { to: "/services", label: "Services", icon: Wrench },
-  { to: "/requests", label: "Requests", icon: FileText },
-  { to: "/messages", label: "Inbox", icon: MessageSquare },
 ];
 
 export function Navbar() {
@@ -44,13 +40,9 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   
-  // Global listener for unread counts
-  useConversations(user?.id);
-  const totalUnreadCount = useMessagingStore(state => state.totalUnreadCount);
   const { totalItems, setIsCartOpen } = useCart();
   const { isInstallable, handleInstall } = usePWAInstall();
 
-  // Keep search state in sync with URL changes
   useEffect(() => {
     setSearch(new URLSearchParams(location.search).get("search") || "");
   }, [location.search]);
@@ -93,15 +85,6 @@ export function Navbar() {
                     whileHover={{ scale: 1.05 }}
                   >
                     {link.label}
-                    {link.to === "/messages" && totalUnreadCount > 0 && (
-                      <motion.span 
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-white shadow-lg shadow-primary/20"
-                      >
-                        {totalUnreadCount}
-                      </motion.span>
-                    )}
                     {isActive && (
                       <motion.div
                         layoutId="nav-active"
@@ -143,7 +126,6 @@ export function Navbar() {
                 </Button>
               </Link>
             </div>
-            
             
             {isAuthenticated && (
               <NotificationDropdown />
@@ -197,22 +179,9 @@ export function Navbar() {
                       <LayoutDashboard className="mr-3 h-4 w-4" />
                       <span>Dashboard</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/messages")} className="cursor-pointer rounded-xl p-3 font-black text-[10px] uppercase tracking-widest focus:bg-primary/10 focus:text-primary transition-colors">
-                      <MessageSquare className="mr-3 h-4 w-4" />
-                      <span className="flex-1">Inbox</span>
-                      {totalUnreadCount > 0 && (
-                        <motion.span 
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[9px] font-black text-white"
-                        >
-                          {totalUnreadCount}
-                        </motion.span>
-                      )}
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/dashboard?tab=listings")} className="cursor-pointer rounded-xl p-3 font-black text-[10px] uppercase tracking-widest focus:bg-primary/10 focus:text-primary transition-colors">
                       <Package className="mr-3 h-4 w-4" />
-                      <span>My Collection</span>
+                      <span>My Listings</span>
                     </DropdownMenuItem>
                     {isAdmin(user?.email) && (
                       <DropdownMenuItem onClick={() => navigate("/admin")} className="cursor-pointer rounded-xl p-3 font-black text-[10px] uppercase tracking-widest focus:bg-purple-500/10 text-purple-600">

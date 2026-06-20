@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Star, MessageCircle, Flag, Phone, Loader2, Trash2, Settings as SettingsIcon, Image as ImageIcon, Youtube } from "lucide-react";
+import { ArrowLeft, Star, Flag, Phone, Loader2, Trash2, Settings as SettingsIcon, Image as ImageIcon, Youtube } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { formatPrice, Service, CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
@@ -10,9 +10,7 @@ import { doc, getDoc, collection, query, where, getDocs, limit, deleteDoc } from
 import { useAuth } from "../../auth/contexts/AuthContext";
 import { toast } from "sonner";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
-import { CommentSection } from "@/features/marketplace/components/CommentSection";
 import { ReviewSection } from "@/components/ReviewSection";
-import { chatService } from "@/features/messaging/services/chatService";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useSEO } from "@/hooks/useSEO";
 import SchemaMarkup from "@/components/SchemaMarkup";
@@ -182,31 +180,20 @@ const ServiceDetail = () => {
     }
   };
 
-  const handleChat = async () => {
+  const handleContactWhatsApp = () => {
     if (!isAuthenticated) return navigate("/signin");
     if (authUser?.id === service.ownerId) {
       toast.error("This is your own service!");
       return;
     }
-
-    try {
-      const participants = [
-        { uid: authUser!.id, displayName: authUser!.businessName || authUser!.name || "User", photoURL: authUser!.photoUrl || "" },
-        { uid: service.ownerId, displayName: service.ownerName || "Provider", photoURL: "" }
-      ];
-
-      const conversationId = await chatService.getOrCreateConversation(participants, {
-        type: 'service',
-        id: service.id,
-        title: service.title,
-        image: service.image,
-        price: service.price
-      });
-
-      navigate(`/messages/${conversationId}`);
-    } catch (error) {
-      console.error("Error starting chat:", error);
-      toast.error("Failed to start conversation.");
+    const phone = service.ownerPhone || service.contactPhone || "";
+    if (phone) {
+      const cleaned = phone.replace(/\D/g, "");
+      const intl = cleaned.startsWith("234") ? cleaned : cleaned.startsWith("0") ? "234" + cleaned.slice(1) : "234" + cleaned;
+      const msg = encodeURIComponent(`Hi! I found your service on Siyayya: *${service.title}* (${service.priceLabel || "Starting from"} ₦${service.price?.toLocaleString()}). I'd like to book. Are you available?`);
+      window.open(`https://wa.me/${intl}?text=${msg}`, "_blank", "noopener,noreferrer");
+    } else {
+      toast.info("Contact details not available. Visit the seller's profile for more info.");
     }
   };
 
@@ -319,11 +306,11 @@ const ServiceDetail = () => {
 
           <div className="mt-10 flex flex-col gap-4 pb-12 border-b border-black/5">
             <Button
-              className="h-14 bg-accent hover:bg-accent/90 text-white active:scale-95 transition-all gap-3 text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-accent/20 w-full"
-              onClick={handleChat}
+              className="h-14 bg-[#25D366] hover:bg-[#1ebe5d] text-white active:scale-95 transition-all gap-3 text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-green-500/20 w-full"
+              onClick={handleContactWhatsApp}
             >
-              <MessageCircle className="h-5 w-5" />
-              Message Provider
+              <Phone className="h-5 w-5" />
+              WhatsApp Provider
             </Button>
 
             <Button
@@ -349,12 +336,6 @@ const ServiceDetail = () => {
               </Button>
             )}
           </div>
-
-          <CommentSection 
-            listingId={service.id} 
-            ownerId={service.ownerId} 
-            listingType="service"
-          />
 
           <ReviewSection listingId={service.id} ownerId={service.ownerId} />
 

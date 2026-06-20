@@ -301,7 +301,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const uid = user.id;
     try {
-      const collections = ["products", "services", "requests"];
+      const collections = ["products", "services"];
       const allRefs: any[] = [];
 
       for (const coll of collections) {

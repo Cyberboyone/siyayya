@@ -1,18 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, ShoppingBag, Plus, MessageSquare, User as UserIcon } from "lucide-react";
-import { useMessagingStore } from "@/features/messaging/store/useMessagingStore";
+import { Home, ShoppingBag, Plus, Wrench, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 
 export function BottomNav() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const totalUnreadCount = useMessagingStore((state) => state.totalUnreadCount);
 
   const navItems = [
     { label: "Home", to: "/", icon: Home },
     { label: "Market", to: "/marketplace", icon: ShoppingBag },
     { label: "Create", to: isAuthenticated ? "/dashboard/new" : "/signin", icon: Plus, isSpecial: true },
-    { label: "Inbox", to: isAuthenticated ? "/messages" : "/signin", icon: MessageSquare, badge: totalUnreadCount },
+    { label: "Services", to: "/services", icon: Wrench },
     { label: "Account", to: isAuthenticated ? "/dashboard" : "/signin", icon: UserIcon },
   ];
 
@@ -26,8 +24,9 @@ export function BottomNav() {
             if (item.isSpecial) {
               return (
                 <Link
-                  key={item.to}
+                  key={item.label}
                   to={item.to}
+                  aria-label="Create new listing"
                   className="flex items-center justify-center relative -mt-12"
                 >
                   <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center text-white shadow-[0_15px_30px_rgba(var(--primary),0.4)] border-[6px] border-[#fafafa] dark:border-[#0a0a0a] active:scale-90 transition-all duration-300">
@@ -39,17 +38,12 @@ export function BottomNav() {
 
             return (
               <Link
-                key={item.to}
+                key={item.label}
                 to={item.to}
                 className="flex flex-col items-center gap-1.5 py-2 px-1 relative flex-1"
               >
                 <div className={`transition-all duration-500 relative ${isActive ? "text-primary scale-110" : "text-textMuted/60 hover:text-textPrimary"}`}>
                   <item.icon className={`h-5 w-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-[2px]'}`} />
-                  {item.badge !== undefined && item.badge > 0 && (
-                    <span className="absolute -top-2 -right-2 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[8px] font-black text-white ring-4 ring-white dark:ring-black">
-                      {item.badge}
-                    </span>
-                  )}
                 </div>
                 <span className={`text-[9px] font-black uppercase tracking-tighter transition-all duration-500 leading-none ${isActive ? "text-primary opacity-100 translate-y-0" : "opacity-0 translate-y-2 h-0"}`}>
                   {item.label}

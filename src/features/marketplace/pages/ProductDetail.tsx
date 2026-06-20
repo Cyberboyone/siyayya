@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Star, Flag, Heart, Loader2, Phone, Trash2, MessageSquare } from "lucide-react";
+import { ArrowLeft, ArrowRight, Star, Flag, Heart, Loader2, Phone, Trash2 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { formatPrice, Product } from "@/lib/mock-data";
@@ -7,14 +7,12 @@ import { ProductCard } from "../components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
 import { useSavedItems } from "@/hooks/use-saved-items";
-import { CommentSection } from "../components/CommentSection";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, getDocs, limit, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { ReviewSection } from "@/components/ReviewSection";
 import { formatDate } from "@/lib/utils";
-import { chatService } from "@/features/messaging/services/chatService";
 import { CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
 import { Youtube, Settings as SettingsIcon } from "lucide-react";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -53,15 +51,7 @@ const ProductDetail = () => {
   const { addToCart, items } = useCart();
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [pendingChat, setPendingChat] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (pendingChat && isAuthenticated && authUser) {
-      setPendingChat(false);
-      handleChat();
-    }
-  }, [pendingChat, isAuthenticated, authUser]);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -265,44 +255,23 @@ const ProductDetail = () => {
     }
   };
 
-  const handleChat = async () => {
-    if (!isAuthenticated || !authUser) {
-      setPendingChat(true);
+  const handleContactWhatsApp = () => {
+    if (!isAuthenticated) {
       setAuthModalOpen(true);
       return;
     }
-    if (authUser.id === product.ownerId) {
+    if (authUser?.id === product.ownerId) {
       toast.error("This is your own listing!");
       return;
     }
-    if (!product) return;
-
-    try {
-      const conversationId = await chatService.getOrCreateConversation(
-        [
-          {
-            uid: authUser.id,
-            displayName: authUser.name || "Student",
-            photoURL: authUser.photoUrl || authUser.avatar || ""
-          },
-          {
-            uid: product.ownerId,
-            displayName: product.ownerName || "Seller",
-            photoURL: product.ownerAvatar || product.ownerPhoto || ""
-          }
-        ],
-        {
-          type: 'product',
-          id: product.id,
-          title: product.title,
-          image: product.images?.[0],
-          price: product.price
-        }
-      );
-      navigate(`/messages/${conversationId}`);
-    } catch (error) {
-      console.error("Error opening chat:", error);
-      toast.error("Could not open chat");
+    const phone = product.ownerPhone || product.contactPhone || "";
+    if (phone) {
+      const cleaned = phone.replace(/\D/g, "");
+      const intl = cleaned.startsWith("234") ? cleaned : cleaned.startsWith("0") ? "234" + cleaned.slice(1) : "234" + cleaned;
+      const msg = encodeURIComponent(`Hi! I saw your listing on Siyayya: *${product.title}* (₦${product.price?.toLocaleString()}). Is it still available?`);
+      window.open(`https://wa.me/${intl}?text=${msg}`, "_blank", "noopener,noreferrer");
+    } else {
+      toast.info("Seller contact not listed. Visit their profile for more info.");
     }
   };
 
@@ -476,11 +445,11 @@ const ProductDetail = () => {
 
         <div className="mt-10 flex flex-col gap-4 pb-12 border-b border-black/5">
           <Button
-            className="h-14 bg-accent hover:bg-accent/90 text-white active:scale-95 transition-all gap-3 text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-accent/20 w-full"
-            onClick={handleChat}
+            className="h-14 bg-[#25D366] hover:bg-[#1ebe5d] text-white active:scale-95 transition-all gap-3 text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-green-500/20 w-full"
+            onClick={handleContactWhatsApp}
           >
-            <MessageSquare className="h-5 w-5" />
-            Message Seller
+            <Phone className="h-5 w-5" />
+            WhatsApp Seller
           </Button>
 
           <div className="grid grid-cols-2 gap-4">
@@ -559,12 +528,6 @@ const ProductDetail = () => {
             </div>
           </div>
         )}
-
-        <CommentSection 
-          listingId={product.id} 
-          ownerId={product.ownerId} 
-          listingType="product"
-        />
 
         <ReviewSection listingId={product.id} ownerId={product.ownerId} />
 

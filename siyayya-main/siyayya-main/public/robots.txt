@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-
-# Host
-Host: https://siyayya.app
-
-# Sitemaps
-Sitemap: https://siyayya.app/sitemap.xml

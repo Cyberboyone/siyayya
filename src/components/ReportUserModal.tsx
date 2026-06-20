@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/button";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
-import { Participant } from "@/features/messaging/types";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
+
+interface Participant {
+  uid: string;
+  displayName: string;
+  photoURL?: string;
+}
 
 interface ReportUserModalProps {
   isOpen: boolean;

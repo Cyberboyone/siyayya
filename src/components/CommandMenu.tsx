@@ -14,7 +14,6 @@ import {
   BookOpen, 
   Search, 
   PlusCircle, 
-  MessageSquare,
   TrendingUp,
   Tag,
   Wrench,
@@ -57,10 +56,6 @@ export function CommandMenu() {
             <CommandItem onSelect={() => runCommand(() => navigate("/dashboard/new"))}>
               <PlusCircle className="mr-2 h-4 w-4" />
               <span>Post a New Listing</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => navigate("/messages"))}>
-              <MessageSquare className="mr-2 h-4 w-4" />
-              <span>Check Messages</span>
             </CommandItem>
           </CommandGroup>
 

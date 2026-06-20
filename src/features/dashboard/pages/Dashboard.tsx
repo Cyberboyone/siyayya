@@ -5,13 +5,13 @@ import { ProductCard } from "@/features/marketplace/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Product, Service, ProductRequest } from "@/lib/mock-data";
+import { Product, Service } from "@/lib/mock-data";
 import { useSavedItems } from "@/hooks/use-saved-items";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { collection, query, where, getDocs, getDoc, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/firebase";
-import { Plus, Edit, Trash2, Package, Wrench, FileText, Settings, Eye, Star, CheckCircle, Heart, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Wrench, Settings, Eye, Star, CheckCircle, Heart, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { NotificationSettings } from "@/features/notifications/components/NotificationSettings";
@@ -28,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-type Tab = "overview" | "listings" | "requests" | "saved" | "reviews" | "settings";
+type Tab = "overview" | "listings" | "saved" | "reviews" | "settings";
 
 interface Review {
   id: string;
@@ -48,7 +48,6 @@ const Dashboard = () => {
 
   const [myProducts, setMyProducts] = useState<Product[]>([]);
   const [myServices, setMyServices] = useState<Service[]>([]);
-  const [myRequests, setMyRequests] = useState<ProductRequest[]>([]);
   const [savedProducts, setSavedProducts] = useState<Product[]>([]);
   const [myReviews, setMyReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,10 +87,6 @@ const Dashboard = () => {
         const qServices = query(collection(db, "services"), where("ownerId", "==", user.id));
         const servSnap = await getDocs(qServices);
         setMyServices(servSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)));
-
-        const qRequests = query(collection(db, "requests"), where("ownerId", "==", user.id));
-        const reqSnap = await getDocs(qRequests);
-        setMyRequests(reqSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProductRequest)));
 
         const qReviews = query(collection(db, "reviews"), where("ownerId", "==", user.id));
         const reviewSnap = await getDocs(qReviews);
@@ -138,7 +133,7 @@ const Dashboard = () => {
     return `₦${price.toLocaleString("en-NG")}`;
   };
 
-  const handleDeleteListing = async (id: string, type: "products" | "services" | "requests") => {
+  const handleDeleteListing = async (id: string, type: "products" | "services") => {
     setConfirmDialog({
       open: true,
       title: "Delete Listing",
@@ -163,7 +158,6 @@ const Dashboard = () => {
           
           if (type === "products") setMyProducts(prev => prev.filter(p => p.id !== id));
           if (type === "services") setMyServices(prev => prev.filter(s => s.id !== id));
-          if (type === "requests") setMyRequests(prev => prev.filter(r => r.id !== id));
           
           toast.success("Listing deleted successfully");
         } catch (error) {
@@ -206,7 +200,6 @@ const Dashboard = () => {
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "overview", label: "Overview", icon: Eye },
     { id: "listings", label: "My Listings", icon: Package },
-    { id: "requests", label: "My Requests", icon: FileText },
     { id: "saved", label: "Saved Items", icon: Heart },
     { id: "reviews", label: "Reviews", icon: Star },
     { id: "settings", label: "Settings", icon: Settings },
@@ -243,7 +236,7 @@ const Dashboard = () => {
             <h1 className="text-4xl md:text-7xl font-black text-textPrimary tracking-tight italic uppercase leading-none pr-4">
               My <span className="text-gradient pr-4 inline-block">Dashboard</span>
             </h1>
-            <p className="text-[11px] font-bold text-textMuted uppercase tracking-widest opacity-60 italic max-w-md">Manage your listings, requests, and campus presence from one high-fidelity interface.</p>
+            <p className="text-[11px] font-bold text-textMuted uppercase tracking-widest opacity-60 italic max-w-md">Manage your listings, orders, and campus presence from one high-fidelity interface.</p>
           </div>
           <Link to="/dashboard/new">
             <Button className="h-16 px-10 rounded-[1.5rem] bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all gap-3">
@@ -320,7 +313,6 @@ const Dashboard = () => {
                       {[
                         { label: "Inventory", count: myProducts.length, icon: Package, color: "text-primary" },
                         { label: "Expertise", count: myServices.length, icon: Wrench, color: "text-accent" },
-                        { label: "Bounty", count: myRequests.length, icon: FileText, color: "text-emerald-500" },
                         { label: "Curated", count: savedIds.length, icon: Heart, color: "text-rose-500" },
                       ].map((stat) => (
                         <div key={stat.label} className="rounded-[2.5rem] bg-white dark:bg-black/10 p-8 text-center border border-black/5 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
@@ -379,34 +371,6 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                {tab === "requests" && (
-                   <div className="space-y-12 animate-in fade-in duration-700">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Open Bounties</h3>
-                    {myRequests.length > 0 ? (
-                       <div className="grid grid-cols-1 gap-4">
-                        {myRequests.map((r) => (
-                          <div key={r.id} className="rounded-[2.5rem] bg-white dark:bg-black/10 p-8 border border-black/5 hover:shadow-2xl transition-all duration-500">
-                             <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4 sm:gap-0">
-                                <div className="w-full sm:w-auto">
-                                   <h4 className="text-xl font-black text-textPrimary uppercase italic mb-1">{r.title}</h4>
-                                   <p className="text-lg font-black text-primary italic">Budget: ₦{r.budget.toLocaleString()}</p>
-                                </div>
-                                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                                   <Button onClick={() => navigate(`/dashboard/edit/requests/${r.id}`)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-black/5 border-none">
-                                    <Edit className="h-3.5 w-3.5" /> Edit
-                                  </Button>
-                                  <Button onClick={() => handleDeleteListing(r.id, "requests")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 text-destructive bg-destructive/5 border-none">
-                                    <Trash2 className="h-3.5 w-3.5" /> Delete
-                                  </Button>
-                                </div>
-                             </div>
-                             <p className="text-sm text-textSecondary font-medium leading-relaxed italic border-l-2 border-primary/20 pl-6 py-2">{r.description}</p>
-                          </div>
-                        ))}
-                       </div>
-                    ) : <EmptyState icon={FileText} label="No Requests" />}
-                   </div>
-                )}
 
                 {tab === "saved" && (
                   <div className="space-y-12 animate-in fade-in duration-700">

@@ -28,10 +28,6 @@ const Admin = lazy(() => import("./features/admin/pages/AdminDashboard.tsx"));
 const UserProfile = lazy(() => import("./features/user/pages/UserProfile.tsx"));
 const About = lazy(() => import("./features/static/pages/About.tsx"));
 const ContactUs = lazy(() => import("./features/static/pages/ContactUs.tsx"));
-const Requests = lazy(() => import("./features/marketplace/pages/Requests.tsx"));
-const Request = lazy(() => import("./features/marketplace/pages/NewRequest.tsx"));
-const InboxPage = lazy(() => import("./features/messaging/pages/InboxPage.tsx"));
-const ChatRoomPage = lazy(() => import("./features/messaging/pages/ChatRoomPage.tsx"));
 const NotFound = lazy(() => import("./features/static/pages/NotFound.tsx"));
 const CampusDetail = lazy(() => import("./features/campus/pages/CampusDetail.tsx"));
 const BusinessDetail = lazy(() => import("./features/business/pages/BusinessDetail.tsx"));
@@ -72,9 +68,6 @@ const App = () => {
                       <Route path="/product/:slug" element={<ProductDetail />} />
                       <Route path="/services" element={<Services />} />
                       <Route path="/service/:slug" element={<ServiceDetail />} />
-                      <Route path="/requests" element={<Requests />} />
-                      <Route path="/request" element={<Request />} />
-                      
                       {/* 📣 Campus Hub Page */}
                       <Route path="/campus/:campusSlug" element={<CampusDetail />} />
                       
@@ -87,9 +80,6 @@ const App = () => {
                       <Route path="/about" element={<About />} />
                       <Route path="/user/:username" element={<UserProfile />} />
                       
-                      {/* 💬 Messaging & Notifications */}
-                      <Route path="/messages" element={<ProtectedRoute><InboxPage /></ProtectedRoute>} />
-                      <Route path="/messages/:id" element={<ProtectedRoute><ChatRoomPage /></ProtectedRoute>} />
                       <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
                       
                       {/* 🔴 Clean Route Protection */}
