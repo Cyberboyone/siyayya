@@ -7,8 +7,6 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   reauthenticateWithPopup,
-  setPersistence,
-  browserLocalPersistence,
   deleteUser,
   signInAnonymously
 } from "firebase/auth";
@@ -40,89 +38,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Prevents onAuthStateChanged from duplicating work that loginWithGoogle already did
+  const justLoggedInRef = useRef(false);
   const phoneLiteInProgressRef = useRef(false);
 
-  const syncUserProfile = async (firebaseUser: FirebaseUser): Promise<{ isNewUser: boolean }> => {
-    const idToken = await firebaseUser.getIdToken();
-    console.log(`[Auth] Synchronizing profile for UID: ${firebaseUser.uid}...`);
-
+  // Read user profile directly from Firestore — no server API call needed
+  const loadUserFromFirestore = async (firebaseUser: FirebaseUser): Promise<{ isNewUser: boolean }> => {
     try {
-      const response = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
+      const docRef = doc(db, "users", firebaseUser.uid);
+      const docSnap = await getDoc(docRef);
 
-      if (response.ok) {
-        const syncData = await response.json();
-        const isNewUser = syncData.isNewUser;
-        console.log(`[Auth] Profile sync successful. isNewUser: ${isNewUser}`);
-        
-        const docRef = doc(db, "users", firebaseUser.uid);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const updatedUser = { 
-            id: firebaseUser.uid, 
-            ...data,
-            email: data.email || firebaseUser.email || "",
-            name: data.name || firebaseUser.displayName || "Unknown User",
-            businessName: data.businessName || ""
-          } as User;
-          if (updatedUser.isBanned) {
-            toast.error("Your account has been banned.");
-            await firebaseSignOut(auth);
-            setUser(null);
-            return { isNewUser: false };
-          }
-          setUser(updatedUser);
-        }
-        return { isNewUser };
-      } else {
-        if (response.status >= 400) {
-          console.warn(`[Auth] API sync issue (${response.status}). Falling back to direct Firestore fetch...`);
-          
-          const docRef = doc(db, "users", firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const userData = { 
-              id: firebaseUser.uid, 
-              ...data,
-              email: data.email || firebaseUser.email || "",
-              name: data.name || firebaseUser.displayName || "Unknown User",
-              businessName: data.businessName || ""
-            } as User;
-
-            if (userData.isBanned) {
-              toast.error("Your account has been banned.");
-              await firebaseSignOut(auth);
-              setUser(null);
-              return { isNewUser: false };
-            }
-
-            setUser(userData);
-            return { isNewUser: !userData.businessName };
-          } else {
-             return { isNewUser: true };
-          }
-        }
-
-        const errorData = await response.json().catch(() => ({}));
-        console.error("[Auth] Profile sync failed:", response.status, errorData);
-        setUser({
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const userData = {
           id: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          name: firebaseUser.displayName || "User",
-          businessName: "",
-          rating: 0,
-          reviewCount: 0
-        });
-        return { isNewUser: false };
+          ...data,
+          email: data.email || firebaseUser.email || "",
+          name: data.name || firebaseUser.displayName || "Unknown User",
+          businessName: data.businessName || ""
+        } as User;
+
+        if (userData.isBanned) {
+          toast.error("Your account has been banned.");
+          await firebaseSignOut(auth);
+          setUser(null);
+          return { isNewUser: false };
+        }
+
+        setUser(userData);
+        return { isNewUser: !data.phone };
+      } else {
+        return { isNewUser: true };
       }
     } catch (error) {
-      console.error("[Auth] Profile sync error:", error);
+      console.error("[Auth] Firestore read error:", error);
+      // Set minimal user so the app doesn't block
       setUser({
         id: firebaseUser.uid,
         email: firebaseUser.email || "",
@@ -135,6 +86,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Background sync to server — non-blocking, best-effort
+  const syncToServerBackground = (idToken: string) => {
+    fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    }).catch(() => {
+      // Silent — server sync is best-effort, client state is source of truth
+    });
+  };
+
   useEffect(() => {
     if (isFirebaseDisabled) {
       setIsLoading(false);
@@ -142,32 +104,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const loadingTimeout = setTimeout(() => {
-      console.warn("[Auth] Loading state was stuck for 10s. Forcing release.");
+      console.warn("[Auth] Loading stuck for 5s, releasing.");
       setIsLoading(false);
-    }, 10000);
+    }, 5000);
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       clearTimeout(loadingTimeout);
       try {
         if (firebaseUser) {
-          console.log(`[Auth Context] User detected: uid=${firebaseUser.uid}, email=${firebaseUser.email}, anonymous=${firebaseUser.isAnonymous}`);
-          
-          try {
-            const idTokenResult = await firebaseUser.getIdTokenResult();
-            setIsAdmin(!!idTokenResult.claims.admin);
-          } catch (e) {
-            console.error("Failed to fetch custom claims:", e);
-          }
-          
-          // If loginWithPhoneLite is actively running, skip — it handles its own user state
-          if (phoneLiteInProgressRef.current) {
-            console.log("[Auth Context] Phone-lite login in progress, skipping onAuthStateChanged processing.");
+          // Skip if loginWithGoogle or loginWithPhoneLite already handled this auth event
+          if (justLoggedInRef.current || phoneLiteInProgressRef.current) {
+            justLoggedInRef.current = false;
             return;
           }
 
           if (firebaseUser.isAnonymous) {
-            // Anonymous users: read profile directly from Firestore (no API call)
-            console.log("[Auth Context] Anonymous user detected, reading profile from Firestore...");
             const docRef = doc(db, "users", firebaseUser.uid);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
@@ -186,21 +137,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(null);
                 return;
               }
-
               setUser(userData);
-              console.log("[Auth Context] Anonymous user profile loaded from Firestore.");
-            } else {
-              console.warn("[Auth Context] Anonymous user has no Firestore profile.");
-              // Don't set a minimal user — wait for loginWithPhoneLite to create the profile
             }
           } else {
-            // Google / email users: use existing API sync flow
-            await syncUserProfile(firebaseUser);
+            // Returning session — load from Firestore directly (fast path)
+            await loadUserFromFirestore(firebaseUser);
+
+            // Check admin claim without blocking — runs after user is set
+            firebaseUser.getIdTokenResult().then(result => {
+              setIsAdmin(!!result.claims.admin);
+            }).catch(() => {});
           }
         } else {
           setUser(null);
           setIsAdmin(false);
-          console.log("[Auth Context] No active session.");
         }
       } catch (error) {
         console.error("[Auth Context Error]:", error);
@@ -218,37 +168,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
-      await setPersistence(auth, browserLocalPersistence);
       const result = await signInWithPopup(auth, provider);
-      
+
+      // Mark so onAuthStateChanged skips re-processing this login event
+      justLoggedInRef.current = true;
+
+      // Check/create Firestore doc directly — no API round trip
       const docRef = doc(db, "users", result.user.uid);
       const docSnap = await getDoc(docRef);
-      const isNewUser = !docSnap.exists() || !docSnap.data().phone;
-      
+      let isNewUser = false;
+
+      if (!docSnap.exists()) {
+        isNewUser = true;
+        const newProfile = {
+          id: result.user.uid,
+          name: result.user.displayName || "User",
+          email: result.user.email || "",
+          avatar: result.user.photoURL || "",
+          businessName: "",
+          status: "active",
+          rating: 0,
+          reviewCount: 0,
+          isVerified: false,
+          joinedAt: new Date().toISOString(),
+        };
+        await setDoc(docRef, newProfile);
+        setUser({ ...newProfile, businessName: "" } as User);
+      } else {
+        const data = docSnap.data();
+        isNewUser = !data.phone;
+        const userData = {
+          id: result.user.uid,
+          ...data,
+          email: data.email || result.user.email || "",
+          name: data.name || result.user.displayName || "User",
+          avatar: data.avatar || result.user.photoURL || "",
+        } as User;
+
+        if (userData.isBanned) {
+          toast.error("Your account has been banned.");
+          await firebaseSignOut(auth);
+          setUser(null);
+          setIsLoading(false);
+          throw new Error("Account banned");
+        }
+        setUser(userData);
+
+        // Update basic profile info in background
+        setDoc(docRef, {
+          name: result.user.displayName || data.name,
+          email: result.user.email || data.email,
+          avatar: result.user.photoURL || data.avatar,
+        }, { merge: true }).catch(() => {});
+      }
+
+      // Fire-and-forget server sync — doesn't block login
+      result.user.getIdToken().then(idToken => {
+        syncToServerBackground(idToken);
+      }).catch(() => {});
+
       return { user: result.user, isNewUser };
     } catch (error: any) {
+      justLoggedInRef.current = false;
       setIsLoading(false);
+      if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+        toast.error("Sign-in was cancelled.");
+        throw error;
+      }
       console.error("[Auth Error] Google Login failed:", error);
-      if (error.code === 'auth/cancelled-popup-request') throw error;
-      let msg = "Login failed.";
-      if (error.code === 'auth/popup-closed-by-user') msg = "Login was cancelled.";
-      toast.error(msg);
+      if (error.message !== "Account banned") toast.error("Sign-in failed. Please try again.");
       throw error;
+    } finally {
+      setIsLoading(false);
     }
-    // No finally setIsLoading(false) on success — onAuthStateChanged handles it
   };
 
   const loginWithPhoneLite = async (name: string, phone: string) => {
     try {
       setIsLoading(true);
       phoneLiteInProgressRef.current = true;
-      await setPersistence(auth, browserLocalPersistence);
       const result = await signInAnonymously(auth);
-      
+
       const newUserProfile: User = {
         id: result.user.uid,
-        name: name,
-        phone: phone,
+        name,
+        phone,
         email: "",
         businessName: name,
         businessNameLower: normalizeBusinessName(name),
@@ -259,7 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         phone_verified: false,
         profile_completed: false
       };
-      
+
       const docRef = doc(db, "users", result.user.uid);
       await setDoc(docRef, newUserProfile, { merge: true });
       setUser(newUserProfile);
@@ -284,7 +288,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteAccount = async () => {
     if (!user || !auth.currentUser) throw new Error("No authenticated user");
 
-    // Re-authenticate before deletion — Firebase requires a recent sign-in
     try {
       if (!auth.currentUser.isAnonymous) {
         const provider = new GoogleAuthProvider();
@@ -292,7 +295,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (reAuthError: any) {
       if (reAuthError.code !== 'auth/cancelled-popup-request') {
-        console.error("Re-authentication failed:", reAuthError);
         toast.error("Please sign in again before deleting your account.");
         throw reAuthError;
       }
@@ -309,7 +311,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         snap.forEach(d => allRefs.push(d.ref));
       }
 
-      // Firestore batches are limited to 500 operations — commit in chunks
       const BATCH_LIMIT = 499;
       for (let i = 0; i < allRefs.length; i += BATCH_LIMIT) {
         const chunk = allRefs.slice(i, i + BATCH_LIMIT);
@@ -318,7 +319,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await batch.commit();
       }
 
-      // Delete the user document
       const userBatch = writeBatch(db);
       userBatch.delete(doc(db, "users", uid));
       await userBatch.commit();
@@ -338,12 +338,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateProfile = async (data: Partial<User>) => {
     if (!user) throw new Error("No user session");
-    
     const updateData = { ...data };
     if (data.businessName) {
       updateData.businessNameLower = normalizeBusinessName(data.businessName);
     }
-    
     const docRef = doc(db, "users", user.id);
     await setDoc(docRef, updateData, { merge: true });
     setUser(prev => prev ? { ...prev, ...updateData } as User : null);
