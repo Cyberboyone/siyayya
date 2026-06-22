@@ -112,20 +112,49 @@ export function CloudinaryUpload({
     e.stopPropagation();
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      if (fileInputRef.current) {
-        // We simulate a change event by setting the files on the input (not directly possible but we can trigger our upload function directly)
-        fileInputRef.current.files = e.dataTransfer.files;
-        // manually dispatch change event
-        const event = new Event('change', { bubbles: true });
-        fileInputRef.current.dispatchEvent(event);
+
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].size > MAX_FILE_SIZE) {
+        toast({ title: 'File Too Large', description: `${files[i].name} exceeds 5MB.`, variant: 'destructive' });
+        return;
       }
     }
-  }, []);
+
+    const availableSlots = maxFiles - currentCount;
+    if (availableSlots <= 0) {
+      toast({ title: 'Limit Exceeded', description: `Maximum ${maxFiles} images allowed.`, variant: 'destructive' });
+      return;
+    }
+
+    setIsUploading(true);
+    setError(null);
+    const uploadLimit = Math.min(files.length, availableSlots);
+    try {
+      for (let i = 0; i < uploadLimit; i++) {
+        const uploadData = await uploadToCloudinary(files[i]);
+        if (multiple) {
+          setPreviews(prev => [...prev, uploadData.secure_url]);
+        } else {
+          setPreviews([uploadData.secure_url]);
+        }
+        onUpload({ url: uploadData.secure_url, publicId: uploadData.public_id, resourceType: uploadData.resource_type });
+        if (!multiple) break;
+      }
+    } catch (err: any) {
+      const msg = err.message || 'Upload failed';
+      setError(msg);
+      toast({ title: 'Upload Failed', description: msg, variant: 'destructive' });
+    } finally {
+      setIsUploading(false);
+    }
+  }, [maxFiles, currentCount, multiple, onUpload, toast]);
 
   const clearPreviews = () => {
     setPreviews([]);
