@@ -12,6 +12,10 @@ import { AdminRoute } from "./features/admin/components/AdminRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { CommandMenu } from "./components/CommandMenu";
+import { CartProvider } from "./features/marketplace/contexts/CartContext";
+import { CartSidebar } from "./components/CartSidebar";
+import { InstallPrompt } from "./components/InstallPrompt";
+import { PageTracker } from "./components/PageTracker";
 
 const Index = lazy(() => import("./features/static/pages/Home.tsx"));
 const Marketplace = lazy(() => import("./features/marketplace/pages/Marketplace.tsx"));
@@ -35,14 +39,10 @@ const HostelDetail = lazy(() => import("./features/hostel/pages/HostelDetail.tsx
 const NotificationsPage = lazy(() => import("./features/notifications/pages/NotificationsPage.tsx"));
 const CheckoutPage = lazy(() => import("./features/marketplace/pages/CheckoutPage.tsx"));
 const OrderHistoryPage = lazy(() => import("./features/dashboard/pages/OrderHistoryPage.tsx"));
-import { CartProvider } from "./features/marketplace/contexts/CartContext";
-import { CartSidebar } from "./components/CartSidebar";
-import { InstallPrompt } from "./components/InstallPrompt";
-import { PageTracker } from "./components/PageTracker";
 
 function PageLoader() {
   return (
-    <div className="flex-grow flex flex-col items-center justify-center min-h-[60vh] gap-3" aria-label="Loading page">
+    <div className="flex-grow flex flex-col items-center justify-center min-h-[60vh] gap-3">
       <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
       <p className="text-sm text-textMuted font-medium animate-pulse">Loading…</p>
     </div>
@@ -75,54 +75,44 @@ const App = () => {
                 <PageTracker />
                 <InstallPrompt />
                 <div className="flex flex-col min-h-screen">
-                <main className="flex-grow flex flex-col">
-                  <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/marketplace" element={<Marketplace />} />
-                      <Route path="/marketplace/:category" element={<Marketplace />} />
-                      <Route path="/market/:campusSlug" element={<MarketCampus />} />
-                      <Route path="/product/:slug" element={<ProductDetail />} />
-                      <Route path="/services" element={<Services />} />
-                      <Route path="/service/:slug" element={<ServiceDetail />} />
-                      {/* 📣 Campus Hub Page */}
-                      <Route path="/campus/:campusSlug" element={<CampusDetail />} />
-                      
-                      {/* 🏪 Business Merchant Landing */}
-                      <Route path="/business/:businessSlug" element={<BusinessDetail />} />
-                      
-                      {/* 🏠 Hostel Accommodations */}
-                      <Route path="/hostels/:campus" element={<HostelDetail />} />
-                      <Route path="/hostels/:campus/:hostelType" element={<HostelDetail />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/user/:username" element={<UserProfile />} />
-                      
-                      <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-                      
-                      {/* 🔴 Clean Route Protection */}
-                      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                      <Route path="/dashboard/new" element={<ProtectedRoute><NewListing /></ProtectedRoute>} />
-                      <Route path="/dashboard/edit/:type/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
-                      <Route path="/orders" element={<ProtectedRoute><OrderHistoryPage /></ProtectedRoute>} />
-                      <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
-                      
-                      <Route path="/signin" element={<PublicRoute><SignIn /></PublicRoute>} />
-                      <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
-                      
-                      <Route path="/admin" element={
-                        <AdminRoute>
-                          <ErrorBoundary>
-                            <Admin />
-                          </ErrorBoundary>
-                        </AdminRoute>
-                      } />
-                      <Route path="/contact" element={<ContactUs />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </main>
-                <Footer />
-              </div>
+                  <main className="flex-grow flex flex-col">
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/marketplace" element={<Marketplace />} />
+                        <Route path="/marketplace/:category" element={<Marketplace />} />
+                        <Route path="/market/:campusSlug" element={<MarketCampus />} />
+                        <Route path="/product/:slug" element={<ProductDetail />} />
+                        <Route path="/services" element={<Services />} />
+                        <Route path="/service/:slug" element={<ServiceDetail />} />
+                        <Route path="/campus/:campusSlug" element={<CampusDetail />} />
+                        <Route path="/business/:businessSlug" element={<BusinessDetail />} />
+                        <Route path="/hostels/:campus" element={<HostelDetail />} />
+                        <Route path="/hostels/:campus/:hostelType" element={<HostelDetail />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/user/:username" element={<UserProfile />} />
+                        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+                        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                        <Route path="/dashboard/new" element={<ProtectedRoute><NewListing /></ProtectedRoute>} />
+                        <Route path="/dashboard/edit/:type/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
+                        <Route path="/orders" element={<ProtectedRoute><OrderHistoryPage /></ProtectedRoute>} />
+                        <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+                        <Route path="/signin" element={<PublicRoute><SignIn /></PublicRoute>} />
+                        <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
+                        <Route path="/admin" element={
+                          <AdminRoute>
+                            <ErrorBoundary>
+                              <Admin />
+                            </ErrorBoundary>
+                          </AdminRoute>
+                        } />
+                        <Route path="/contact" element={<ContactUs />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
+                  </main>
+                  <Footer />
+                </div>
               </CartProvider>
             </CampusProvider>
           </AuthProvider>
