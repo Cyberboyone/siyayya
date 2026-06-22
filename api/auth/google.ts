@@ -1,7 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin if not already initialized
 if (!admin.apps || admin.apps.length === 0) {
   try {
     const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -13,76 +12,45 @@ if (!admin.apps || admin.apps.length === 0) {
       if (!projectId) missing.push('FIREBASE_PROJECT_ID');
       if (!clientEmail) missing.push('FIREBASE_CLIENT_EMAIL');
       if (!privateKey) missing.push('FIREBASE_PRIVATE_KEY');
-      console.error(`[Auth Admin] CRITICAL: Missing environment variables: ${missing.join(', ')}`);
+      console.error(`[Auth Admin] Missing variables: ${missing.join(', ')}`);
     } else {
-      // 🔴 Robust normalization for private key
-      // 1. Remove double quotes if present at start/end
       let formattedKey = privateKey.trim();
-      if (formattedKey && formattedKey.length > 0) {
-        if (formattedKey.startsWith('"') && formattedKey.endsWith('"')) {
-          formattedKey = formattedKey.substring(1, formattedKey.length - 1);
-        }
-        // 2. Fix newline characters
-        formattedKey = formattedKey.replace(/\\n/g, '\n');
+      if (formattedKey.startsWith('"') && formattedKey.endsWith('"')) {
+        formattedKey = formattedKey.slice(1, -1);
       }
+      formattedKey = formattedKey.replace(/\\n/g, '\n');
 
       admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail,
-          privateKey: formattedKey,
-        }),
+        credential: admin.credential.cert({ projectId, clientEmail, privateKey: formattedKey }),
         databaseURL: `https://${projectId}.firebaseio.com`
       });
-      console.log('[Auth Admin] Firebase admin initialized successfully.');
     }
   } catch (error: any) {
-    console.error('[Auth Admin] Initialisation error:', error.message || error);
+    console.error('[Auth Admin] Init error:', error.message || error);
   }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only allow POST requests for token verification
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed. Use POST.' });
+    return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  // Validate OAuth Environment Variables as requested
-  const requiredOauthVars = [
-    'GOOGLE_CLIENT_ID',
-    'GOOGLE_CLIENT_SECRET',
-    'NEXTAUTH_SECRET',
-    'NEXTAUTH_URL'
-  ];
-  const missingOauthVars = requiredOauthVars.filter(v => !process.env[v]);
-  if (missingOauthVars && missingOauthVars.length > 0) {
-    console.error(`[Auth Configuration] Missing required OAuth variables: ${missingOauthVars.join(', ')}`);
-    return res.status(500).json({
-      message: 'Server configuration error. Please contact support.'
-    });
+  // If Firebase Admin isn't initialised, skip gracefully — client handles auth
+  if (!admin.apps || admin.apps.length === 0) {
+    return res.status(200).json({ skipped: true, message: 'Admin not configured' });
   }
 
   const { idToken } = req.body;
-
   if (!idToken) {
     return res.status(400).json({ message: 'Missing idToken' });
   }
 
   try {
-    console.log('[Auth Verification] Verifying ID token...');
-    
-    // 1. Verify the ID token using Firebase Admin
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const { uid, email, name, picture } = decodedToken;
 
-    if (!email) {
-      throw new Error('Email not provided by Google');
-    }
+    if (!email) throw new Error('Email not provided');
 
-    console.log(`[Auth Verification] token verified for: ${email}`);
-
-    // 2. Create or update user in Firestore (SIMPLIFIED)
-    // We no longer manage roles here. Roles are handled by the frontend whitelist.
     const db = admin.firestore();
     const userRef = db.collection('users').doc(uid);
     const userDoc = await userRef.get();
@@ -91,11 +59,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!userDoc.exists) {
       isNewUser = true;
-      
       await userRef.set({
         id: uid,
         name: name || 'Unknown User',
-        email: email,
+        email,
         avatar: picture || '',
         businessName: '',
         status: 'active',
@@ -104,64 +71,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         isVerified: false,
         joinedAt: new Date().toISOString(),
       });
-      console.log(`[Auth Verification] New user created: ${email}`);
     } else {
-      // Update basic profile info only
       await userRef.update({
         name: name || userDoc.data()?.name,
-        email: email || userDoc.data()?.email, 
+        email: email || userDoc.data()?.email,
         avatar: picture || userDoc.data()?.avatar,
       });
-      
-      // Check if businessName is still missing
-      if (!userDoc.data()?.businessName) {
-        isNewUser = true;
-      }
-      console.log(`[Auth Verification] Profile updated: ${email}`);
+      if (!userDoc.data()?.businessName) isNewUser = true;
     }
 
-    // 3. Claim Guest Requests
+    // Claim any guest requests — best-effort, non-blocking
     try {
-      const requestsRef = db.collection('requests');
-      const guestRequestsQuery = await requestsRef
+      const snap = await db.collection('requests')
         .where('isGuest', '==', true)
         .where('guestEmail', '==', email)
         .get();
 
-      if (!guestRequestsQuery.empty) {
+      if (!snap.empty) {
         const batch = db.batch();
-        guestRequestsQuery.docs.forEach((doc) => {
-          batch.update(doc.ref, {
-            ownerId: uid,
-            ownerName: name || 'Unknown User',
-            isGuest: false,
-            ownerIsVerified: false
-          });
-        });
+        snap.docs.forEach(d => batch.update(d.ref, {
+          ownerId: uid,
+          ownerName: name || 'Unknown User',
+          isGuest: false,
+          ownerIsVerified: false
+        }));
         await batch.commit();
       }
-    } catch (claimError) {
-      console.error('Error claiming guest requests:', claimError);
+    } catch (e) {
+      console.error('[Auth] Guest claim error:', e);
     }
 
-    // 4. Return success response (Simplified)
-    console.log(`[Auth Verification] Final response for ${email}: isNewUser=${isNewUser}, uid=${uid}`);
-    return res.status(200).json({
-      uid,
-      email,
-      isNewUser
-    });
-
+    return res.status(200).json({ uid, email, isNewUser });
   } catch (error: any) {
-    console.error('[Auth Verification ERROR]:', error.message || error);
-    
-    // Provide more specific error message for permission issues
-    const isPermissionError = error.message?.includes('permission') || error.code?.includes('permission');
-    
-    return res.status(isPermissionError ? 403 : 401).json({ 
-      message: isPermissionError ? 'Insufficient permissions on server' : 'Authentication failed', 
+    console.error('[Auth] Error:', error.message || error);
+    const isPermission = error.message?.includes('permission') || error.code?.includes('permission');
+    return res.status(isPermission ? 403 : 401).json({
+      message: isPermission ? 'Insufficient permissions' : 'Authentication failed',
       error: error.message,
-      code: error.code
     });
   }
 }
