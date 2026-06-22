@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowJs": true,
+    "module": "ESNext",
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
