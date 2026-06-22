@@ -17,7 +17,13 @@ export const UniversitySelect: React.FC<UniversitySelectProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const selectedCampus = useMemo(
     () => CAMPUSES.find((c) => c.id === value),
@@ -25,15 +31,15 @@ export const UniversitySelect: React.FC<UniversitySelectProps> = ({
   );
 
   const filteredCampuses = useMemo(() => {
-    if (!searchQuery) return CAMPUSES;
-    const query = searchQuery.toLowerCase();
+    if (!debouncedQuery) return CAMPUSES;
+    const query = debouncedQuery.toLowerCase();
     return CAMPUSES.filter(c =>
       c.name.toLowerCase().includes(query) ||
       c.shortName.toLowerCase().includes(query) ||
       c.location.toLowerCase().includes(query) ||
       (c.state?.toLowerCase() ?? "").includes(query)
     );
-  }, [searchQuery]);
+  }, [debouncedQuery]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
