@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "../contexts/AuthContext";
 import { isBusinessNameTaken } from "@/lib/validation";
 import { isAdmin } from "@/lib/config";
-import { CAMPUSES, getCampusById, getFacultyById } from "@/lib/campus";
+import { getCampusById } from "@/lib/campus";
 import { toast } from "sonner";
 import { Check, ShieldCheck, Loader2, School, GraduationCap, Building2 } from "lucide-react";
 import { UniversitySelect } from "@/components/UniversitySelect";
