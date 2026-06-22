@@ -40,7 +40,24 @@ import { CartSidebar } from "./components/CartSidebar";
 import { InstallPrompt } from "./components/InstallPrompt";
 import { PageTracker } from "./components/PageTracker";
 
-const queryClient = new QueryClient();
+function PageLoader() {
+  return (
+    <div className="flex-grow flex flex-col items-center justify-center min-h-[60vh] gap-3" aria-label="Loading page">
+      <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+      <p className="text-sm text-textMuted font-medium animate-pulse">Loading…</p>
+    </div>
+  );
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   return (
@@ -59,7 +76,7 @@ const App = () => {
                 <InstallPrompt />
                 <div className="flex flex-col min-h-screen">
                 <main className="flex-grow flex flex-col">
-                  <Suspense fallback={<div className="flex-grow flex items-center justify-center"><div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div></div>}>
+                  <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/marketplace" element={<Marketplace />} />
