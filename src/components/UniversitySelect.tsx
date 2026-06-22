@@ -27,11 +27,11 @@ export const UniversitySelect: React.FC<UniversitySelectProps> = ({
   const filteredCampuses = useMemo(() => {
     if (!searchQuery) return CAMPUSES;
     const query = searchQuery.toLowerCase();
-    return CAMPUSES.filter(
-        c.name.toLowerCase().includes(query) ||
-        c.shortName.toLowerCase().includes(query) ||
-        c.location.toLowerCase().includes(query) ||
-        (c.state?.toLowerCase() || "").includes(query)
+    return CAMPUSES.filter(c =>
+      c.name.toLowerCase().includes(query) ||
+      c.shortName.toLowerCase().includes(query) ||
+      c.location.toLowerCase().includes(query) ||
+      (c.state?.toLowerCase() ?? "").includes(query)
     );
   }, [searchQuery]);
 
