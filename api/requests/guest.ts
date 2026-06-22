@@ -1,63 +1,65 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { getAdminDb } from '../_lib/firebase-admin';
 import * as admin from 'firebase-admin';
+import { z } from 'zod';
 
-// Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-      databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`
-    });
-  } catch (error) {
-    console.error('Firebase admin initialization error', error);
-  }
-}
+const GuestRequestSchema = z.object({
+  title: z.string().min(5).max(100),
+  description: z.string().min(10).max(2000),
+  category: z.string().min(1).max(50),
+  price: z.number().min(0).max(10_000_000).optional(),
+  contactPhone: z.string().min(10).max(15),
+  whatsapp: z.string().max(15).optional(),
+  email: z.string().email().max(200),
+  name: z.string().min(2).max(100),
+  captchaAnswer: z.number().int().min(2).max(20),
+  honeypot: z.string().max(0, 'Bot detected').optional(),
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const parsed = GuestRequestSchema.safeParse({
+    ...req.body,
+    price: Number(req.body.price) || 0,
+    captchaAnswer: Number(req.body.captchaAnswer),
+  });
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.errors[0]?.message || 'Invalid input' });
+  }
+
+  const { title, description, category, price, contactPhone, whatsapp, email, name, captchaAnswer, honeypot } = parsed.data;
+
+  if (honeypot) {
+    return res.status(200).json({ success: true });
+  }
+
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
+    || req.socket.remoteAddress
+    || 'unknown';
+
   try {
-    const db = admin.firestore();
-    const { title, description, category, price, contactPhone, whatsapp, email, name, expectedMathResult, actualMathResult } = req.body;
-    
-    // IP tracking for rate limiting
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown-ip';
+    const db = getAdminDb();
 
-    // Basic Input Validation
-    if (!title || !description || !category || !email || !name) {
-      return res.status(400).json({ error: 'Missing required fields: Title, description, category, email, and name are required.' });
-    }
-
-    // Math CAPTCHA validation
-    if (expectedMathResult === undefined || actualMathResult === undefined || parseInt(actualMathResult) !== parseInt(expectedMathResult)) {
-      return res.status(400).json({ error: 'CAPTCHA verification failed. Please check your math.' });
-    }
-
-    // Rate Limiting (max 3 requests per hour per IP)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const recentRequestsQuery = await db.collection('requests')
+    const recentSnap = await db.collection('requests')
       .where('isGuest', '==', true)
       .where('ip', '==', ip)
       .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(oneHourAgo))
       .get();
 
-    if (recentRequestsQuery.size >= 3) {
-      return res.status(429).json({ error: 'Too many requests recently. Please try again later.' });
+    if (recentSnap.size >= 3) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
     }
 
-    // Store Request
-    const requestDoc = {
+    const docRef = await db.collection('requests').add({
       title,
       description,
       category,
-      budget: Number(price) || 0,
+      budget: price || 0,
       contactPhone,
       whatsapp: whatsapp || contactPhone,
       isGuest: true,
@@ -67,15 +69,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ownerName: name,
       ownerIsVerified: false,
       status: 'open',
-      ip: ip, // Store IP for rate limit checks
+      ip,
+      captchaScore: captchaAnswer,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
-
-    const docRef = await db.collection('requests').add(requestDoc);
+    });
 
     return res.status(200).json({ success: true, id: docRef.id });
-  } catch (error: any) {
-    console.error('Guest request submission error:', error);
+  } catch {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
