@@ -1,94 +1,82 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import * as admin from 'firebase-admin';
+import { getAdminAuth, getAdminDb } from './_lib/firebase-admin';
+import { z } from 'zod';
 
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-  try {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+const ReviewUpdateSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().min(1).max(500),
+});
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId,
-        clientEmail,
-        privateKey: privateKey?.replace(/\\n/g, '\n'),
-      }),
-    });
-  } catch (error) {
-    console.error('[Reviews API] Firebase initialization error:', error);
+async function verifyToken(req: VercelRequest): Promise<admin.auth.DecodedIdToken> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    throw Object.assign(new Error('Missing token'), { status: 401 });
   }
+  return getAdminAuth().verifyIdToken(authHeader.split('Bearer ')[1]);
 }
 
-const db = admin.firestore();
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { id } = req.query; // Review ID
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized. Missing authentication token.' });
+  let decoded: admin.auth.DecodedIdToken;
+  try {
+    decoded = await verifyToken(req);
+  } catch (err: any) {
+    return res.status(err.status || 401).json({ message: 'Unauthorized.' });
   }
 
-  const idToken = authHeader.split('Bearer ')[1];
+  const { uid } = decoded;
+  const { id } = req.query;
+  const db = getAdminDb();
 
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const { uid } = decodedToken;
-
-    if (req.method === 'PUT') {
-      const { rating, comment } = req.body;
-      
-      if (!id || typeof id !== 'string') return res.status(400).json({ message: 'Missing review ID.' });
-      if (!rating || !comment) return res.status(400).json({ message: 'Missing rating or comment.' });
-
-      const reviewRef = db.collection('reviews').doc(id);
-      const reviewDoc = await reviewRef.get();
-
-      if (!reviewDoc.exists) return res.status(404).json({ message: 'Review not found.' });
-      
-      const data = reviewDoc.data();
-      if (data?.userId !== uid) {
-        return res.status(403).json({ message: 'Forbidden. You can only edit your own reviews.' });
-      }
-
-      await reviewRef.update({
-        rating,
-        comment,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      return res.status(200).json({ message: 'Review updated successfully.' });
+  if (req.method === 'PUT') {
+    const parsed = ReviewUpdateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0]?.message || 'Invalid input' });
+    }
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ message: 'Missing review ID.' });
     }
 
-    if (req.method === 'DELETE') {
-      if (!id || typeof id !== 'string') return res.status(400).json({ message: 'Missing review ID.' });
-
+    try {
       const reviewRef = db.collection('reviews').doc(id);
       const reviewDoc = await reviewRef.get();
+      if (!reviewDoc.exists) return res.status(404).json({ message: 'Review not found.' });
+      if (reviewDoc.data()?.userId !== uid) {
+        return res.status(403).json({ message: 'Forbidden.' });
+      }
+      await reviewRef.update({
+        ...parsed.data,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return res.status(200).json({ message: 'Review updated.' });
+    } catch {
+      return res.status(500).json({ message: 'Internal Server Error' });
+    }
+  }
 
+  if (req.method === 'DELETE') {
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ message: 'Missing review ID.' });
+    }
+    try {
+      const reviewRef = db.collection('reviews').doc(id);
+      const reviewDoc = await reviewRef.get();
       if (!reviewDoc.exists) return res.status(404).json({ message: 'Review not found.' });
 
-      const data = reviewDoc.data();
-      
-      // Allow the review owner OR an admin to delete
-      const adminEmails = (process.env.ADMIN_EMAILS || "")
-        .split(",")
-        .map(e => e.trim().toLowerCase())
-        .filter(Boolean);
-      const isUserAdmin = adminEmails.includes(decodedToken.email?.toLowerCase() || "");
-      
-      if (data?.userId !== uid && !isUserAdmin) {
-        return res.status(403).json({ message: 'Forbidden. You can only delete your own reviews.' });
+      const adminEmails = (process.env.ADMIN_EMAILS || '')
+        .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+      const isAdminUser = adminEmails.includes(decoded.email?.toLowerCase() || '');
+
+      if (reviewDoc.data()?.userId !== uid && !isAdminUser) {
+        return res.status(403).json({ message: 'Forbidden.' });
       }
 
       await reviewRef.delete();
-      return res.status(200).json({ message: 'Review deleted successfully.' });
+      return res.status(200).json({ message: 'Review deleted.' });
+    } catch {
+      return res.status(500).json({ message: 'Internal Server Error' });
     }
-
-    return res.status(405).json({ message: 'Method Not Allowed' });
-  } catch (error: any) {
-    console.error('[Reviews API Error]:', error.message || error);
-    return res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
+
+  return res.status(405).json({ message: 'Method Not Allowed' });
 }
