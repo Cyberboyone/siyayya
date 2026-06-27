@@ -41,7 +41,7 @@ export function Navbar() {
   const navigate = useNavigate();
   
   const { totalItems, setIsCartOpen } = useCart();
-  const { isInstallable, handleInstall } = usePWAInstall();
+  const { isInstallable, isInstalled, handleInstall } = usePWAInstall();
 
   useEffect(() => {
     setSearch(new URLSearchParams(location.search).get("search") || "");
@@ -109,7 +109,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              {isInstallable && (
+              {!isInstalled && isInstallable && (
                 <Button 
                   onClick={handleInstall}
                   size="sm" 

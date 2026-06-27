@@ -4,12 +4,13 @@ import { Download, X } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 export function InstallPrompt() {
-  const { isInstallable, handleInstall } = usePWAInstall();
+  const { isInstallable, isInstalled, handleInstall } = usePWAInstall();
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    // Do not prompt when the app is already installed or running as a PWA.
+    if (isInstalled) {
+      setShowPrompt(false);
       return;
     }
 
@@ -42,7 +43,7 @@ export function InstallPrompt() {
     return () => {
       clearInterval(timer);
     };
-  }, [isInstallable, showPrompt]);
+  }, [isInstallable, isInstalled, showPrompt]);
 
   const onInstallClick = async () => {
     const success = await handleInstall();
