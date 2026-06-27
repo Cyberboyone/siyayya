@@ -157,13 +157,14 @@ const Home = () => {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full max-w-5xl"
           >
-            <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-[6.5rem] font-black text-textPrimary tracking-tighter uppercase leading-[0.9] drop-shadow-sm">
-              Buy, Sell & Connect <br />
-              <span className="bg-gradient-to-r from-primary via-accent to-pink-500 bg-[length:200%_auto] animate-gradient bg-clip-text text-transparent inline-block pb-4 pr-2 drop-shadow-sm">
+            <h1 className="hero-title-display text-[clamp(3.25rem,10vw,7.4rem)] font-black tracking-[-0.075em] uppercase leading-[0.82] text-slate-950 dark:text-white">
+              <span className="hero-title-line block">Buy, Sell</span>
+              <span className="hero-title-line block">&amp; Connect</span>
+              <span className="hero-title-accent mt-2 inline-block pb-5 pr-3">
                 on Campus
               </span>
             </h1>
-            <p className="text-base md:text-lg text-textSecondary mt-6 max-w-2xl mx-auto font-medium leading-relaxed">
+            <p className="text-base md:text-xl text-slate-700 dark:text-slate-200 mt-7 max-w-2xl mx-auto font-semibold leading-relaxed">
               The premium student marketplace in Northern Nigeria. Buy, sell, and discover the best campus deals — fast, safe, and 100% student-driven.
             </p>
           </motion.div>

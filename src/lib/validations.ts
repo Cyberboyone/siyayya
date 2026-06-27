@@ -13,12 +13,45 @@ import { z } from 'zod';
       .slice(0, 2000);
   }
 
+
+const phoneSchema = z
+  .string()
+  .trim()
+  .min(10, 'Phone number is too short')
+  .max(20, 'Phone number is too long')
+  .regex(/^[+()\d\s-]+$/, 'Please enter a valid phone number');
+
+export const UserRegistrationSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name is too long'),
+  phone: phoneSchema,
+});
+
+export const ProfileUpdateSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name is too long')
+    .optional(),
+  businessName: z
+    .string()
+    .trim()
+    .max(100, 'Business name is too long')
+    .optional(),
+  phone: phoneSchema.optional(),
+  email: z.union([z.string().email('Invalid email address'), z.literal('')]).optional(),
+});
+
   const baseSchema = {
     title: z.string().min(3, 'Title must be at least 3 characters').max(120, 'Title is too long'),
     description: z.string().min(10, 'Description must be at least 10 characters').max(2000, 'Description too long'),
     price: z.number().min(0, 'Price must be 0 or more'),
     category: z.string().min(1, 'Please select a category'),
-    contactPhone: z.string().min(7, 'A valid phone number is required').max(20),
+    contactPhone: phoneSchema,
     images: z.array(z.string()).optional().default([]),
     youtubeUrl: z.string().optional().or(z.literal('')),
   };
