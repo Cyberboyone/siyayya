@@ -1,78 +1,69 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { getMessaging } from "firebase/messaging";
+  import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+  import { getFirestore } from "firebase/firestore";
+  import { getStorage } from "firebase/storage";
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
+  const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  };
 
-const isFirebaseConfigured = Boolean(
-  import.meta.env.VITE_FIREBASE_API_KEY &&
-  import.meta.env.VITE_FIREBASE_AUTH_DOMAIN &&
-  import.meta.env.VITE_FIREBASE_PROJECT_ID
-);
+  const isFirebaseConfigured = Boolean(
+    import.meta.env.VITE_FIREBASE_API_KEY &&
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN &&
+    import.meta.env.VITE_FIREBASE_PROJECT_ID
+  );
 
-// Initialize Firebase with safety checks to prevent white screens on missing variables
-let app;
-let isFirebaseDisabled = !isFirebaseConfigured;
+  let app: any;
+  let isFirebaseDisabled = !isFirebaseConfigured;
 
-try {
-  const isProduction = import.meta.env.PROD;
-  console.log(`[Firebase Init] Environment: ${isProduction ? 'Production' : 'Development'}`);
-  
-  if (isFirebaseConfigured) {
-    app = initializeApp(firebaseConfig);
-    console.log("[Firebase Init] Success: Firebase client SDK initialized.");
-  } else {
-    const missingVars = [];
-    if (!import.meta.env.VITE_FIREBASE_API_KEY) missingVars.push('VITE_FIREBASE_API_KEY');
-    if (!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) missingVars.push('VITE_FIREBASE_AUTH_DOMAIN');
-    if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) missingVars.push('VITE_FIREBASE_PROJECT_ID');
-    
-    const errorMsg = isProduction 
-      ? `[Firebase Init] Missing production variables on Vercel: ${missingVars.join(', ')}. Please check your Vercel Dashboard.`
-      : `[Firebase Init] Missing local variables: ${missingVars.join(', ')}. Running in fallback mode.`;
-    console.warn(errorMsg);
-  }
-} catch (error) {
-  isFirebaseDisabled = true;
-  console.error("[Firebase Init] Critical error during initialization:", error);
-}
-
-const analytics = typeof window !== 'undefined' && app ? getAnalytics(app) : null;
-
-if (!app) {
-  console.error("[Firebase Init] Firebase is not properly configured. Check environment variables. App will run in degraded mode.");
-  isFirebaseDisabled = true;
-}
-
-const auth = app ? getAuth(app) : (null as unknown as ReturnType<typeof getAuth>);
-const db = app ? getFirestore(app) : (null as unknown as ReturnType<typeof getFirestore>);
-const storage = app ? getStorage(app) : (null as unknown as ReturnType<typeof getStorage>);
-
-let messaging: any = null;
-if (app && typeof window !== 'undefined') {
   try {
-    messaging = getMessaging(app);
-    console.log("[Firebase Init] Messaging initialized.");
-  } catch (error) {
-    console.warn("[Firebase Init] Messaging not supported or failed to initialize", error);
+    if (isFirebaseConfigured) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      const missing = [
+        !import.meta.env.VITE_FIREBASE_API_KEY && 'VITE_FIREBASE_API_KEY',
+        !import.meta.env.VITE_FIREBASE_AUTH_DOMAIN && 'VITE_FIREBASE_AUTH_DOMAIN',
+        !import.meta.env.VITE_FIREBASE_PROJECT_ID && 'VITE_FIREBASE_PROJECT_ID',
+      ].filter(Boolean);
+      console.warn('[Firebase] Missing env vars:', missing.join(', '));
+      isFirebaseDisabled = true;
+    }
+  } catch (err) {
+    isFirebaseDisabled = true;
+    console.error('[Firebase] Init error:', err);
   }
-}
 
-if (app) {
-  setPersistence(auth, browserLocalPersistence)
-    .then(() => console.log("[Firebase Init] Auth persistence set to local."))
-    .catch((error) => console.error("[Firebase Init] Persistence error:", error));
-}
+  const auth = app ? getAuth(app) : (null as unknown as ReturnType<typeof getAuth>);
+  const db = app ? getFirestore(app) : (null as unknown as ReturnType<typeof getFirestore>);
+  const storage = app ? getStorage(app) : (null as unknown as ReturnType<typeof getStorage>);
 
-export { app, analytics, auth, db, storage, messaging, isFirebaseDisabled };
+  if (app) {
+    setPersistence(auth, browserLocalPersistence).catch(() => {});
+  }
+
+  // analytics + messaging are heavy — deferred to after page load so they don't
+  // block the critical rendering path (~125 KB of JS execution saved up front)
+  let analytics: any = null;
+  let messaging: any = null;
+
+  if (app && typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+      import('firebase/analytics').then(({ getAnalytics }) => {
+        try { analytics = getAnalytics(app); } catch (_) {}
+      }).catch(() => {});
+      if ('serviceWorker' in navigator) {
+        import('firebase/messaging').then(({ getMessaging }) => {
+          try { messaging = getMessaging(app); } catch (_) {}
+        }).catch(() => {});
+      }
+    }, { once: true });
+  }
+
+  export { app, analytics, auth, db, storage, messaging, isFirebaseDisabled };
+  
