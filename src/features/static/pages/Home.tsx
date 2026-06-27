@@ -157,10 +157,10 @@ const Home = () => {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full max-w-5xl"
           >
-            <h1 className="hero-title-display text-[clamp(3.25rem,10vw,7.4rem)] font-black tracking-[-0.075em] uppercase leading-[0.82] text-slate-950 dark:text-white">
+            <h1 className="hero-title-display text-[clamp(3.1rem,9vw,6.8rem)] font-extrabold tracking-[-0.058em] uppercase leading-[0.88] text-slate-950 dark:text-white">
               <span className="hero-title-line block">Buy, Sell</span>
               <span className="hero-title-line block">&amp; Connect</span>
-              <span className="hero-title-accent mt-2 inline-block pb-5 pr-3">
+              <span className="hero-title-accent mt-3 inline-block pb-4 pr-3">
                 on Campus
               </span>
             </h1>
