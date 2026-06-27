@@ -122,17 +122,12 @@ const Home = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="relative max-w-7xl mx-auto px-4 pt-12 md:pt-20 pb-16 md:pb-24 overflow-visible">
+      <div className="relative max-w-7xl mx-auto px-4 pt-10 md:pt-16 pb-12 md:pb-20 overflow-visible">
         {/* Abstract Background Mesh Gradients */}
-        <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] rounded-full blur-[120px] -z-10 pointer-events-none mix-blend-multiply dark:mix-blend-screen opacity-60">
-          <div className="absolute top-0 left-[20%] w-[400px] h-[400px] bg-primary/40 rounded-full mix-blend-multiply filter blur-[80px] animate-blob" />
-          <div className="absolute top-[20%] right-[20%] w-[500px] h-[500px] bg-accent/30 rounded-full mix-blend-multiply filter blur-[80px] animate-blob animation-delay-2000" />
-          <div className="absolute bottom-[-10%] left-[30%] w-[600px] h-[600px] bg-pink-500/20 rounded-full mix-blend-multiply filter blur-[80px] animate-blob animation-delay-4000" />
+        <div className="absolute top-[-12%] left-1/2 -translate-x-1/2 w-[900px] h-[520px] rounded-full blur-[110px] -z-10 pointer-events-none mix-blend-multiply dark:mix-blend-screen opacity-45">
+          <div className="absolute top-4 left-[22%] w-[420px] h-[420px] bg-primary/30 rounded-full mix-blend-multiply filter blur-[85px] animate-blob" />
+          <div className="absolute top-[18%] right-[22%] w-[420px] h-[420px] bg-orange-300/25 rounded-full mix-blend-multiply filter blur-[85px] animate-blob animation-delay-2000" />
         </div>
-        
-        {/* Floating Background Shapes */}
-        <div className="absolute top-10 left-[5%] w-32 h-32 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-2xl -z-10 animate-float pointer-events-none hidden md:block" />
-        <div className="absolute top-40 right-[8%] w-40 h-40 bg-gradient-to-tr from-accent/30 to-pink-500/20 rounded-full blur-3xl -z-10 animate-float-delayed pointer-events-none hidden md:block" />
 
         <div className="relative z-10 flex flex-col items-center justify-center text-center">
           
@@ -157,16 +152,23 @@ const Home = () => {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full max-w-5xl"
           >
-            <h1 className="hero-title-display text-[clamp(3.05rem,9vw,6.6rem)] font-medium tracking-[-0.045em] leading-[0.94] text-slate-950 dark:text-white">
-              <span className="hero-title-line block">Buy, Sell</span>
-              <span className="hero-title-line block">&amp; Connect</span>
-              <span className="hero-title-accent mt-3 inline-block pb-4 pr-3 font-semibold">
+            <h1 className="hero-title-display text-[clamp(3rem,8vw,6.25rem)] font-extrabold tracking-tight leading-[0.96] text-slate-950 dark:text-white">
+              Buy, Sell &amp; Connect
+              <span className="hero-title-accent block pb-3">
                 on Campus
               </span>
             </h1>
-            <p className="text-base md:text-xl text-slate-700 dark:text-slate-200 mt-7 max-w-2xl mx-auto font-semibold leading-relaxed">
-              The premium student marketplace in Northern Nigeria. Buy, sell, and discover the best campus deals — fast, safe, and 100% student-driven.
+            <p className="text-base md:text-xl text-slate-600 dark:text-slate-300 mt-6 max-w-2xl mx-auto font-medium leading-relaxed">
+              Find phones, laptops, fashion, hostels, services and more from trusted students around your campus.
             </p>
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link to="/marketplace" className="w-full sm:w-auto inline-flex items-center justify-center rounded-full bg-primary px-7 py-3.5 text-sm font-extrabold text-white shadow-[0_16px_35px_-18px_rgba(255,92,0,0.9)] hover:bg-primaryDark hover:-translate-y-0.5 transition-all">
+                Start Shopping
+              </Link>
+              <Link to="/dashboard/new" className="w-full sm:w-auto inline-flex items-center justify-center rounded-full bg-white/80 dark:bg-surface/80 px-7 py-3.5 text-sm font-extrabold text-slate-900 dark:text-white border border-black/5 dark:border-white/10 hover:border-primary/40 hover:text-primary hover:-translate-y-0.5 transition-all">
+                Post a Listing
+              </Link>
+            </div>
           </motion.div>
 
           {/* Integrated Search Bar (Moved up) */}
@@ -174,7 +176,7 @@ const Home = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-3xl mx-auto px-4 mt-12 relative z-20"
+            className="w-full max-w-3xl mx-auto px-4 mt-9 relative z-20"
           >
             <SearchBar className="h-16 md:h-20 bg-white/80 dark:bg-surface/80 backdrop-blur-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-none border-2 border-white/60 dark:border-white/10 rounded-[2.5rem] overflow-hidden focus-within:ring-4 focus-within:ring-primary/30 transition-all duration-500" />
             <div className="mt-6 flex justify-center">
@@ -184,24 +186,21 @@ const Home = () => {
             </div>
           </motion.div>
 
-          {/* Stats Section (Sleek Pills) */}
+          {/* Trust Signals */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 mt-12 px-4 mb-4"
+            className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mt-9 px-4 mb-4"
           >
             {[
-              { label: "Campuses", value: "12+", icon: "🏫" },
-              { label: "Listings", value: "1k+", icon: "🛍️" },
-              { label: "Students", value: "5k+", icon: "🎓" }
-            ].map((stat, i) => (
-              <div key={i} className="flex items-center gap-3 sm:gap-4 px-5 sm:px-8 py-3 sm:py-4 rounded-[2.5rem] bg-white/60 dark:bg-surface/60 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:-translate-y-1 hover:bg-white dark:hover:bg-surface hover:shadow-primary/20 transition-all duration-300 cursor-default group">
-                <span className="text-2xl sm:text-3xl group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">{stat.icon}</span>
-                <div className="flex flex-col text-left">
-                  <span className="text-base sm:text-xl font-black text-textPrimary leading-none">{stat.value}</span>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-textSecondary mt-1">{stat.label}</span>
-                </div>
+              { label: "Verified student sellers", icon: "✅" },
+              { label: "Campus-based deals", icon: "📍" },
+              { label: "Safer student trading", icon: "🛡️" }
+            ].map((item, i) => (
+              <div key={i} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/70 dark:bg-surface/70 backdrop-blur-xl border border-black/5 dark:border-white/10 shadow-[0_8px_26px_rgb(0,0,0,0.04)] text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200">
+                <span className="text-base leading-none">{item.icon}</span>
+                <span>{item.label}</span>
               </div>
             ))}
           </motion.div>
@@ -212,15 +211,15 @@ const Home = () => {
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
           {[
-            { id: "trending", label: "Trending", icon: "🔥", link: "/marketplace?sort=trending" },
-            { id: "latest", label: "Latest", icon: "🕐", link: "/marketplace?sort=newest" },
-            { id: "nearby", label: "Nearby", icon: "📍", link: "/marketplace" },
+            { id: "phones", label: "Phones", icon: "📱", link: "/marketplace/electronics" },
+            { id: "laptops", label: "Laptops", icon: "💻", link: "/marketplace/electronics" },
             { id: "fashion", label: "Fashion", icon: "👕", link: "/marketplace/fashion" },
-            { id: "electronics", label: "Electronics", icon: "📱", link: "/marketplace/electronics" },
-            { id: "books", label: "Books", icon: "📚", link: "/marketplace/books" },
+            { id: "accommodation", label: "Hostels", icon: "🏠", link: "/hostels/nearest" },
             { id: "services", label: "Services", icon: "🔧", link: "/services" },
-            { id: "sports", label: "Sports", icon: "⚽", link: "/marketplace/sports" },
-            { id: "accommodation", label: "Accommodation", icon: "🏠", link: "/hostels/nearest" },
+            { id: "books", label: "Books", icon: "📚", link: "/marketplace/books" },
+            { id: "latest", label: "Latest", icon: "🕐", link: "/marketplace?sort=newest" },
+            { id: "trending", label: "Trending", icon: "🔥", link: "/marketplace?sort=trending" },
+            { id: "nearby", label: "Nearby", icon: "📍", link: "/marketplace" },
           ].map((cat) => (
             <Link
               key={cat.id}

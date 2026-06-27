@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Urbanist:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -114,33 +114,17 @@
   }
 
   .hero-title-display {
-    font-family: 'Urbanist', 'Outfit', sans-serif;
-    letter-spacing: -0.045em;
+    font-family: 'Outfit', sans-serif;
     text-wrap: balance;
-    filter: drop-shadow(0 16px 30px rgba(15, 23, 42, 0.10));
-  }
-
-  .hero-title-line {
-    background: linear-gradient(135deg, #0f172a 0%, #111827 42%, #4c1d95 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .dark .hero-title-line {
-    background: linear-gradient(135deg, #ffffff 0%, #fff7ed 48%, #fed7aa 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
   }
 
   .hero-title-accent {
-    background: linear-gradient(90deg, #ff5c00 0%, #ff7a00 34%, #ec4899 68%, #8b5cf6 100%);
-    background-size: 220% auto;
+    background: linear-gradient(90deg, #ff5c00 0%, #ff8a00 48%, #fb7185 100%);
+    background-size: 180% auto;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    animation: gradient 4s ease infinite;
-    text-shadow: 0 18px 44px rgba(255, 92, 0, 0.22);
+    animation: gradient 5s ease infinite;
   }
   
   .hero-gradient {
