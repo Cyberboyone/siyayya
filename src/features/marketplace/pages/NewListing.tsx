@@ -63,7 +63,7 @@ export default function NewListing() {
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated && type !== "request") {
-        navigate("/signin");
+        navigate(`/signin?from=${encodeURIComponent("/dashboard/new")}`);
       }
     }
     if (user && !contactPhone) {
@@ -237,9 +237,9 @@ export default function NewListing() {
             <ArrowLeft className="h-4 w-4" /> Back to Dashboard
           </Link>
           <h1 className="text-4xl md:text-5xl font-black text-textPrimary tracking-tight italic uppercase leading-none pr-4">
-            Submission <span className="text-gradient pr-4 inline-block">Studio</span>
+            Create <span className="text-gradient pr-4 inline-block">Listing</span>
           </h1>
-          <p className="text-[11px] font-bold text-textMuted uppercase tracking-widest opacity-60 italic">Launch your next campus offering with cinematic flair.</p>
+          <p className="text-[11px] font-bold text-textMuted uppercase tracking-widest opacity-60 italic">Post a product, service, or request for students around your campus.</p>
         </div>
       </div>
 
@@ -248,7 +248,7 @@ export default function NewListing() {
           
           {/* Type Selector */}
           <div className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Select Medium</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">What are you posting?</h3>
             <div className="flex p-2 gap-2 bg-black/5 rounded-[2rem] w-full">
               {(["product", "service", "request"] as const).map((t) => (
                 <button
@@ -258,7 +258,7 @@ export default function NewListing() {
                     type === t ? "bg-white dark:bg-black text-primary shadow-xl scale-105" : "text-textMuted/60 hover:text-textPrimary"
                   }`}
                 >
-                  {t === "request" ? "Gig/Request" : `List ${t}`}
+                  {t === "request" ? "Request" : `List ${t}`}
                 </button>
               ))}
             </div>
@@ -275,7 +275,7 @@ export default function NewListing() {
                    <h3 className="font-black text-sm uppercase tracking-tight text-primary">Guest Session Active</h3>
                 </div>
                 <p className="text-xs text-textSecondary font-medium leading-relaxed italic">
-                  You are posting without an account. <Link to="/signup" className="text-primary font-black underline">Join Siyayya</Link> to manage your requests.
+                  You are posting without an account. <Link to="/signin" className="text-primary font-black underline">Join Siyayya</Link> to manage your requests.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                   <div className="space-y-2">
@@ -303,7 +303,7 @@ export default function NewListing() {
             {/* Media Upload */}
             {(type === "product" || type === "service") && (
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Gallery & Visuals</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Photos</h3>
                 <div className="rounded-[2rem] border-2 border-dashed border-black/5 bg-black/[0.02] p-6">
                    <CloudinaryUpload 
                     onUpload={(data) => {
@@ -313,9 +313,10 @@ export default function NewListing() {
                     multiple={type === "product"}
                     maxFiles={5}
                     currentCount={images.length}
-                    label={type === "product" ? "Add Product Shots" : "Add Service Display"}
+                    label={type === "product" ? "Add Product Photos" : "Add Service Photo"}
                     accept="image/*"
                   />
+                  <p className="mt-3 text-[11px] text-textMuted font-semibold px-2">Clear photos help buyers trust your listing.</p>
                 </div>
               </div>
             )}
@@ -323,9 +324,9 @@ export default function NewListing() {
             {/* Details */}
             <div className="space-y-6">
                <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-textMuted ml-4">Headline / Title *</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-textMuted ml-4">Title *</label>
                 <Input
-                  placeholder={type === "service" ? "What's your specialty?" : "What are you offering?"}
+                  placeholder={type === "service" ? "What service are you offering?" : "What are you selling?"}
                   className="bg-black/5 dark:bg-white/5 rounded-2xl h-16 border-none shadow-inner px-8 text-base font-black italic tracking-tight"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -333,10 +334,10 @@ export default function NewListing() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-textMuted ml-4">The Narrative / Description *</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-textMuted ml-4">Description *</label>
                 <textarea
                   rows={5}
-                  placeholder="Tell the story of your offering..."
+                  placeholder="Describe the item, condition, pickup location, and any important details..."
                   className="w-full rounded-[1.5rem] bg-black/5 dark:bg-white/5 border-none shadow-inner px-8 py-6 text-sm font-medium text-textPrimary placeholder:text-textMuted/40 focus:ring-4 focus:ring-primary/10 transition-all outline-none"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -345,7 +346,7 @@ export default function NewListing() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-textMuted ml-4">Commercial Value (₦) *</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-textMuted ml-4">Price (₦) *</label>
                   <Input
                     type="number"
                     placeholder="0"
@@ -355,13 +356,13 @@ export default function NewListing() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-textMuted ml-4">Category / Domain *</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-textMuted ml-4">Category *</label>
                   <select 
                     className="h-16 w-full rounded-2xl bg-black/5 dark:bg-white/5 border-none shadow-inner px-8 text-[11px] font-black uppercase tracking-widest text-textPrimary outline-none focus:ring-4 focus:ring-primary/10 transition-all appearance-none cursor-pointer"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                   >
-                    <option value="" disabled>Select Domain</option>
+                    <option value="" disabled>Select Category</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>{c.label}</option>
                     ))}
@@ -373,7 +374,7 @@ export default function NewListing() {
             {/* Attributes */}
             {category && CATEGORY_ATTRIBUTES[category] && (
               <div className="space-y-6 pt-6 border-t border-black/5">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Specification Sheet</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {CATEGORY_ATTRIBUTES[category].map((attr) => (
                     <div key={attr.id} className="space-y-2">
@@ -409,7 +410,7 @@ export default function NewListing() {
             {/* Video & Extras */}
             {(type === "product" || type === "service") && (
               <div className="space-y-6 pt-6 border-t border-black/5">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Multimedia Extension</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Optional Video</h3>
                 <div className="space-y-4">
                    <div className="relative group">
                     <Youtube className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-[#FF0000] z-10" />
@@ -448,7 +449,7 @@ export default function NewListing() {
             {/* CAPTCHA */}
             {!isAuthenticated && type === "request" && (
               <div className="space-y-6 pt-6 border-t border-black/5">
-                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Intelligence Verification</h3>
+                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Verification</h3>
                  <div className="flex items-center gap-6">
                    <div className="h-16 px-8 rounded-2xl bg-black/5 flex items-center justify-center text-lg font-black italic text-primary">
                      {captchaNum1} + {captchaNum2} = ?
@@ -469,7 +470,7 @@ export default function NewListing() {
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Launching..." : "Publish to Feed"}
+              {isSubmitting ? "Posting..." : "Post Listing"}
             </Button>
           </div>
         </div>
@@ -479,10 +480,10 @@ export default function NewListing() {
         <AlertDialogContent className="rounded-[3rem] p-10 glass border-white/20 shadow-[0_50px_100px_rgba(0,0,0,0.3)] max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-3xl font-black italic uppercase leading-none text-textPrimary">
-              Launched <br /><span className="text-gradient pr-4 inline-block">Successfully</span>
+              Posted <br /><span className="text-gradient pr-4 inline-block">Successfully</span>
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs font-bold text-textSecondary uppercase tracking-widest leading-relaxed mt-6">
-              Your gig is live. Create an account to track responses and upgrade your experience.
+              Your request is live. Create an account to track responses and manage your posts.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="mt-10 space-y-3">
@@ -490,16 +491,16 @@ export default function NewListing() {
               className="w-full h-14 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20"
               onClick={() => {
                 setShowGuestSuccessModal(false);
-                navigate("/signup");
+                navigate("/signin");
               }}
             >
-              Secure Account
+              Create Account
             </AlertDialogAction>
             <AlertDialogCancel
               className="w-full h-14 rounded-2xl bg-black/5 text-textPrimary font-black uppercase tracking-widest text-[10px] border-none"
               onClick={() => {
                 setShowGuestSuccessModal(false);
-                navigate("/requests");
+                navigate("/marketplace");
               }}
             >
               Maybe Later

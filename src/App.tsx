@@ -95,6 +95,7 @@ import { lazy, Suspense } from "react";
                         <Route path="/orders" element={<ProtectedRoute><OrderHistoryPage /></ProtectedRoute>} />
                         <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
                         <Route path="/signin" element={<PublicRoute><SignIn /></PublicRoute>} />
+                        <Route path="/signup" element={<PublicRoute><SignIn /></PublicRoute>} />
                         <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
                         <Route path="/admin" element={<AdminRoute><ErrorBoundary><Admin /></ErrorBoundary></AdminRoute>} />
                         <Route path="/contact" element={<ContactUs />} />

@@ -27,11 +27,15 @@ const CompleteSignup = () => {
 
   const selectedCampus = getCampusById(campusId);
 
-  const handleBusinessNameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setBusinessName(val);
-    
-    const trimmed = val.trim();
+  useEffect(() => {
+    if (!user) return;
+    if (!businessName) setBusinessName(user.businessName || user.name || "");
+    if (!phone) setPhone(user.phone || "");
+    if (!campusId) setCampusId(user.campusId || "");
+  }, [user, businessName, phone, campusId]);
+
+  useEffect(() => {
+    const trimmed = businessName.trim();
     if (trimmed.length < 3) {
       setIsUnique(null);
       setIsCheckingUniqueness(false);
@@ -40,19 +44,27 @@ const CompleteSignup = () => {
 
     const currentCheck = ++checkCount.current;
     setIsCheckingUniqueness(true);
-    
-    try {
-      const taken = await isBusinessNameTaken(trimmed, user?.id);
-      if (currentCheck === checkCount.current) {
-        setIsUnique(!taken);
-        setIsCheckingUniqueness(false);
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const taken = await isBusinessNameTaken(trimmed, user?.id);
+        if (currentCheck === checkCount.current) {
+          setIsUnique(!taken);
+        }
+      } catch (error) {
+        console.error("Uniqueness check error:", error);
+      } finally {
+        if (currentCheck === checkCount.current) {
+          setIsCheckingUniqueness(false);
+        }
       }
-    } catch (error) {
-      console.error("Uniqueness check error:", error);
-      if (currentCheck === checkCount.current) {
-        setIsCheckingUniqueness(false);
-      }
-    }
+    }, 650);
+
+    return () => window.clearTimeout(timer);
+  }, [businessName, user?.id]);
+
+  const handleBusinessNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBusinessName(e.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,7 +76,7 @@ const CompleteSignup = () => {
     }
 
     if (isUnique === false) {
-      toast.error("This Business Name is already taken. Please choose another.");
+      toast.error("This display/shop name is already taken. Please choose another.");
       return;
     }
 
@@ -108,9 +120,9 @@ const CompleteSignup = () => {
           <Link to="/" className="inline-flex items-center justify-center gap-2 mb-4 group">
             <Logo textClassName="text-3xl" />
           </Link>
-          <h1 className="text-2xl font-black text-foreground mb-2">Final Step: Your Identity</h1>
+          <h1 className="text-2xl font-black text-foreground mb-2">Almost done — complete your profile</h1>
           <p className="text-sm text-muted-foreground font-semibold px-4 italic text-balance">
-             Set up your campus profile to start trading with other students.
+             Step 2 of 2: choose how other students will see and contact you.
           </p>
         </div>
 
@@ -132,14 +144,14 @@ const CompleteSignup = () => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between ml-1 mb-1">
-                <label className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground">Business Name <span className="text-primary italic">*</span></label>
+                <label className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground">Display / Shop Name <span className="text-primary italic">*</span></label>
                 {isCheckingUniqueness && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
                 {!isCheckingUniqueness && isUnique === true && <span className="text-[10px] font-bold text-green-500 uppercase flex items-center gap-1"><Check className="h-3 w-3" /> Available</span>}
                 {!isCheckingUniqueness && isUnique === false && <span className="text-[10px] font-bold text-red-500 uppercase">Taken</span>}
               </div>
               <Input
                 type="text"
-                placeholder="e.g. AbuTech or Siyayya Stores"
+                placeholder="e.g. Aisha, AbuTech, or Siyayya Stores"
                 className={`h-14 rounded-2xl bg-secondary/20 border-2 transition-all font-bold px-6 ${
                   isUnique === true ? 'border-green-500/50 shadow-lg shadow-green-500/5' : 
                   isUnique === false ? 'border-red-500/50 shadow-lg shadow-red-500/5' : 
@@ -152,7 +164,7 @@ const CompleteSignup = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground ml-1 mb-1 block">Phone Number <span className="text-primary italic">*</span></label>
+              <label className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground ml-1 mb-1 block">WhatsApp / Phone Number <span className="text-primary italic">*</span></label>
               <Input
                 type="tel"
                 placeholder="+234..."
@@ -167,7 +179,7 @@ const CompleteSignup = () => {
           <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex items-start gap-3">
              <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
              <p className="text-[10px] text-muted-foreground leading-relaxed italic">
-               By completing signup, you agree to the Siyayya <span className="text-foreground font-bold">Safety Guidelines</span>.
+               Your phone helps buyers and sellers contact you safely on campus. By continuing, you agree to the Siyayya <span className="text-foreground font-bold">Safety Guidelines</span>.
              </p>
           </div>
 

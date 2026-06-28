@@ -69,6 +69,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(userData);
         return { isNewUser: !data.phone };
       } else {
+        const newProfile = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || "User",
+          email: firebaseUser.email || "",
+          avatar: firebaseUser.photoURL || "",
+          businessName: "",
+          status: "active",
+          rating: 0,
+          reviewCount: 0,
+          isVerified: false,
+          joinedAt: new Date().toISOString(),
+        };
+        await setDoc(docRef, newProfile, { merge: true });
+        setUser(newProfile as User);
         return { isNewUser: true };
       }
     } catch (error) {
