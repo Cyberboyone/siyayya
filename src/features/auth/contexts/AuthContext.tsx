@@ -6,6 +6,8 @@ import {
   User as FirebaseUser,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   reauthenticateWithPopup,
   deleteUser,
   signInAnonymously
@@ -17,6 +19,19 @@ import { toast } from "sonner";
 
 export const normalizeBusinessName = (name: string): string => {
   return name.trim().toLowerCase().replace(/\s+/g, "-");
+};
+
+const isMobileOrPWA = (): boolean => {
+  if (typeof window === "undefined") return false;
+
+  const userAgent = window.navigator.userAgent || "";
+  const isMobile = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(userAgent);
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+  return isMobile || isStandalone;
 };
 
 interface AuthContextType {
@@ -111,11 +126,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const completeGoogleSession = async (firebaseUser: FirebaseUser): Promise<{ user: FirebaseUser, isNewUser: boolean }> => {
+    const { isNewUser } = await loadUserFromFirestore(firebaseUser);
+
+    firebaseUser.getIdToken().then(idToken => {
+      syncToServerBackground(idToken);
+    }).catch(() => {});
+
+    firebaseUser.getIdTokenResult().then(result => {
+      setIsAdmin(!!result.claims.admin);
+    }).catch(() => {});
+
+    return { user: firebaseUser, isNewUser };
+  };
+
   useEffect(() => {
     if (isFirebaseDisabled) {
       setIsLoading(false);
       return;
     }
+
+    getRedirectResult(auth).then(async (result) => {
+      if (!result?.user) return;
+      justLoggedInRef.current = true;
+      await completeGoogleSession(result.user);
+    }).catch((error) => {
+      console.error("[Auth Error] Google redirect failed:", error);
+      toast.error("Google sign-in failed. Please try again.");
+    }).finally(() => {
+      sessionStorage.removeItem("siyayya_google_redirect_pending");
+    });
 
     const loadingTimeout = setTimeout(() => {
       console.warn("[Auth] Loading stuck for 5s, releasing.");
@@ -179,81 +219,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     setIsLoading(true);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
+      if (isMobileOrPWA()) {
+        sessionStorage.setItem("siyayya_google_redirect_pending", "true");
+        await signInWithRedirect(auth, provider);
+        return new Promise<{ user: FirebaseUser, isNewUser: boolean }>(() => {});
+      }
+
       const result = await signInWithPopup(auth, provider);
 
       // Mark so onAuthStateChanged skips re-processing this login event
       justLoggedInRef.current = true;
 
-      // Check/create Firestore doc directly — no API round trip
-      const docRef = doc(db, "users", result.user.uid);
-      const docSnap = await getDoc(docRef);
-      let isNewUser = false;
-
-      if (!docSnap.exists()) {
-        isNewUser = true;
-        const newProfile = {
-          id: result.user.uid,
-          name: result.user.displayName || "User",
-          email: result.user.email || "",
-          avatar: result.user.photoURL || "",
-          businessName: "",
-          status: "active",
-          rating: 0,
-          reviewCount: 0,
-          isVerified: false,
-          joinedAt: new Date().toISOString(),
-        };
-        await setDoc(docRef, newProfile);
-        setUser({ ...newProfile, businessName: "" } as User);
-      } else {
-        const data = docSnap.data();
-        isNewUser = !data.phone;
-        const userData = {
-          id: result.user.uid,
-          ...data,
-          email: data.email || result.user.email || "",
-          name: data.name || result.user.displayName || "User",
-          avatar: data.avatar || result.user.photoURL || "",
-        } as User;
-
-        if (userData.isBanned) {
-          toast.error("Your account has been banned.");
-          await firebaseSignOut(auth);
-          setUser(null);
-          setIsLoading(false);
-          throw new Error("Account banned");
-        }
-        setUser(userData);
-
-        // Update basic profile info in background
-        setDoc(docRef, {
-          name: result.user.displayName || data.name,
-          email: result.user.email || data.email,
-          avatar: result.user.photoURL || data.avatar,
-        }, { merge: true }).catch(() => {});
-      }
-
-      // Fire-and-forget server sync — doesn't block login
-      result.user.getIdToken().then(idToken => {
-        syncToServerBackground(idToken);
-      }).catch(() => {});
-
-      return { user: result.user, isNewUser };
+      return await completeGoogleSession(result.user);
     } catch (error: any) {
       justLoggedInRef.current = false;
-      setIsLoading(false);
-      if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
-        toast.error("Sign-in was cancelled.");
-        throw error;
+
+      if (
+        !isMobileOrPWA() &&
+        ["auth/popup-blocked", "auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(error.code)
+      ) {
+        if (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request") {
+          toast.error("Sign-in was cancelled.");
+          setIsLoading(false);
+          throw error;
+        }
+
+        sessionStorage.setItem("siyayya_google_redirect_pending", "true");
+        await signInWithRedirect(auth, provider);
+        return new Promise<{ user: FirebaseUser, isNewUser: boolean }>(() => {});
       }
+
+      setIsLoading(false);
       console.error("[Auth Error] Google Login failed:", error);
       if (error.message !== "Account banned") toast.error("Sign-in failed. Please try again.");
       throw error;
     } finally {
-      setIsLoading(false);
+      if (!sessionStorage.getItem("siyayya_google_redirect_pending")) {
+        setIsLoading(false);
+      }
     }
   };
 
