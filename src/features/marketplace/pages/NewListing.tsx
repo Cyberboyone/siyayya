@@ -52,6 +52,7 @@ export default function NewListing() {
   const [captchaNum2, setCaptchaNum2] = useState(0);
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [showGuestSuccessModal, setShowGuestSuccessModal] = useState(false);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
 
   useEffect(() => {
     if (type === "request") {
@@ -77,6 +78,15 @@ export default function NewListing() {
   const handleSubmit = async () => {
     if (user?.isBanned) {
        toast.error("You cannot post. Account banned.");
+       return;
+    }
+    if (isUploadingMedia) {
+       toast.error("Please wait for your photo upload to finish.");
+       return;
+    }
+    if (isAuthenticated && !user?.campusId) {
+       toast.error("Please complete your campus profile before posting.");
+       navigate(`/complete-signup?from=${encodeURIComponent("/dashboard/new")}`);
        return;
     }
     if (!title || !description || !category || !contactPhone) {
@@ -173,7 +183,7 @@ export default function NewListing() {
           properties,
           videoId: videoId || null,
           createdAt: serverTimestamp(),
-          campusId: user?.campusId || "buk", // Ensure campusId is set from current user session
+          campusId: user?.campusId,
         };
         
         if (type === "product") {
@@ -220,7 +230,13 @@ export default function NewListing() {
       }
     } catch (error: any) {
        console.error("Error adding document: ", error);
-       toast.error(error.message || "Failed to publish listing.");
+       const code = error?.code || "";
+       const message = code === "permission-denied"
+         ? "You do not have permission to post yet. Please complete your profile or contact support."
+         : code === "unavailable"
+           ? "Network error. Please check your connection and try again."
+           : error?.message || "Failed to publish listing. Please try again.";
+       toast.error(message);
     } finally {
        setIsSubmitting(false);
     }
@@ -307,9 +323,19 @@ export default function NewListing() {
                 <div className="rounded-[2rem] border-2 border-dashed border-black/5 bg-black/[0.02] p-6">
                    <CloudinaryUpload 
                     onUpload={(data) => {
-                      setImages(prev => [...prev, data.url]);
-                      setMediaData(prev => [...prev, data]);
+                      if (type === "product") {
+                        setImages(prev => [...prev, data.url]);
+                        setMediaData(prev => [...prev, data]);
+                      } else {
+                        setImages([data.url]);
+                        setMediaData([data]);
+                      }
                     }}
+                    onRemove={(index) => {
+                      setImages(prev => prev.filter((_, i) => i !== index));
+                      setMediaData(prev => prev.filter((_, i) => i !== index));
+                    }}
+                    onUploadingChange={setIsUploadingMedia}
                     multiple={type === "product"}
                     maxFiles={5}
                     currentCount={images.length}
@@ -468,9 +494,9 @@ export default function NewListing() {
             <Button
               className="w-full h-20 rounded-[2rem] bg-[#111] hover:bg-black text-white shadow-2xl font-black uppercase tracking-[0.25em] text-xs transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50"
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploadingMedia}
             >
-              {isSubmitting ? "Posting..." : "Post Listing"}
+              {isUploadingMedia ? "Uploading photos..." : isSubmitting ? "Posting..." : "Post Listing"}
             </Button>
           </div>
         </div>

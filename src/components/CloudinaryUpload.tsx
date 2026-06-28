@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 
 interface CloudinaryUploadProps {
   onUpload: (data: { url: string; publicId: string; resourceType: string }) => void;
+  onRemove?: (index: number) => void;
+  onUploadingChange?: (isUploading: boolean) => void;
   multiple?: boolean;
   maxFiles?: number;
   currentCount?: number;
@@ -17,6 +19,8 @@ interface CloudinaryUploadProps {
 
 export function CloudinaryUpload({
   onUpload,
+  onRemove,
+  onUploadingChange,
   multiple = false,
   maxFiles = 5,
   currentCount = 0,
@@ -65,6 +69,7 @@ export function CloudinaryUpload({
     }
 
     setIsUploading(true);
+    onUploadingChange?.(true);
     setError(null);
 
     try {
@@ -100,6 +105,7 @@ export function CloudinaryUpload({
       });
     } finally {
       setIsUploading(false);
+      onUploadingChange?.(false);
       // Reset input so the same file could be selected again if needed
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -134,6 +140,7 @@ export function CloudinaryUpload({
     }
 
     setIsUploading(true);
+    onUploadingChange?.(true);
     setError(null);
     const uploadLimit = Math.min(files.length, availableSlots);
     try {
@@ -153,11 +160,13 @@ export function CloudinaryUpload({
       toast({ title: 'Upload Failed', description: msg, variant: 'destructive' });
     } finally {
       setIsUploading(false);
+      onUploadingChange?.(false);
     }
-  }, [maxFiles, currentCount, multiple, onUpload, toast]);
+  }, [maxFiles, currentCount, multiple, onUpload, onUploadingChange, toast]);
 
-  const clearPreviews = () => {
-    setPreviews([]);
+  const removePreview = (index: number) => {
+    setPreviews(prev => prev.filter((_, i) => i !== index));
+    onRemove?.(index);
   };
 
   return (
@@ -221,7 +230,7 @@ export function CloudinaryUpload({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setPreviews(prev => prev.filter((_, i) => i !== index));
+                  removePreview(index);
                 }}
                 className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
               >
