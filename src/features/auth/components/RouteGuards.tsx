@@ -9,18 +9,33 @@ import { useRef } from "react";
  * 🎯 SMART REDIRECT LOGIC
  * Shared utility to determine where a user should be based on their profile state.
  */
-export const getSmartRedirectPath = (user: any) => {
+type AuthUserProfile = {
+  email?: string;
+  businessName?: string;
+  name?: string;
+  phone?: string;
+  campusId?: string;
+  profile_completed?: boolean;
+};
+
+export const isProfileComplete = (user: AuthUserProfile | null | undefined) => {
+  if (!user) return false;
+
+  const hasDisplayName = !!user.businessName?.trim() && user.businessName !== "Unknown User";
+  const hasPhone = !!user.phone?.trim();
+  const hasCampus = !!user.campusId?.trim();
+
+  return user.profile_completed === true || (hasDisplayName && hasPhone && hasCampus);
+};
+
+export const getSmartRedirectPath = (user: AuthUserProfile | null | undefined) => {
   if (!user) return "/signin";
   
   // 1. Admins go to the admin panel
   if (isAdmin(user.email)) return "/admin";
   
   // 2. Users with incomplete profiles go to signup completion
-  const hasBusinessName = user.businessName && 
-                          user.businessName.trim() !== "" && 
-                          user.businessName !== "Unknown User";
-                          
-  if (!hasBusinessName) return "/complete-signup";
+  if (!isProfileComplete(user)) return "/complete-signup";
   
   // 3. Everyone else goes to their dashboard
   return "/dashboard";

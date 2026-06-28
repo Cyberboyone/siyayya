@@ -87,9 +87,10 @@ const CompleteSignup = () => {
 
       await updateProfile({
         businessName: businessName.trim(),
-        phone,
+        phone: phone.trim(),
         campusId,
         university: campus?.shortName, // Legacy support
+        profile_completed: true,
       });
 
       toast.success("Registration complete! Welcome to Siyayya.");

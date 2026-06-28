@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { isAdmin } from "@/lib/config";
+import { isProfileComplete } from "@/features/auth/components/RouteGuards";
 
 /**
  * 🎯 AUTH REDIRECT HANDLER
@@ -34,11 +35,7 @@ const AuthRedirect = () => {
     }
 
     // 🔴 2. Profile Completeness Check
-    const hasBusinessName = user.businessName && 
-                          user.businessName.trim() !== "" && 
-                          user.businessName !== "Unknown User";
-    
-    if (hasBusinessName) {
+    if (isProfileComplete(user)) {
       console.log(`[AuthRedirect] Existing user ${user.email} (profile complete) redirecting to ${fromPath || "/dashboard"}`);
       navigate(fromPath || "/dashboard", { replace: true });
     } else {
