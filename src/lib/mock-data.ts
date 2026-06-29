@@ -135,8 +135,6 @@ export interface User {
   badges?: string[];
   reviewCount?: number;
   completedListings?: number;
-  isPhoneVerified?: boolean;
-  phone_verified?: boolean;
   profile_completed?: boolean;
   isVerified?: boolean;
   role?: "user" | "admin";

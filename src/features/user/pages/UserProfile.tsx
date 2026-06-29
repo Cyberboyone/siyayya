@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Star, MapPin, Calendar, Phone,
-  Package, Wrench, Loader2, BadgeCheck, Edit,
+  Package, Wrench, Loader2, Edit,
   Mail, MessageSquare, Heart, Users, ShieldAlert, Award
 } from "lucide-react";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -293,11 +293,6 @@ const UserProfile = () => {
                   </div>
                 )}
               </div>
-              {userInfo.isPhoneVerified && (
-                <div className="absolute -bottom-2 -right-2 h-10 w-10 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-xl">
-                  <BadgeCheck className="h-6 w-6 text-white" />
-                </div>
-              )}
             </div>
 
             <div className="flex-1 text-center md:text-left">

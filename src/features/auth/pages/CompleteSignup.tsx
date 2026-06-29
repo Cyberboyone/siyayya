@@ -13,7 +13,6 @@ import { UniversitySelect } from "@/components/UniversitySelect";
 
 const CompleteSignup = () => {
   const [businessName, setBusinessName] = useState("");
-  const [phone, setPhone] = useState("");
   const [campusId, setCampusId] = useState("");
   
   const [isCheckingUniqueness, setIsCheckingUniqueness] = useState(false);
@@ -30,9 +29,8 @@ const CompleteSignup = () => {
   useEffect(() => {
     if (!user) return;
     if (!businessName) setBusinessName(user.businessName || user.name || "");
-    if (!phone) setPhone(user.phone || "");
     if (!campusId) setCampusId(user.campusId || "");
-  }, [user, businessName, phone, campusId]);
+  }, [user, businessName, campusId]);
 
   useEffect(() => {
     const trimmed = businessName.trim();
@@ -70,7 +68,7 @@ const CompleteSignup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!businessName || !phone || !campusId) {
+    if (!businessName || !campusId) {
       toast.error("Please fill in all mandatory fields.");
       return;
     }
@@ -87,7 +85,6 @@ const CompleteSignup = () => {
 
       await updateProfile({
         businessName: businessName.trim(),
-        phone: phone.trim(),
         campusId,
         university: campus?.shortName, // Legacy support
         profile_completed: true,
@@ -123,7 +120,7 @@ const CompleteSignup = () => {
           </Link>
           <h1 className="text-2xl font-black text-foreground mb-2">Almost done — complete your profile</h1>
           <p className="text-sm text-muted-foreground font-semibold px-4 italic text-balance">
-             Step 2 of 2: choose how other students will see and contact you.
+             Step 2 of 2: choose your campus and how other students will see you.
           </p>
         </div>
 
@@ -164,23 +161,12 @@ const CompleteSignup = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground ml-1 mb-1 block">WhatsApp / Phone Number <span className="text-primary italic">*</span></label>
-              <Input
-                type="tel"
-                placeholder="+234..."
-                className="h-14 rounded-2xl bg-secondary/20 border-2 border-white/10 focus:border-primary/50 transition-all font-bold px-6"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-              />
-            </div>
           </div>
 
           <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex items-start gap-3">
              <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
              <p className="text-[10px] text-muted-foreground leading-relaxed italic">
-               Your phone helps buyers and sellers contact you safely on campus. By continuing, you agree to the Siyayya <span className="text-foreground font-bold">Safety Guidelines</span>.
+               You can add your contact number when creating a listing. By continuing, you agree to the Siyayya <span className="text-foreground font-bold">Safety Guidelines</span>.
              </p>
           </div>
 

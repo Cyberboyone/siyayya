@@ -209,7 +209,7 @@ const Dashboard = () => {
     try {
       setIsUpdatingProfile(true);
       await deleteAccount();
-      navigate("/signup");
+      navigate("/signin");
     } catch (error: any) {
       console.error("Deletion error:", error);
       if (error.code === 'auth/requires-recent-login') {

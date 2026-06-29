@@ -13,7 +13,6 @@ type AuthUserProfile = {
   email?: string;
   businessName?: string;
   name?: string;
-  phone?: string;
   campusId?: string;
   profile_completed?: boolean;
 };
@@ -22,10 +21,9 @@ export const isProfileComplete = (user: AuthUserProfile | null | undefined) => {
   if (!user) return false;
 
   const hasDisplayName = !!user.businessName?.trim() && user.businessName !== "Unknown User";
-  const hasPhone = !!user.phone?.trim();
   const hasCampus = !!user.campusId?.trim();
 
-  return user.profile_completed === true || (hasDisplayName && hasPhone && hasCampus);
+  return user.profile_completed === true || (hasDisplayName && hasCampus);
 };
 
 export const getSmartRedirectPath = (user: AuthUserProfile | null | undefined) => {
