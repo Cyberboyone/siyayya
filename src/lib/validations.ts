@@ -21,31 +21,6 @@ const phoneSchema = z
   .max(20, 'Phone number is too long')
   .regex(/^[+()\d\s-]+$/, 'Please enter a valid phone number');
 
-export const UserRegistrationSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name is too long'),
-  phone: phoneSchema,
-});
-
-export const ProfileUpdateSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name is too long')
-    .optional(),
-  businessName: z
-    .string()
-    .trim()
-    .max(100, 'Business name is too long')
-    .optional(),
-  phone: phoneSchema.optional(),
-  email: z.union([z.string().email('Invalid email address'), z.literal('')]).optional(),
-});
-
   const baseSchema = {
     title: z.string().min(3, 'Title must be at least 3 characters').max(120, 'Title is too long'),
     description: z.string().min(10, 'Description must be at least 10 characters').max(2000, 'Description too long'),

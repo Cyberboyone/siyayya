@@ -1,8 +1,8 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
@@ -15,9 +15,7 @@ const SignIn = () => {
     noindex: true,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { user, loginWithGoogle, isLoading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { loginWithGoogle, isLoading: authLoading } = useAuth();
 
   const handleGoogleSignIn = async () => {
     try {

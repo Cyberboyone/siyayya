@@ -8,7 +8,7 @@ import { isBusinessNameTaken } from "@/lib/validation";
 import { isAdmin } from "@/lib/config";
 import { getCampusById } from "@/lib/campus";
 import { toast } from "sonner";
-import { Check, ShieldCheck, Loader2, School, GraduationCap, Building2 } from "lucide-react";
+import { Check, ShieldCheck, Loader2, School } from "lucide-react";
 import { UniversitySelect } from "@/components/UniversitySelect";
 
 const CompleteSignup = () => {
@@ -24,7 +24,6 @@ const CompleteSignup = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const selectedCampus = getCampusById(campusId);
 
   useEffect(() => {
     if (!user) return;

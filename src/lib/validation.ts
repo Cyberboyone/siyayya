@@ -2,10 +2,10 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db, isFirebaseDisabled } from "./firebase";
 
 /**
- * 🟢 Isolated Business Name Validation
- * Checks if a business name is already taken in the Firestore database.
+ * 🟢 Isolated Display / Shop Name Validation
+ * Checks if a display/shop name is already taken in the Firestore database.
  * 
- * @param name The business name to check
+ * @param name The display/shop name to check
  * @param currentUserId Optional ID to ignore (for edit mode)
  * @returns Promise<boolean> True if taken, False if available
  */
@@ -44,7 +44,7 @@ export async function isBusinessNameTaken(name: string, currentUserId?: string):
     console.log(`[Validation] Result for "${normalizedName}": ${isTakenByOthers ? 'TAKEN' : 'AVAILABLE'}`);
     return isTakenByOthers;
   } catch (error) {
-    console.error("[Validation Error] Failed to check business name uniqueness:", error);
+    console.error("[Validation Error] Failed to check display/shop name uniqueness:", error);
     // Safety fallback: if we can't check, we don't block unless we are sure.
     // However, to prevent duplicates, returning false (available) is risky.
     // But returning true (taken) on error causes the "false positive" bug the user reported.
