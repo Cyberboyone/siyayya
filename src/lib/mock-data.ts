@@ -48,6 +48,7 @@ export type NotificationType =
   | "like" 
   | "follow" 
   | "announcement" 
+  | "dailyDigest"
   | "admin";
 
 export interface AppNotification {
@@ -148,6 +149,7 @@ export interface User {
     messages?: boolean;
     orderUpdates?: boolean;
     promotions?: boolean;
+    dailyDigest?: boolean;
     [key: string]: boolean | undefined;
   };
 }

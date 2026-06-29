@@ -17,7 +17,8 @@ export function NotificationSettings() {
     like: true,
     follow: true,
     mention: true,
-    announcement: true
+    announcement: true,
+    dailyDigest: true
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -58,11 +59,6 @@ export function NotificationSettings() {
         notificationPreferences: preferences
       });
       toast.success('Notification preferences updated');
-      
-      // Push notifications are now in-app by default, so no need to ask for native permission here
-      // if (permission !== 'granted' && Object.values(preferences).some(v => v)) {
-      //   await requestPermission();
-      // }
     } catch (error) {
       console.error('Error saving preferences:', error);
       toast.error('Failed to update preferences');
@@ -82,6 +78,7 @@ export function NotificationSettings() {
     { key: 'follow', label: 'New Followers', description: 'When someone starts following you' },
     { key: 'mention', label: 'Mentions', description: 'When you are mentioned in a discussion' },
     { key: 'announcement', label: 'Campus Announcements', description: 'Important updates from the Siyayya team' },
+    { key: 'dailyDigest', label: 'Daily Marketplace Reminder', description: 'One daily reminder to check new campus deals' },
   ];
 
   return (
@@ -90,10 +87,19 @@ export function NotificationSettings() {
         <div>
           <h4 className="text-[11px] font-black text-textPrimary uppercase tracking-widest italic">Push Notifications</h4>
           <p className="text-[9px] font-bold text-textMuted uppercase mt-1 tracking-wider">
-            In-App Notifications Enabled
+            {permission === 'granted' ? 'Device Push Enabled' : 'Enable device push for daily reminders'}
           </p>
         </div>
       </div>
+
+      {permission !== 'granted' && (
+        <button
+          onClick={requestPermission}
+          className="w-full h-12 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] hover:bg-primary/90 transition-all"
+        >
+          Enable Push Notifications
+        </button>
+      )}
 
       <div className="space-y-4 bg-black/5 dark:bg-white/5 rounded-2xl p-6">
         {notificationTypes.map(({ key, label, description }) => (

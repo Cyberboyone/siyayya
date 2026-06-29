@@ -13,6 +13,7 @@ import { lazy, Suspense } from "react";
   import { CommandMenu } from "./components/CommandMenu";
   import { CartProvider } from "./features/marketplace/contexts/CartContext";
   import { PageTracker } from "./components/PageTracker";
+  import { NotificationBootstrap } from "./components/NotificationBootstrap";
 
   // Deferred — not needed for first paint
   const CartSidebar = lazy(() => import("./components/CartSidebar").then(m => ({ default: m.CartSidebar })));
@@ -70,6 +71,7 @@ import { lazy, Suspense } from "react";
                 <Sonner />
                 <ScrollToTop />
                 <PageTracker />
+                <NotificationBootstrap />
                 <Suspense fallback={null}><InstallPrompt /></Suspense>
                 <div className="flex flex-col min-h-screen">
                   <main className="flex-grow flex flex-col">
