@@ -9,8 +9,7 @@ import {
   signInWithRedirect,
   getRedirectResult,
   reauthenticateWithPopup,
-  deleteUser,
-  signInAnonymously
+  deleteUser
 } from "firebase/auth";
 import { doc, getDoc, setDoc, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { auth, db, isFirebaseDisabled } from "@/lib/firebase";
@@ -42,8 +41,6 @@ interface AuthContextType {
   updateProfile: (data: Partial<User>) => Promise<void>;
   logout: () => Promise<void>;
   loginWithGoogle: () => Promise<{ user: FirebaseUser, isNewUser: boolean }>;
-  loginWithPhoneLite: (name: string, phone: string) => Promise<any>;
-  addPhoneToGoogleAccount: (phone: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
 
@@ -56,7 +53,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Prevents onAuthStateChanged from duplicating work that loginWithGoogle already did
   const justLoggedInRef = useRef(false);
-  const phoneLiteInProgressRef = useRef(false);
 
   // Read user profile directly from Firestore — no server API call needed
   const loadUserFromFirestore = async (firebaseUser: FirebaseUser): Promise<{ isNewUser: boolean }> => {
@@ -166,8 +162,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearTimeout(loadingTimeout);
       try {
         if (firebaseUser) {
-          // Skip if loginWithGoogle or loginWithPhoneLite already handled this auth event
-          if (justLoggedInRef.current || phoneLiteInProgressRef.current) {
+          // Skip if loginWithGoogle already handled this auth event
+          if (justLoggedInRef.current) {
             justLoggedInRef.current = false;
             return;
           }
@@ -264,48 +260,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithPhoneLite = async (name: string, phone: string) => {
-    try {
-      setIsLoading(true);
-      phoneLiteInProgressRef.current = true;
-      const result = await signInAnonymously(auth);
-
-      const newUserProfile: User = {
-        id: result.user.uid,
-        name,
-        phone,
-        email: "",
-        businessName: name,
-        businessNameLower: normalizeBusinessName(name),
-        rating: 5.0,
-        reviewCount: 0,
-        account_type: "buyer",
-        status: "active",
-        phone_verified: false,
-        profile_completed: false
-      };
-
-      const docRef = doc(db, "users", result.user.uid);
-      await setDoc(docRef, newUserProfile, { merge: true });
-      setUser(newUserProfile);
-      return result.user;
-    } catch (error: any) {
-      console.error("[Auth Error] Phone Lite Login failed:", error);
-      toast.error("Login failed. Check connection or try Google Sign In.");
-      throw error;
-    } finally {
-      phoneLiteInProgressRef.current = false;
-      setIsLoading(false);
-    }
-  };
-
-  const addPhoneToGoogleAccount = async (phone: string) => {
-    if (!user) throw new Error("No user session");
-    const docRef = doc(db, "users", user.id);
-    await setDoc(docRef, { phone, phone_verified: false }, { merge: true });
-    setUser(prev => prev ? { ...prev, phone, phone_verified: false } as User : null);
-  };
-
   const deleteAccount = async () => {
     if (!user || !auth.currentUser) throw new Error("No authenticated user");
 
@@ -377,8 +331,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout, 
       updateProfile, 
       loginWithGoogle, 
-      loginWithPhoneLite,
-      addPhoneToGoogleAccount,
       deleteAccount 
     }}>
       {children}

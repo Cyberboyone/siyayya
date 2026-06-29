@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Phone, ShieldCheck } from "lucide-react";
+import { X, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
-import { PhoneAuthFlow } from "./PhoneAuthFlow";
-import { GooglePhonePrompt } from "./GooglePhonePrompt";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,18 +13,13 @@ interface AuthModalProps {
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { loginWithGoogle } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const [view, setView] = useState<"options" | "phone" | "google_phone">("options");
 
   const handleGoogleSignIn = async () => {
     try {
       setIsSigningIn(true);
       const result = await loginWithGoogle();
-      if (result?.isNewUser) {
-        setView("google_phone");
-      } else {
-        onSuccess?.();
-        onClose();
-      }
+      onSuccess?.();
+      onClose();
     } catch {
       // Error handled in context
     } finally {
@@ -57,42 +50,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 <X className="h-4 w-4 text-textMuted" />
               </button>
 
-              {view === "options" ? (
-                <>
-                  <h3 className="text-xl font-black text-textPrimary tracking-tight mb-2">
-                    Quick Sign In
-                  </h3>
-                  <p className="text-sm text-textMuted leading-relaxed mb-6">
-                    Sign in to message sellers, negotiate prices, and save your favorite items.
-                  </p>
+              <>
+                <h3 className="text-xl font-black text-textPrimary tracking-tight mb-2">
+                  Quick Sign In
+                </h3>
+                <p className="text-sm text-textMuted leading-relaxed mb-6">
+                  Sign in with Google to message sellers, negotiate prices, and save your favorite items.
+                </p>
 
-                  <div className="space-y-3">
-                    <button
-                      onClick={handleGoogleSignIn}
-                      disabled={isSigningIn}
-                      className="w-full flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl bg-textPrimary text-white dark:bg-white dark:text-textPrimary font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50"
-                    >
-                      {isSigningIn ? "Signing in..." : "Continue with Google"}
-                    </button>
-                    <button
-                      onClick={() => setView("phone")}
-                      className="w-full flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl border-2 border-muted bg-transparent text-textPrimary font-bold text-sm hover:bg-muted/50 transition-all"
-                    >
-                      <Phone className="h-4 w-4" />
-                      Continue with Phone Number
-                    </button>
-                  </div>
-                  
-                  <div className="mt-5 flex items-center justify-center gap-2 text-[10px] text-textMuted">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Secure & Fast Verification</span>
-                  </div>
-                </>
-              ) : view === "phone" ? (
-                <PhoneAuthFlow onBack={() => setView("options")} onSuccess={() => { onSuccess?.(); onClose(); }} />
-              ) : (
-                <GooglePhonePrompt onSuccess={() => { onSuccess?.(); onClose(); }} />
-              )}
+                <div className="space-y-3">
+                  <button
+                    onClick={handleGoogleSignIn}
+                    disabled={isSigningIn}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl bg-textPrimary text-white dark:bg-white dark:text-textPrimary font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50"
+                  >
+                    {isSigningIn ? "Signing in..." : "Continue with Google"}
+                  </button>
+                </div>
+                
+                <div className="mt-5 flex items-center justify-center gap-2 text-[10px] text-textMuted">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>Secure Google authentication</span>
+                </div>
+              </>
             </div>
           </motion.div>
         </>
