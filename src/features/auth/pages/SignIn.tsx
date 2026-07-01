@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
@@ -20,6 +20,12 @@ const SignIn = () => {
   const { claimStoredReferral } = useReferralProgram();
 
   const hasInvite = typeof window !== "undefined" && !!localStorage.getItem("siyayya_referral_code");
+
+  useEffect(() => {
+    if (!authLoading) {
+      setIsLoading(false);
+    }
+  }, [authLoading, user]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -101,7 +107,7 @@ const SignIn = () => {
             
             <div className="text-center space-y-2">
               <p className="text-[10px] text-muted-foreground">
-                If login fails or gets stuck, try opening this page in <span className="text-primary font-bold">Chrome</span> or <span className="text-primary font-bold">Safari</span>.
+                If login fails or gets stuck in the installed app, open Siyayya once in <span className="text-primary font-bold">Safari/Chrome</span> and sign in there.
               </p>
               {(isLoading || authLoading) && (
                 <button 
