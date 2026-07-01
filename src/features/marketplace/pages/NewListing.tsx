@@ -7,11 +7,10 @@ import { Input } from "@/components/ui/input";
 import { categories, CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
 import { Youtube, Info, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { auth, db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { auth } from "@/lib/firebase";
 import { CloudinaryUpload } from "@/components/CloudinaryUpload";
 import { extractYouTubeId } from "@/lib/utils";
-import { ProductListingSchema, ServiceListingSchema, RequestListingSchema, sanitizeText } from "@/lib/validations";
+import { ProductListingSchema, ServiceListingSchema, RequestListingSchema } from "@/lib/validations";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -153,10 +152,9 @@ export default function NewListing() {
         
         setShowGuestSuccessModal(true);
       } else {
-        const collectionName = type === "product" ? "products" : type === "service" ? "services" : "requests";
         const ownerId = auth.currentUser?.uid || user?.id;
 
-        if (!ownerId) {
+        if (!ownerId || !auth.currentUser) {
           toast.error("Please sign in again before posting.");
           navigate(`/signin?from=${encodeURIComponent("/dashboard/new")}`);
           setIsSubmitting(false);
@@ -177,66 +175,38 @@ export default function NewListing() {
           return;
         }
 
-        const baseSlug = title.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
-        const uniqueSlug = `${baseSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
+        const token = await auth.currentUser.getIdToken(true);
+        const response = await fetch('/api/listings/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idToken: token,
+            type,
+            title,
+            description,
+            price: Number(price) || 0,
+            category,
+            condition,
+            images,
+            mediaData,
+            contactPhone,
+            whatsapp: whatsapp || contactPhone,
+            properties,
+            videoId: videoId || null,
+            youtubeUrl,
+            campusId: user?.campusId,
+          }),
+        });
 
-        const newDocData: any = {
-          title: sanitizeText(title),
-          slug: uniqueSlug,
-          description: sanitizeText(description),
-          category,
-          price: Number(price) || 0,
-          contactPhone,
-          whatsapp: whatsapp || contactPhone,
-          properties,
-          videoId: videoId || null,
-          createdAt: serverTimestamp(),
-          campusId: user?.campusId,
-        };
-        
-        if (type === "product") {
-          newDocData.ownerId = ownerId;
-          newDocData.ownerName = user?.businessName || user?.name || "Unknown";
-          newDocData.ownerIsVerified = user?.isVerified || false;
-          newDocData.ownerPhone = contactPhone;
-          newDocData.ownerRating = 5.0;
-          newDocData.condition = condition;
-          newDocData.images = images;
-          newDocData.image = images.length > 0 ? images[0] : "";
-          newDocData.mediaData = mediaData;
-          newDocData.isSold = false;
-          newDocData.isFeatured = false;
-          newDocData.status = "approved";
-          newDocData.views = 0;
-        } else if (type === "service") {
-          newDocData.ownerId = ownerId;
-          newDocData.ownerName = user?.businessName || user?.name || "Unknown";
-          newDocData.ownerIsVerified = user?.isVerified || false;
-          newDocData.ownerPhone = contactPhone;
-          newDocData.ownerRating = 5.0;
-          newDocData.rating = 0;
-          newDocData.reviews = 0;
-          newDocData.images = images;
-          newDocData.image = images.length > 0 ? images[0] : "";
-          newDocData.mediaData = mediaData;
-          newDocData.mediaUrl = images.length > 0 ? images[0] : "";
-          newDocData.mediaType = "image";
-          newDocData.priceLabel = "Starting from";
-          newDocData.status = "approved";
-          newDocData.views = 0;
-        } else {
-          newDocData.ownerId = ownerId;
-          newDocData.ownerName = user?.businessName || user?.name || "Unknown";
-          newDocData.ownerIsVerified = user?.isVerified || false;
-          newDocData.budget = Number(price) || 0;
-          newDocData.status = "open";
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(result.message || `Failed to publish listing (${response.status})`);
         }
 
-        await addDoc(collection(db, collectionName), newDocData);
         toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} published successfully!`);
 
         if (type === "product") {
-          const shareUrl = `${window.location.origin}/product/${uniqueSlug}?ref=share`;
+          const shareUrl = `${window.location.origin}/product/${result.slug}?ref=share`;
           const shareText = `I just posted ${title} on Siyayya Campus Marketplace. Check it out: ${shareUrl}`;
           const openDashboard = () => navigate("/dashboard?tab=listings");
 
