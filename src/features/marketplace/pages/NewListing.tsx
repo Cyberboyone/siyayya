@@ -237,7 +237,7 @@ export default function NewListing() {
        console.error("Error adding document: ", error);
        const code = error?.code || "";
        const message = code === "permission-denied"
-         ? "You do not have permission to post yet. Please complete your profile or contact support."
+         ? "This app version is still using old cached permissions. Please refresh or clear site data, then try again."
          : code === "unavailable"
            ? "Network error. Please check your connection and try again."
            : error?.message || "Failed to publish listing. Please try again.";
