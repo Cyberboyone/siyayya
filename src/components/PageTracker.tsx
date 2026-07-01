@@ -7,6 +7,12 @@ export function PageTracker() {
   const location = useLocation();
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const referralCode = params.get('ref') || params.get('invite');
+    if (referralCode) {
+      localStorage.setItem('siyayya_referral_code', referralCode.trim().toUpperCase());
+    }
+
     const currentViews = parseInt(sessionStorage.getItem('siyayya_page_views') || '0', 10);
     sessionStorage.setItem('siyayya_page_views', (currentViews + 1).toString());
 
@@ -21,7 +27,7 @@ export function PageTracker() {
       lastActive: serverTimestamp(),
       lastPath: location.pathname,
     }, { merge: true }).catch(() => {});
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   return null;
 }

@@ -133,9 +133,13 @@ export interface User {
   joinedAt?: string;
   rating: number;
   reputationScore?: number;
-  badges?: string[];
   reviewCount?: number;
   completedListings?: number;
+  referralCode?: string;
+  referralCount?: number;
+  referralRewardCredits?: number;
+  referredBy?: string;
+  badges?: string[];
   profile_completed?: boolean;
   isVerified?: boolean;
   role?: "user" | "admin";

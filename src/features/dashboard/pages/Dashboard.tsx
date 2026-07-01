@@ -15,6 +15,7 @@ import { Plus, Edit, Trash2, Package, Wrench, Settings, Eye, Star, CheckCircle, 
 import { toast } from "sonner";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { NotificationSettings } from "@/features/notifications/components/NotificationSettings";
+import { useReferralProgram } from "@/hooks/useReferralProgram";
 import { UniversitySelect } from "@/components/UniversitySelect";
 import { 
   AlertDialog,
@@ -46,6 +47,7 @@ const Dashboard = () => {
   const [tab, setTab] = useState<Tab>(initialTab);
   const { savedIds, toggle } = useSavedItems();
   const { user, deleteAccount, updateProfile } = useAuth();
+  const { referralCode, referralCount, rewardCredits, shareInvite, copyInvite } = useReferralProgram();
   const navigate = useNavigate();
 
   const [myProducts, setMyProducts] = useState<Product[]>([]);
@@ -355,11 +357,32 @@ const Dashboard = () => {
                       </div>
                     </div>
 
+                    <div className="rounded-[2.5rem] bg-gradient-to-br from-primary/10 via-white to-emerald-500/10 dark:via-black/10 p-8 border border-primary/10 shadow-sm">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary mb-2">Referral Program</p>
+                          <h3 className="text-3xl font-black text-textPrimary italic uppercase leading-none">Invite friends. Earn boosts.</h3>
+                          <p className="text-xs text-textSecondary font-semibold mt-3 max-w-xl">Share your Siyayya invite link. Every successful invite gives you referral credit you can use as a growth reward.</p>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <span className="rounded-full bg-white/80 dark:bg-black/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-textPrimary">Code: {referralCode}</span>
+                            <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-600">{rewardCredits} boost credits</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                          <Button onClick={shareInvite} className="h-12 rounded-2xl bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black uppercase tracking-widest text-[10px] gap-2">
+                            <Share2 className="h-4 w-4" /> Share Invite
+                          </Button>
+                          <Button onClick={copyInvite} variant="outline" className="h-12 rounded-2xl font-black uppercase tracking-widest text-[10px]">Copy Link</Button>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                       {[
                         { label: "Inventory", count: myProducts.length, icon: Package, color: "text-primary" },
                         { label: "Expertise", count: myServices.length, icon: Wrench, color: "text-accent" },
                         { label: "Curated", count: savedIds.length, icon: Heart, color: "text-rose-500" },
+                        { label: "Invites", count: referralCount, icon: Share2, color: "text-emerald-500" },
                       ].map((stat) => (
                         <div key={stat.label} className="rounded-[2.5rem] bg-white dark:bg-black/10 p-8 text-center border border-black/5 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
                           <div className={`h-12 w-12 rounded-2xl bg-black/5 flex items-center justify-center mx-auto mb-4 ${stat.color}`}>

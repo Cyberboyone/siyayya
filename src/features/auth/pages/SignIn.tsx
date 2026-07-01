@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import AuthRedirect from "@/components/AuthRedirect";
+import { useReferralProgram } from "@/hooks/useReferralProgram";
 
 const SignIn = () => {
   useSEO({
@@ -15,12 +16,16 @@ const SignIn = () => {
     noindex: true,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithGoogle, isLoading: authLoading } = useAuth();
+  const { loginWithGoogle, isLoading: authLoading, user } = useAuth();
+  const { claimStoredReferral } = useReferralProgram();
+
+  const hasInvite = typeof window !== "undefined" && !!localStorage.getItem("siyayya_referral_code");
 
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
       await loginWithGoogle();
+      claimStoredReferral();
     } catch (error: any) {
       console.error("[SignIn Error]", error);
       toast.error("Google sign-in initiation failed. Please try again.");
@@ -47,6 +52,13 @@ const SignIn = () => {
         </div>
 
         <div className="glass-card p-6 sm:p-10 space-y-8 shadow-2xl border-white/10">
+          {hasInvite && !user && (
+            <div className="rounded-2xl bg-primary/10 border border-primary/20 p-4 text-center">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary">Invite link detected</p>
+              <p className="text-xs text-muted-foreground font-semibold mt-1">Continue with Google to join through your friend’s invite.</p>
+            </div>
+          )}
+
           <div className="space-y-2 text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-4">Secure Authentication</p>
             <p className="text-sm text-muted-foreground font-semibold">

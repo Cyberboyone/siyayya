@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Users, Package, Flag, Loader2,
-  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3
+  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3, Gift
 } from "lucide-react";
 
 import { ADMIN_EMAILS } from "@/lib/config";
@@ -20,24 +20,26 @@ import { ADMIN_EMAILS } from "@/lib/config";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user: currentUser, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "orders" | "analytics">("analytics");
+  const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "orders" | "analytics" | "referrals">("analytics");
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [referrals, setReferrals] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [usersSnap, productsSnap, servicesSnap, reportsSnap, ordersSnap] = await Promise.all([
+      const [usersSnap, productsSnap, servicesSnap, reportsSnap, ordersSnap, referralsSnap] = await Promise.all([
         getDocs(collection(db, "users")),
         getDocs(collection(db, "products")),
         getDocs(collection(db, "services")),
         getDocs(collection(db, "reports")),
         getDocs(collection(db, "orders")),
+        getDocs(collection(db, "referrals")),
       ]);
 
       setUsers(usersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -53,6 +55,11 @@ const AdminDashboard = () => {
 
       setListings(allListings);
       setReports(reportsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setReferrals(referralsSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        return (dateB as any) - (dateA as any);
+      }));
       
       setOrders(ordersSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
         const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
@@ -202,6 +209,7 @@ const AdminDashboard = () => {
     { id: "listings" as const, label: `Listings (${listings.length})`, icon: Package },
     { id: "reports" as const, label: `Reports (${reports.length})`, icon: Flag },
     { id: "orders" as const, label: `Orders (${orders.length})`, icon: ShoppingBag },
+    { id: "referrals" as const, label: `Referrals (${referrals.length})`, icon: Gift },
   ];
 
   return (
@@ -626,6 +634,44 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
+                {activeTab === 'referrals' && referrals.length === 0 && (
+                  <div className="p-20 text-center text-textSecondary font-bold italic">No referrals yet</div>
+                )}
+                {activeTab === 'referrals' && referrals.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-[760px] w-full text-left border-collapse">
+                      <thead className="bg-muted/30 border-b border-black/5">
+                        <tr>
+                          <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">New User</th>
+                          <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Referrer ID</th>
+                          <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Code</th>
+                          <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {referrals.filter(r =>
+                          r.referredUserName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          r.referredUserEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          r.referralCode?.toLowerCase().includes(searchQuery.toLowerCase())
+                        ).map(r => {
+                          const date = r.createdAt?.toDate ? r.createdAt.toDate() : (r.createdAt ? new Date(r.createdAt) : null);
+                          return (
+                            <tr key={r.id} className="border-b border-black/5 hover:bg-muted/10 transition-colors">
+                              <td className="px-6 py-4">
+                                <p className="font-bold text-textPrimary text-sm">{r.referredUserName || 'Unknown'}</p>
+                                <p className="text-[10px] text-textSecondary">{r.referredUserEmail}</p>
+                              </td>
+                              <td className="px-6 py-4 text-xs font-mono text-textSecondary">{r.referrerId}</td>
+                              <td className="px-6 py-4"><span className="rounded bg-primary/10 px-2 py-1 text-[10px] font-black uppercase text-primary">{r.referralCode}</span></td>
+                              <td className="px-6 py-4 text-xs text-textSecondary">{date ? date.toLocaleDateString() : 'N/A'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
                 {activeTab === 'analytics' && (
                   <div className="p-4 sm:p-8 space-y-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -652,8 +698,8 @@ const AdminDashboard = () => {
                         <h3 className="text-3xl font-black text-textPrimary">{freshListings24h}</h3>
                       </div>
                       <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Reported Items</p>
-                        <h3 className="text-3xl font-black text-textPrimary">{reports.length}</h3>
+                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Referral Signups</p>
+                        <h3 className="text-3xl font-black text-textPrimary">{referrals.length}</h3>
                       </div>
                     </div>
 
