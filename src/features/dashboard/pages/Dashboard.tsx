@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { ProductCard } from "@/features/marketplace/components/ProductCard";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Product, Service } from "@/lib/mock-data";
 import { useSavedItems } from "@/hooks/use-saved-items";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
-import { collection, query, where, getDocs, getDoc, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, getDoc, doc, deleteDoc, updateDoc, serverTimestamp, increment } from "firebase/firestore";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/firebase";
-import { Plus, Edit, Trash2, Package, Wrench, Settings, Eye, Star, CheckCircle, Heart, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Wrench, Settings, Eye, Star, CheckCircle, Heart, Loader2, AlertTriangle, Flame, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { NotificationSettings } from "@/features/notifications/components/NotificationSettings";
@@ -41,7 +41,9 @@ interface Review {
 }
 
 const Dashboard = () => {
-  const [tab, setTab] = useState<Tab>("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get("tab") as Tab) || "overview";
+  const [tab, setTab] = useState<Tab>(initialTab);
   const { savedIds, toggle } = useSavedItems();
   const { user, deleteAccount, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -111,6 +113,13 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [user, savedIds]);
   
+  useEffect(() => {
+    const tabParam = searchParams.get("tab") as Tab | null;
+    if (tabParam && ["overview", "listings", "saved", "reviews", "settings"].includes(tabParam)) {
+      setTab(tabParam);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -197,6 +206,43 @@ const Dashboard = () => {
     }
   };
 
+  const handleBoostListing = async (id: string, type: "products" | "services") => {
+    try {
+      await updateDoc(doc(db, type, id), {
+        boostedAt: serverTimestamp(),
+        boostCount: increment(1),
+      });
+
+      if (type === "products") {
+        setMyProducts(prev => prev.map(p => p.id === id ? { ...p, boostedAt: new Date().toISOString() } as any : p));
+      } else {
+        setMyServices(prev => prev.map(s => s.id === id ? { ...s, boostedAt: new Date().toISOString() } as any : s));
+      }
+
+      toast.success("Listing boosted to Fresh Today");
+    } catch (error) {
+      console.error("Boost failed:", error);
+      toast.error("Could not boost this listing");
+    }
+  };
+
+  const handleShareListing = async (item: Product | Service, type: "product" | "service") => {
+    const path = type === "product" ? `/product/${(item as any).slug || item.id}` : `/service/${(item as any).slug || item.id}`;
+    const url = `${window.location.origin}${path}?ref=seller-share`;
+    const text = `Check out ${item.title} on Siyayya Campus Marketplace: ${url}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: item.title, text: `Check out ${item.title} on Siyayya.`, url });
+        return;
+      }
+    } catch (error: any) {
+      if (error?.name === "AbortError") return;
+    }
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  };
+
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "overview", label: "Overview", icon: Eye },
     { id: "listings", label: "My Listings", icon: Package },
@@ -255,7 +301,7 @@ const Dashboard = () => {
                 {tabs.map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => setTab(t.id)}
+                    onClick={() => { setTab(t.id); setSearchParams({ tab: t.id }); }}
                     className={`flex items-center gap-4 rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-500 shrink-0 ${
                       tab === t.id
                         ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
@@ -348,6 +394,12 @@ const Dashboard = () => {
                                   <Button onClick={() => navigate(`/dashboard/edit/products/${p.id}`)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-black/5 border-none shadow-sm">
                                     <Edit className="h-3.5 w-3.5" /> Edit
                                   </Button>
+                                  <Button onClick={() => handleBoostListing(p.id, "products")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-orange-500/10 text-orange-500 border-none shadow-sm">
+                                    <Flame className="h-3.5 w-3.5" /> Boost
+                                  </Button>
+                                  <Button onClick={() => handleShareListing(p, "product")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-emerald-500/10 text-emerald-600 border-none shadow-sm">
+                                    <Share2 className="h-3.5 w-3.5" /> Share
+                                  </Button>
                                   {!p.isSold && (
                                     <Button onClick={() => handleMarkSold(p.id)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-primary/10 text-primary border-none shadow-sm">
                                       <CheckCircle className="h-3.5 w-3.5" /> Mark as Sold
@@ -367,6 +419,37 @@ const Dashboard = () => {
                           ))}
                         </div>
                       ) : <EmptyState icon={Package} label="No Products" />}
+                    </div>
+
+                    <div className="space-y-6">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Services</h3>
+                      {myServices.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-4">
+                          {myServices.map((s) => (
+                            <div key={s.id} className="rounded-[2rem] bg-white dark:bg-black/10 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 border border-black/5 transition-all duration-500 hover:shadow-lg">
+                              <img src={s.image || ""} className="h-20 w-20 rounded-2xl object-cover shadow-2xl shrink-0 bg-black/5" />
+                              <div className="flex-1 w-full min-w-0">
+                                <h4 className="text-lg font-black text-textPrimary uppercase italic leading-none mb-2">{s.title}</h4>
+                                <p className="text-xl font-black text-primary italic tabular-nums">₦{s.price.toLocaleString()}</p>
+                                <div className="flex flex-wrap gap-2 mt-4 w-full">
+                                  <Button onClick={() => navigate(`/dashboard/edit/services/${s.id}`)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-black/5 border-none shadow-sm">
+                                    <Edit className="h-3.5 w-3.5" /> Edit
+                                  </Button>
+                                  <Button onClick={() => handleBoostListing(s.id, "services")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-orange-500/10 text-orange-500 border-none shadow-sm">
+                                    <Flame className="h-3.5 w-3.5" /> Boost
+                                  </Button>
+                                  <Button onClick={() => handleShareListing(s, "service")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-emerald-500/10 text-emerald-600 border-none shadow-sm">
+                                    <Share2 className="h-3.5 w-3.5" /> Share
+                                  </Button>
+                                  <Button onClick={() => handleDeleteListing(s.id, "services")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 text-destructive bg-destructive/5 border-none shadow-sm ml-auto">
+                                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : <EmptyState icon={Wrench} label="No Services" />}
                     </div>
                   </div>
                 )}

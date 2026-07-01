@@ -234,7 +234,34 @@ export default function NewListing() {
 
         await addDoc(collection(db, collectionName), newDocData);
         toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} published successfully!`);
-        navigate("/dashboard?tab=listings");
+
+        if (type === "product") {
+          const shareUrl = `${window.location.origin}/product/${uniqueSlug}?ref=share`;
+          const shareText = `I just posted ${title} on Siyayya Campus Marketplace. Check it out: ${shareUrl}`;
+          const openDashboard = () => navigate("/dashboard?tab=listings");
+
+          toast.success("Listing is live — share it to WhatsApp to get buyers faster.", {
+            action: {
+              label: "Share",
+              onClick: () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer"),
+            },
+            duration: 9000,
+          });
+
+          if (navigator.share) {
+            try {
+              await navigator.share({ title, text: `I just posted ${title} on Siyayya.`, url: shareUrl });
+            } catch (error: any) {
+              if (error?.name !== "AbortError") {
+                console.info("Native share unavailable", error);
+              }
+            }
+          }
+
+          openDashboard();
+        } else {
+          navigate("/dashboard?tab=listings");
+        }
       }
     } catch (error: any) {
        console.error("Error adding document: ", error);

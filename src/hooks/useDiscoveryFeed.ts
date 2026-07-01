@@ -23,6 +23,7 @@ interface DiscoveryFeedResult {
   trendingNow: Product[];
   recommendedForYou: Product[];
   nearYourCampus: Product[];
+  freshToday: Product[];
   recentlyAdded: Product[];
   popularThisWeek: Product[];
   hiddenGems: Product[];
@@ -148,9 +149,17 @@ export const useDiscoveryFeed = (
       .slice(0, 20);
   }, [northernProducts, nearestCampus]);
 
+  const freshToday = useMemo(() => {
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    return [...northernProducts]
+      .filter((p) => getNumericDate((p as any).boostedAt || p.createdAt) >= oneDayAgo)
+      .sort((a, b) => getNumericDate((b as any).boostedAt || b.createdAt) - getNumericDate((a as any).boostedAt || a.createdAt))
+      .slice(0, 20);
+  }, [northernProducts]);
+
   const recentlyAdded = useMemo(() => {
     return [...northernProducts]
-      .sort((a, b) => getNumericDate(b.createdAt) - getNumericDate(a.createdAt))
+      .sort((a, b) => getNumericDate((b as any).boostedAt || b.createdAt) - getNumericDate((a as any).boostedAt || a.createdAt))
       .slice(0, 20);
   }, [northernProducts]);
 
@@ -219,6 +228,7 @@ export const useDiscoveryFeed = (
     trendingNow,
     recommendedForYou,
     nearYourCampus,
+    freshToday,
     recentlyAdded,
     popularThisWeek,
     hiddenGems,

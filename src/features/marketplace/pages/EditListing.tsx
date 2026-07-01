@@ -53,6 +53,8 @@ const EditListing = () => {
   const [isFeatured, setIsFeatured] = useState(false);
   const [ownerIsVerified, setOwnerIsVerified] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [listingOwnerId, setListingOwnerId] = useState("");
+  const [listingOwnerName, setListingOwnerName] = useState("");
   
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -69,6 +71,8 @@ const EditListing = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           const listOwner = data.ownerId;
+          setListingOwnerId(listOwner || "");
+          setListingOwnerName(data.ownerName || "Unknown");
           const userIsAdmin = isContextAdmin || (user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
           setIsAdmin(!!userIsAdmin);
 
@@ -167,8 +171,8 @@ const EditListing = () => {
        
        if (type === "products") {
          updateData.price = Number(price) || 0;
-         updateData.ownerName = user?.businessName || user?.name || "Unknown";
-         updateData.ownerIsVerified = user?.isVerified || false;
+         updateData.ownerName = isAdmin && listingOwnerId !== user?.id ? listingOwnerName : (user?.businessName || user?.name || "Unknown");
+         updateData.ownerIsVerified = isAdmin && listingOwnerId !== user?.id ? ownerIsVerified : (user?.isVerified || false);
          updateData.ownerPhone = contactPhone;
          updateData.condition = condition;
          updateData.images = images;
@@ -177,8 +181,8 @@ const EditListing = () => {
          updateData.mediaType = mediaData.length > 0 ? mediaData[mediaData.length - 1].resourceType : "image";
        } else if (type === "services") {
          updateData.price = Number(price) || 0;
-         updateData.ownerName = user?.businessName || user?.name || "Unknown";
-         updateData.ownerIsVerified = user?.isVerified || false;
+         updateData.ownerName = isAdmin && listingOwnerId !== user?.id ? listingOwnerName : (user?.businessName || user?.name || "Unknown");
+         updateData.ownerIsVerified = isAdmin && listingOwnerId !== user?.id ? ownerIsVerified : (user?.isVerified || false);
          updateData.ownerPhone = contactPhone;
          updateData.images = images;
          updateData.image = images.length > 0 ? images[0] : "";
@@ -187,8 +191,8 @@ const EditListing = () => {
          updateData.mediaType = mediaData.length > 0 ? mediaData[mediaData.length - 1].resourceType : "image";
        } else {
          updateData.budget = Number(price) || 0;
-         updateData.ownerName = user?.businessName || user?.name || "Unknown";
-         updateData.ownerIsVerified = user?.isVerified || false;
+         updateData.ownerName = isAdmin && listingOwnerId !== user?.id ? listingOwnerName : (user?.businessName || user?.name || "Unknown");
+         updateData.ownerIsVerified = isAdmin && listingOwnerId !== user?.id ? ownerIsVerified : (user?.isVerified || false);
        }
 
        if (isAdmin) {

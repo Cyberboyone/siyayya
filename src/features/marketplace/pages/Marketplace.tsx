@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
-import { SlidersHorizontal, X, Loader2, SearchX, Plus, FileText } from "lucide-react";
+import { SlidersHorizontal, X, Loader2, SearchX, Plus, FileText, Flame, Star } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { SearchBar } from "@/components/SearchBar";
 import { CategoryPills } from "@/components/CategoryPills";
@@ -26,7 +26,9 @@ const Marketplace = () => {
   
   const category = routeCategory || "all";
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [sort, setSort] = useState<"newest" | "price-low" | "price-high">("newest");
+  const initialSort = (searchParams.get("sort") as "newest" | "price-low" | "price-high" | "trending") || "newest";
+  const [sort, setSort] = useState<"newest" | "price-low" | "price-high" | "trending">(initialSort);
+  const freshFilter = searchParams.get("fresh") === "today";
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [condition, setCondition] = useState<"all" | "New" | "Used">("all");
   const [priceMin, setPriceMin] = useState("");
@@ -82,8 +84,10 @@ const Marketplace = () => {
   useEffect(() => {
     const params: Record<string, string> = {};
     if (search) params.search = search;
+    if (freshFilter) params.fresh = "today";
+    if (sort !== "newest") params.sort = sort;
     setSearchParams(params, { replace: true });
-  }, [search, setSearchParams]);
+  }, [search, sort, freshFilter, setSearchParams]);
 
   const handleSelectCategory = (newCat: string) => {
     const searchPart = search ? `?search=${encodeURIComponent(search)}` : "";
@@ -102,6 +106,10 @@ const Marketplace = () => {
     if (priceMin) items = items.filter((p) => p.price >= Number(priceMin));
     if (priceMax) items = items.filter((p) => p.price <= Number(priceMax));
     if (minRating > 0) items = items.filter((p) => (p.ownerRating || 5) >= minRating);
+    if (freshFilter) {
+      const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      items = items.filter((p) => getNumericDate((p as any).boostedAt || p.createdAt) >= oneDayAgo);
+    }
     
     if (searchResults) {
       items = items.filter((p) => searchResults.has(p.id));
@@ -109,9 +117,10 @@ const Marketplace = () => {
 
     if (sort === "price-low") items.sort((a, b) => a.price - b.price);
     else if (sort === "price-high") items.sort((a, b) => b.price - a.price);
-    else items.sort((a, b) => getNumericDate(b.createdAt) - getNumericDate(a.createdAt));
+    else if (sort === "trending") items.sort((a, b) => ((b.views || 0) + ((b as any).isFeatured ? 100 : 0)) - ((a.views || 0) + ((a as any).isFeatured ? 100 : 0)));
+    else items.sort((a, b) => getNumericDate((b as any).boostedAt || b.createdAt) - getNumericDate((a as any).boostedAt || a.createdAt));
     return items;
-  }, [products, category, condition, priceMin, priceMax, minRating, searchResults, sort]);
+  }, [products, category, condition, priceMin, priceMax, minRating, searchResults, sort, freshFilter]);
 
   const filteredServices = useMemo(() => {
     let items = [...services];
@@ -122,17 +131,21 @@ const Marketplace = () => {
     }
 
     if (minRating > 0) items = items.filter((s) => (s.ownerRating || 5) >= minRating);
-    items.sort((a, b) => getNumericDate(b.createdAt) - getNumericDate(a.createdAt));
+    if (freshFilter) {
+      const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      items = items.filter((s) => getNumericDate((s as any).boostedAt || s.createdAt) >= oneDayAgo);
+    }
+    items.sort((a, b) => getNumericDate((b as any).boostedAt || b.createdAt) - getNumericDate((a as any).boostedAt || a.createdAt));
     return items;
-  }, [services, category, searchResults, minRating, search]);
+  }, [services, category, searchResults, minRating, search, freshFilter]);
 
   const combinedResults = useMemo(() => {
-    if (!search && (category === "all")) return [];
+    if (!search && category === "all" && !freshFilter) return [];
     return [
       ...filteredProducts.map(p => ({ ...p, type: 'product' })),
       ...filteredServices.map(s => ({ ...s, type: 'service' }))
     ].sort((a, b) => getNumericDate(b.createdAt) - getNumericDate(a.createdAt));
-  }, [filteredProducts, filteredServices, search, category]);
+  }, [filteredProducts, filteredServices, search, category, freshFilter]);
 
   const clearFilters = () => {
     setCondition("all");
@@ -189,6 +202,7 @@ const Marketplace = () => {
                 <option value="newest">Sort: Newest</option>
                 <option value="price-low">Sort: Price Low</option>
                 <option value="price-high">Sort: Price High</option>
+                <option value="trending">Sort: Trending</option>
               </select>
             </div>
           </div>
@@ -198,6 +212,23 @@ const Marketplace = () => {
       <div className="px-6 max-w-7xl mx-auto">
         <div className="mt-4">
           <CategoryPills selected={category} onSelect={handleSelectCategory} />
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={() => navigate("/marketplace?fresh=today")}
+            className={`h-14 rounded-2xl px-5 flex items-center justify-between border text-left transition-all ${freshFilter ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-surface border-black/5 hover:border-primary/30"}`}
+          >
+            <span className="flex items-center gap-3 text-xs font-black uppercase tracking-widest"><Flame className="h-4 w-4" /> Fresh Today</span>
+            <span className="text-[10px] font-bold opacity-70">new & boosted</span>
+          </button>
+          <button
+            onClick={() => { setSort("trending"); navigate("/marketplace?sort=trending"); }}
+            className={`h-14 rounded-2xl px-5 flex items-center justify-between border text-left transition-all ${sort === "trending" ? "bg-black text-white border-black shadow-lg" : "bg-surface border-black/5 hover:border-primary/30"}`}
+          >
+            <span className="flex items-center gap-3 text-xs font-black uppercase tracking-widest"><Star className="h-4 w-4" /> Trending</span>
+            <span className="text-[10px] font-bold opacity-70">popular deals</span>
+          </button>
         </div>
         
         {isLoading ? (
@@ -245,6 +276,7 @@ const Marketplace = () => {
                 <option value="newest">Newest first</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
+                <option value="trending">Trending</option>
               </select>
             </div>
 
@@ -338,7 +370,7 @@ const Marketplace = () => {
             ) : (
               <div className="mt-8 pb-20">
                 <AnimatePresence mode="popLayout">
-                {(search || (category !== "all" && category !== "services")) ? (
+                {(search || freshFilter || (category !== "all" && category !== "services")) ? (
                   <motion.div 
                     key="combined"
                     initial={{ opacity: 0 }}

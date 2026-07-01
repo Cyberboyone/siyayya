@@ -32,6 +32,7 @@ const Home = () => {
     trendingNow,
     recommendedForYou,
     nearYourCampus,
+    freshToday,
     recentlyAdded,
     popularThisWeek,
     hiddenGems,
@@ -253,6 +254,27 @@ const Home = () => {
       {/* Feed Sections */}
       {!isLoading && (
         <div className="max-w-7xl mx-auto px-4 space-y-6 pb-20">
+
+
+          {/* 🔥 Fresh Today */}
+          {freshToday.length > 0 && feedMode === "nearby" && (
+            <FeedSection
+              icon="🔥"
+              title="Fresh Today"
+              subtitle="New and boosted campus deals"
+              viewAllLink="/marketplace?fresh=today"
+            >
+              {freshToday.slice(0, 8).map((product, i) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  index={i}
+                  isSaved={checkIsSaved(product.id)}
+                  onToggleSave={handleToggleSave}
+                />
+              ))}
+            </FeedSection>
+          )}
 
 
           {/* 🎯 Recommended For You */}

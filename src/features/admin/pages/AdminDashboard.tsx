@@ -148,9 +148,13 @@ const AdminDashboard = () => {
     if (!checkAdmin()) return;
     try {
       const coll = type === 'service' ? 'services' : 'products';
-      await updateDoc(doc(db, coll, id), { isFeatured: !currentStatus });
-      setListings(prev => prev.map(l => l.id === id ? { ...l, isFeatured: !currentStatus } : l));
-      toast.success(currentStatus ? "Feature removed" : "Listing featured!");
+      const newStatus = !currentStatus;
+      await updateDoc(doc(db, coll, id), {
+        isFeatured: newStatus,
+        boostedAt: newStatus ? new Date() : null,
+      });
+      setListings(prev => prev.map(l => l.id === id ? { ...l, isFeatured: newStatus, boostedAt: newStatus ? new Date() : null } : l));
+      toast.success(currentStatus ? "Feature removed" : "Listing featured and boosted to Fresh Today!");
     } catch (e) {
       toast.error("Update failed");
     }
@@ -179,6 +183,18 @@ const AdminDashboard = () => {
       toast.error("Failed to update order status");
     }
   };
+
+  const activeUsers7d = users.filter((u: any) => {
+    const raw = u.lastActive || u.lastLoginAt || u.updatedAt || u.joinedAt;
+    const date = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
+    return date && Date.now() - date.getTime() <= 7 * 24 * 60 * 60 * 1000;
+  }).length;
+
+  const freshListings24h = listings.filter((l: any) => {
+    const raw = l.boostedAt || l.createdAt;
+    const date = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
+    return date && Date.now() - date.getTime() <= 24 * 60 * 60 * 1000;
+  }).length;
 
   const adminTabs = [
     { id: "analytics" as const, label: "Analytics", icon: BarChart3 },
@@ -611,28 +627,55 @@ const AdminDashboard = () => {
                 )}
 
                 {activeTab === 'analytics' && (
-                  <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                      <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Total Revenue</p>
-                      <h3 className="text-3xl font-black text-textPrimary">
-                        ₦{orders.reduce((acc, order) => acc + (order.totalAmount || 0), 0).toLocaleString()}
-                      </h3>
+                  <div className="p-4 sm:p-8 space-y-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
+                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Total Revenue</p>
+                        <h3 className="text-3xl font-black text-textPrimary">
+                          ₦{orders.reduce((acc, order) => acc + (order.totalAmount || 0), 0).toLocaleString()}
+                        </h3>
+                      </div>
+                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
+                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Total Users</p>
+                        <h3 className="text-3xl font-black text-textPrimary">{users.length}</h3>
+                      </div>
+                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
+                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">7-Day Active Users</p>
+                        <h3 className="text-3xl font-black text-textPrimary">{activeUsers7d}</h3>
+                      </div>
+                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
+                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Active Listings</p>
+                        <h3 className="text-3xl font-black text-textPrimary">{listings.filter(l => l.status === 'approved').length}</h3>
+                      </div>
+                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
+                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Fresh Today</p>
+                        <h3 className="text-3xl font-black text-textPrimary">{freshListings24h}</h3>
+                      </div>
+                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
+                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Reported Items</p>
+                        <h3 className="text-3xl font-black text-textPrimary">{reports.length}</h3>
+                      </div>
                     </div>
-                    <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                      <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Total Users</p>
-                      <h3 className="text-3xl font-black text-textPrimary">{users.length}</h3>
-                    </div>
-                    <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                      <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Active Listings</p>
-                      <h3 className="text-3xl font-black text-textPrimary">{listings.filter(l => l.status === 'approved').length}</h3>
-                    </div>
-                    <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                      <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Pending Orders</p>
-                      <h3 className="text-3xl font-black text-textPrimary">{orders.filter(o => o.status === 'paid' || o.status === 'processing').length}</h3>
-                    </div>
-                    <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                      <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Reported Items</p>
-                      <h3 className="text-3xl font-black text-textPrimary">{reports.length}</h3>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="bg-muted/10 rounded-2xl border border-black/5 p-6">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-textPrimary mb-4">Engagement Playbook</h3>
+                        <div className="space-y-3 text-sm text-textSecondary font-medium">
+                          <p>1. Feature 5–10 strong listings daily so Fresh Today looks alive.</p>
+                          <p>2. Verify reliable sellers to increase buyer confidence.</p>
+                          <p>3. Ask sellers to use Share/Boost after posting to bring WhatsApp traffic back.</p>
+                          <p>4. Watch Fresh Today, listings, and active users weekly.</p>
+                        </div>
+                      </div>
+                      <div className="bg-muted/10 rounded-2xl border border-black/5 p-6">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-textPrimary mb-4">Admin Quick Access</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button onClick={() => setActiveTab('listings')} className="rounded-xl h-12 font-black text-[10px] uppercase tracking-widest">Feature Listings</Button>
+                          <Button onClick={() => setActiveTab('users')} variant="outline" className="rounded-xl h-12 font-black text-[10px] uppercase tracking-widest">Verify Sellers</Button>
+                          <Link to="/marketplace?fresh=today" className="rounded-xl h-12 bg-primary/10 text-primary font-black text-[10px] uppercase tracking-widest flex items-center justify-center">View Fresh</Link>
+                          <Link to="/dashboard/new" className="rounded-xl h-12 bg-black text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center">Seed Listing</Link>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
