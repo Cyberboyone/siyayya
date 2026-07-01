@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getAdminDb } from '../_lib/firebase-admin.js';
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 import { z } from 'zod';
 
 const GuestRequestSchema = z.object({

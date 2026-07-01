@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 import { getAdminDb, getAdminMessaging } from '../_lib/firebase-admin.js';
 
 const DAILY_MESSAGES = [
