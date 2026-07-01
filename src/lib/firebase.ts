@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-  import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+  import { getAuth, setPersistence, indexedDBLocalPersistence, browserLocalPersistence } from "firebase/auth";
   import { getFirestore } from "firebase/firestore";
   import { getStorage } from "firebase/storage";
 
@@ -43,9 +43,11 @@ import { initializeApp } from "firebase/app";
   const db = app ? getFirestore(app) : (null as unknown as ReturnType<typeof getFirestore>);
   const storage = app ? getStorage(app) : (null as unknown as ReturnType<typeof getStorage>);
 
-  if (app) {
-    setPersistence(auth, browserLocalPersistence).catch(() => {});
-  }
+  const authPersistenceReady = app
+    ? setPersistence(auth, indexedDBLocalPersistence).catch(() =>
+        setPersistence(auth, browserLocalPersistence).catch(() => {})
+      )
+    : Promise.resolve();
 
   // analytics + messaging are heavy — deferred to after page load so they don't
   // block the critical rendering path (~125 KB of JS execution saved up front)
@@ -65,5 +67,5 @@ import { initializeApp } from "firebase/app";
     }, { once: true });
   }
 
-  export { app, analytics, auth, db, storage, messaging, isFirebaseDisabled };
+  export { app, analytics, auth, db, storage, messaging, isFirebaseDisabled, authPersistenceReady };
   

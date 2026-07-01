@@ -10,10 +10,11 @@ import {
   reauthenticateWithPopup,
   deleteUser,
   setPersistence,
+  indexedDBLocalPersistence,
   browserLocalPersistence
 } from "firebase/auth";
 import { doc, getDoc, setDoc, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
-import { auth, db, isFirebaseDisabled } from "@/lib/firebase";
+import { auth, db, isFirebaseDisabled, authPersistenceReady } from "@/lib/firebase";
 import { User } from "@/lib/mock-data";
 import { toast } from "sonner";
 
@@ -138,23 +139,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    getRedirectResult(auth).then(async (result) => {
-      if (!result?.user) return;
-      justLoggedInRef.current = true;
-      await completeGoogleSession(result.user);
-    }).catch((error) => {
-      console.error("[Auth Error] Google redirect failed:", error);
-      toast.error("Google sign-in failed. Please try again.");
-    }).finally(() => {
-      sessionStorage.removeItem("siyayya_google_redirect_pending");
-    });
+    let unsubscribe = () => {};
+    let loadingTimeout: ReturnType<typeof setTimeout>;
 
-    const loadingTimeout = setTimeout(() => {
-      console.warn("[Auth] Loading stuck for 5s, releasing.");
-      setIsLoading(false);
-    }, 5000);
+    const startAuthListener = async () => {
+      await authPersistenceReady;
+      await setPersistence(auth, indexedDBLocalPersistence).catch(() =>
+        setPersistence(auth, browserLocalPersistence).catch(() => {})
+      );
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      getRedirectResult(auth).then(async (result) => {
+        if (!result?.user) return;
+        justLoggedInRef.current = true;
+        await completeGoogleSession(result.user);
+      }).catch((error) => {
+        console.error("[Auth Error] Google redirect failed:", error);
+        toast.error("Google sign-in failed. Please try again.");
+      }).finally(() => {
+        sessionStorage.removeItem("siyayya_google_redirect_pending");
+      });
+
+      loadingTimeout = setTimeout(() => {
+        console.warn("[Auth] Loading stuck for 8s, releasing.");
+        setIsLoading(false);
+      }, 8000);
+
+      unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       clearTimeout(loadingTimeout);
       try {
         if (firebaseUser) {
@@ -209,9 +219,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } finally {
         setIsLoading(false);
       }
+      });
+    };
+
+    startAuthListener().catch((error) => {
+      console.error("[Auth] Failed to initialize persistence/listener:", error);
+      setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (loadingTimeout) clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
   }, []);
 
   const loginWithGoogle = async () => {
@@ -222,11 +241,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     provider.setCustomParameters({ prompt: "select_account" });
 
     try {
-      // IMPORTANT: Do not await anything before signInWithPopup.
-      // Mobile browsers treat delayed popups as blocked because they are no
-      // longer directly tied to the user's tap. Persistence is already set in
-      // firebase.ts; this best-effort call must not delay the popup.
-      setPersistence(auth, browserLocalPersistence).catch(() => {});
+      // Persistence is initialized before the sign-in button becomes usable.
+      // Keep this synchronous with the tap so mobile browsers don't block it.
+      authPersistenceReady.catch(() => {});
 
       // IMPORTANT: Do not use signInWithRedirect here. On Android, Google
       // redirect can hand the user from Chrome back into the installed PWA,
