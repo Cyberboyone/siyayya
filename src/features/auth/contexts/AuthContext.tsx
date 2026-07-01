@@ -222,9 +222,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     provider.setCustomParameters({ prompt: "select_account" });
 
     try {
-      // Ensure persistence is ready before the Google flow starts. This is
-      // especially important on Android/iOS where auth storage can be fragile.
-      await setPersistence(auth, browserLocalPersistence).catch(() => {});
+      // IMPORTANT: Do not await anything before signInWithPopup.
+      // Mobile browsers treat delayed popups as blocked because they are no
+      // longer directly tied to the user's tap. Persistence is already set in
+      // firebase.ts; this best-effort call must not delay the popup.
+      setPersistence(auth, browserLocalPersistence).catch(() => {});
 
       // IMPORTANT: Do not use signInWithRedirect here. On Android, Google
       // redirect can hand the user from Chrome back into the installed PWA,
@@ -252,7 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       console.error("[Auth Error] Google Login failed:", error);
-      if (error.message !== "Account banned") toast.error("Sign-in failed. Please try again.");
+      if (error.message !== "Account banned") toast.error(error.message || "Sign-in failed. Please try again.");
       throw error;
     } finally {
       setIsLoading(false);

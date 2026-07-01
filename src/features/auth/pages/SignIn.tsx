@@ -34,7 +34,15 @@ const SignIn = () => {
       claimStoredReferral();
     } catch (error: any) {
       console.error("[SignIn Error]", error);
-      toast.error("Google sign-in initiation failed. Please try again.");
+      const code = error?.code || "";
+      const message = code === "auth/popup-blocked"
+        ? "Popup was blocked. Please allow pop-ups for Siyayya in Chrome settings and try again."
+        : code === "auth/unauthorized-domain"
+          ? "This domain is not authorized in Firebase Authentication settings."
+          : code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request"
+            ? "Sign-in was cancelled."
+            : error?.message || "Google sign-in failed. Please try again.";
+      toast.error(message);
       setIsLoading(false);
     }
   };
