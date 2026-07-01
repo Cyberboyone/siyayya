@@ -1,4 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
   import * as fs from 'fs';
   import * as path from 'path';
   import { getAdminDb } from './_lib/firebase-admin';
