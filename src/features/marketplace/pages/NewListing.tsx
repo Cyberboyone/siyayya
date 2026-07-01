@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { categories, CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
 import { Youtube, Info, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { CloudinaryUpload } from "@/components/CloudinaryUpload";
 import { extractYouTubeId } from "@/lib/utils";
@@ -154,6 +154,14 @@ export default function NewListing() {
         setShowGuestSuccessModal(true);
       } else {
         const collectionName = type === "product" ? "products" : type === "service" ? "services" : "requests";
+        const ownerId = auth.currentUser?.uid || user?.id;
+
+        if (!ownerId) {
+          toast.error("Please sign in again before posting.");
+          navigate(`/signin?from=${encodeURIComponent("/dashboard/new")}`);
+          setIsSubmitting(false);
+          return;
+        }
         
         // ZOD VALIDATION
         try {
@@ -187,7 +195,7 @@ export default function NewListing() {
         };
         
         if (type === "product") {
-          newDocData.ownerId = user?.id;
+          newDocData.ownerId = ownerId;
           newDocData.ownerName = user?.businessName || user?.name || "Unknown";
           newDocData.ownerIsVerified = user?.isVerified || false;
           newDocData.ownerPhone = contactPhone;
@@ -201,7 +209,7 @@ export default function NewListing() {
           newDocData.status = "approved";
           newDocData.views = 0;
         } else if (type === "service") {
-          newDocData.ownerId = user?.id;
+          newDocData.ownerId = ownerId;
           newDocData.ownerName = user?.businessName || user?.name || "Unknown";
           newDocData.ownerIsVerified = user?.isVerified || false;
           newDocData.ownerPhone = contactPhone;
@@ -217,7 +225,7 @@ export default function NewListing() {
           newDocData.status = "approved";
           newDocData.views = 0;
         } else {
-          newDocData.ownerId = user?.id;
+          newDocData.ownerId = ownerId;
           newDocData.ownerName = user?.businessName || user?.name || "Unknown";
           newDocData.ownerIsVerified = user?.isVerified || false;
           newDocData.budget = Number(price) || 0;

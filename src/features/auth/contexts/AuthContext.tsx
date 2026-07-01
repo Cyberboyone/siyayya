@@ -63,12 +63,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (docSnap.exists()) {
         const data = docSnap.data();
         const userData = {
-          id: firebaseUser.uid,
           ...data,
+          // Always trust Firebase Auth UID over any stale id saved in Firestore.
+          // Old accounts can have a mismatched `id`, which makes listing writes fail
+          // Firestore rules because ownerId must equal request.auth.uid.
+          id: firebaseUser.uid,
           email: data.email || firebaseUser.email || "",
           name: data.name || firebaseUser.displayName || "Unknown User",
           businessName: data.businessName || ""
         } as User;
+
+        if (data.id !== firebaseUser.uid) {
+          setDoc(docRef, { id: firebaseUser.uid }, { merge: true }).catch(() => {});
+        }
 
         if (userData.isBanned) {
           toast.error("Your account has been banned.");
@@ -174,12 +181,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (docSnap.exists()) {
               const data = docSnap.data();
               const userData = {
-                id: firebaseUser.uid,
                 ...data,
+                // Always trust Firebase Auth UID over any stale id saved in Firestore.
+                id: firebaseUser.uid,
                 email: data.email || "",
                 name: data.name || "User",
                 businessName: data.businessName || data.name || ""
               } as User;
+
+              if (data.id !== firebaseUser.uid) {
+                setDoc(docRef, { id: firebaseUser.uid }, { merge: true }).catch(() => {});
+              }
 
               if (userData.isBanned || userData.status === 'banned' || userData.status === 'suspended') {
                 toast.error("Your account has been banned.");

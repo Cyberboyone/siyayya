@@ -48,6 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     } else {
       await userRef.update({
+        id: uid,
         name: name || userDoc.data()?.name,
         email: email || userDoc.data()?.email,
         avatar: picture || userDoc.data()?.avatar,
