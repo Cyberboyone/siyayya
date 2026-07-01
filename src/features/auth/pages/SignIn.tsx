@@ -107,7 +107,7 @@ const SignIn = () => {
             
             <div className="text-center space-y-2">
               <p className="text-[10px] text-muted-foreground">
-                If login fails or gets stuck in the installed app, open Siyayya once in <span className="text-primary font-bold">Safari/Chrome</span> and sign in there.
+                Google sign-in now stays in the browser. If Android opens the installed app, remove the old Siyayya app icon and sign in from <span className="text-primary font-bold">Chrome</span>.
               </p>
               {(isLoading || authLoading) && (
                 <button 

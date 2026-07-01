@@ -6,7 +6,6 @@ import {
   User as FirebaseUser,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
   getRedirectResult,
   reauthenticateWithPopup,
   deleteUser,
@@ -22,23 +21,6 @@ export const normalizeBusinessName = (name: string): string => {
   return name.trim().toLowerCase().replace(/\s+/g, "-");
 };
 
-const isStandalonePWA = (): boolean => {
-  if (typeof window === "undefined") return false;
-
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.matchMedia("(display-mode: fullscreen)").matches ||
-    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-  );
-};
-
-const shouldFallbackToRedirect = (errorCode?: string): boolean => {
-  return [
-    "auth/popup-blocked",
-    "auth/operation-not-supported-in-this-environment",
-    "auth/web-storage-unsupported",
-  ].includes(errorCode || "");
-};
 
 interface AuthContextType {
   user: User | null;
@@ -234,16 +216,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     setIsLoading(true);
+    sessionStorage.removeItem("siyayya_google_redirect_pending");
+
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
 
     try {
       // Ensure persistence is ready before the Google flow starts. This is
-      // especially important on iOS/PWA where auth storage can be fragile.
+      // especially important on Android/iOS where auth storage can be fragile.
       await setPersistence(auth, browserLocalPersistence).catch(() => {});
 
-      // Prefer popup everywhere. Redirect is what causes installed PWAs to jump
-      // between browser and app, losing the auth handoff for some users.
+      // IMPORTANT: Do not use signInWithRedirect here. On Android, Google
+      // redirect can hand the user from Chrome back into the installed PWA,
+      // losing the Firebase result and leaving them stuck on /signin. Popup
+      // keeps the flow inside the browser tab instead.
       const result = await signInWithPopup(auth, provider);
 
       // Mark so onAuthStateChanged skips re-processing this login event
@@ -252,39 +238,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return await completeGoogleSession(result.user);
     } catch (error: any) {
       justLoggedInRef.current = false;
+      sessionStorage.removeItem("siyayya_google_redirect_pending");
+      setIsLoading(false);
 
       if (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request") {
         toast.error("Sign-in was cancelled.");
-        setIsLoading(false);
         throw error;
       }
 
-      if (shouldFallbackToRedirect(error.code)) {
-        try {
-          if (isStandalonePWA()) {
-            toast.message("Opening secure Google sign-in. If it returns to this page, open Siyayya in your browser once to finish login.");
-          }
-          sessionStorage.setItem("siyayya_google_redirect_pending", "true");
-          await signInWithRedirect(auth, provider);
-          return new Promise<{ user: FirebaseUser, isNewUser: boolean }>(() => {});
-        } catch (redirectError) {
-          sessionStorage.removeItem("siyayya_google_redirect_pending");
-          setIsLoading(false);
-          console.error("[Auth Error] Google redirect fallback failed:", redirectError);
-          toast.error("Google sign-in could not start. Please open Siyayya in your browser and try again.");
-          throw redirectError;
-        }
+      if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment", "auth/web-storage-unsupported"].includes(error.code)) {
+        toast.error("Google sign-in popup was blocked. Please allow pop-ups for Siyayya or open the site in Chrome browser, not the installed app.");
+        throw error;
       }
 
-      sessionStorage.removeItem("siyayya_google_redirect_pending");
-      setIsLoading(false);
       console.error("[Auth Error] Google Login failed:", error);
       if (error.message !== "Account banned") toast.error("Sign-in failed. Please try again.");
       throw error;
     } finally {
-      if (!sessionStorage.getItem("siyayya_google_redirect_pending")) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
