@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getAdminDb } from '../_lib/firebase-admin';
+import { getAdminDb } from '../_lib/firebase-admin.js';
 import * as admin from 'firebase-admin';
 import { z } from 'zod';
 

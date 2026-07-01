@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getAdminAuth, getAdminDb } from '../_lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '../_lib/firebase-admin.js';
 import { z } from 'zod';
 
 const SetClaimSchema = z.object({

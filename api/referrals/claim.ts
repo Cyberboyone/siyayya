@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as admin from 'firebase-admin';
-import { getAdminAuth, getAdminDb } from '../_lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '../_lib/firebase-admin.js';
 
 const makeReferralCode = (uid: string) =>
   `SIY${uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()}`;

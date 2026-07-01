@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as admin from 'firebase-admin';
-import { getAdminAuth, getAdminDb } from '../_lib/firebase-admin';
+import { getAdminAuth, getAdminDb } from '../_lib/firebase-admin.js';
 
 type ListingType = 'product' | 'service' | 'request';
 

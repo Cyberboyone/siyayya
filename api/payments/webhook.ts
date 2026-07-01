@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as admin from 'firebase-admin';
 import crypto from 'crypto';
-import { getAdminDb } from '../_lib/firebase-admin';
+import { getAdminDb } from '../_lib/firebase-admin.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
