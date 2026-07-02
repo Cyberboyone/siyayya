@@ -95,6 +95,17 @@ const ProductDetail = () => {
           }
           setProduct(prodData);
           addViewed(prodData.id);
+          try {
+            const viewKey = `siyayya_viewed_product_${prodData.id}`;
+            if (!sessionStorage.getItem(viewKey)) {
+              sessionStorage.setItem(viewKey, '1');
+              fetch('/api/listings/track-view', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ listingId: prodData.id, collection: 'products' }),
+              }).catch(() => {});
+            }
+          } catch {}
           
           try {
              const q = query(

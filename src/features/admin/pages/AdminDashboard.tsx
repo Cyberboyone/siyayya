@@ -323,6 +323,27 @@ const AdminDashboard = () => {
 
   const topWhatsappListings = [...listings].sort((a: any, b: any) => Number(b.whatsappClicks || 0) - Number(a.whatsappClicks || 0)).slice(0, 5);
 
+  const listingsWithoutContact = listings.filter((listing: any) => Number(listing.views || 0) >= 5 && Number(listing.whatsappClicks || 0) === 0);
+  const topViewedListings = [...listings].sort((a: any, b: any) => Number(b.views || 0) - Number(a.views || 0)).slice(0, 5);
+  const topSellerIntent = users.map((user: any) => {
+    const ownedListings = listings.filter((listing: any) => listing.ownerId === user.id);
+    const totalViews = ownedListings.reduce((sum: number, listing: any) => sum + Number(listing.views || 0), 0);
+    const totalClicks = ownedListings.reduce((sum: number, listing: any) => sum + Number(listing.whatsappClicks || 0), 0);
+    return {
+      id: user.id,
+      name: user.businessName || user.name || user.email || 'Unknown User',
+      listingCount: ownedListings.length,
+      totalViews,
+      totalClicks,
+      conversionRate: totalViews > 0 ? Math.round((totalClicks / totalViews) * 100) : 0,
+    };
+  }).sort((a, b) => b.totalClicks - a.totalClicks).slice(0, 5);
+  const zeroListingUsers = users.filter((user: any) => !listings.some((listing: any) => listing.ownerId === user.id));
+  const noContactSellers = users.filter((user: any) => {
+    const ownedListings = listings.filter((listing: any) => listing.ownerId === user.id);
+    return ownedListings.length > 0 && ownedListings.reduce((sum: number, listing: any) => sum + Number(listing.whatsappClicks || 0), 0) === 0;
+  });
+
   const freshListings24h = listings.filter((l: any) => {
     const raw = l.boostedAt || l.createdAt;
     const date = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
@@ -606,28 +627,84 @@ const AdminDashboard = () => {
                       ))}
                     </div>
 
-                    <div className="rounded-2xl border border-black/5 bg-muted/20 p-5">
-                      <div className="flex items-center justify-between gap-4 mb-4">
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary">Top Contacted Listings</p>
-                          <p className="text-sm text-textSecondary font-medium mt-1">Listings with the highest WhatsApp buyer intent.</p>
+                    <div className="grid lg:grid-cols-2 gap-6">
+                      <div className="rounded-2xl border border-black/5 bg-muted/20 p-5">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-4">Top Contacted Listings</p>
+                        <div className="space-y-3">
+                          {topWhatsappListings.length > 0 ? topWhatsappListings.map((listing: any) => (
+                            <div key={listing.id} className="rounded-xl bg-surface border border-black/5 px-4 py-3 flex items-center justify-between gap-4">
+                              <div className="min-w-0">
+                                <p className="font-bold text-textPrimary truncate">{listing.title || 'Untitled Listing'}</p>
+                                <p className="text-[10px] uppercase tracking-widest text-textSecondary mt-1">{listing.ownerName || 'Unknown'} • {listing.type}</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="text-lg font-black text-primary tabular-nums">{Number(listing.whatsappClicks || 0).toLocaleString()}</p>
+                                <p className="text-[10px] uppercase tracking-widest text-textSecondary">Clicks</p>
+                              </div>
+                            </div>
+                          )) : <p className="text-sm text-textSecondary font-medium">No WhatsApp click data yet.</p>}
                         </div>
                       </div>
-                      <div className="space-y-3">
-                        {topWhatsappListings.length > 0 ? topWhatsappListings.map((listing: any) => (
-                          <div key={listing.id} className="rounded-xl bg-surface border border-black/5 px-4 py-3 flex items-center justify-between gap-4">
-                            <div className="min-w-0">
-                              <p className="font-bold text-textPrimary truncate">{listing.title || 'Untitled Listing'}</p>
-                              <p className="text-[10px] uppercase tracking-widest text-textSecondary mt-1">{listing.ownerName || 'Unknown'} • {listing.type}</p>
+
+                      <div className="rounded-2xl border border-black/5 bg-muted/20 p-5">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-4">Top Viewed Listings</p>
+                        <div className="space-y-3">
+                          {topViewedListings.length > 0 ? topViewedListings.map((listing: any) => {
+                            const views = Number(listing.views || 0);
+                            const clicks = Number(listing.whatsappClicks || 0);
+                            const ctr = views > 0 ? Math.round((clicks / views) * 100) : 0;
+                            return (
+                              <div key={listing.id} className="rounded-xl bg-surface border border-black/5 px-4 py-3 flex items-center justify-between gap-4">
+                                <div className="min-w-0">
+                                  <p className="font-bold text-textPrimary truncate">{listing.title || 'Untitled Listing'}</p>
+                                  <p className="text-[10px] uppercase tracking-widest text-textSecondary mt-1">{views.toLocaleString()} views • {clicks.toLocaleString()} clicks • {ctr}% CTR</p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <p className="text-lg font-black text-primary tabular-nums">{views.toLocaleString()}</p>
+                                  <p className="text-[10px] uppercase tracking-widest text-textSecondary">Views</p>
+                                </div>
+                              </div>
+                            );
+                          }) : <p className="text-sm text-textSecondary font-medium">No view data yet.</p>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid lg:grid-cols-2 gap-6">
+                      <div className="rounded-2xl border border-black/5 bg-muted/20 p-5">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-4">Top Sellers by Buyer Intent</p>
+                        <div className="space-y-3">
+                          {topSellerIntent.length > 0 ? topSellerIntent.map((seller) => (
+                            <div key={seller.id} className="rounded-xl bg-surface border border-black/5 px-4 py-3 flex items-center justify-between gap-4">
+                              <div className="min-w-0">
+                                <p className="font-bold text-textPrimary truncate">{seller.name}</p>
+                                <p className="text-[10px] uppercase tracking-widest text-textSecondary mt-1">{seller.listingCount} listings • {seller.totalViews} views • {seller.conversionRate}% CTR</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="text-lg font-black text-primary tabular-nums">{seller.totalClicks}</p>
+                                <p className="text-[10px] uppercase tracking-widest text-textSecondary">Clicks</p>
+                              </div>
                             </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-lg font-black text-primary tabular-nums">{Number(listing.whatsappClicks || 0).toLocaleString()}</p>
-                              <p className="text-[10px] uppercase tracking-widest text-textSecondary">WhatsApp Clicks</p>
-                            </div>
+                          )) : <p className="text-sm text-textSecondary font-medium">No seller conversion data yet.</p>}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-black/5 bg-muted/20 p-5">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-4">Growth Alerts</p>
+                        <div className="space-y-3">
+                          <div className="rounded-xl bg-surface border border-black/5 px-4 py-3">
+                            <p className="font-bold text-textPrimary">Listings with traffic but no contact</p>
+                            <p className="text-sm text-textSecondary mt-1">{listingsWithoutContact.length} listings have 5+ views but zero WhatsApp clicks. These should be improved or boosted.</p>
                           </div>
-                        )) : (
-                          <p className="text-sm text-textSecondary font-medium">No WhatsApp click data yet.</p>
-                        )}
+                          <div className="rounded-xl bg-surface border border-black/5 px-4 py-3">
+                            <p className="font-bold text-textPrimary">Users with no listings</p>
+                            <p className="text-sm text-textSecondary mt-1">{zeroListingUsers.length} users have accounts but have not posted anything yet.</p>
+                          </div>
+                          <div className="rounded-xl bg-surface border border-black/5 px-4 py-3">
+                            <p className="font-bold text-textPrimary">Sellers with zero contacts</p>
+                            <p className="text-sm text-textSecondary mt-1">{noContactSellers.length} sellers have listings but no WhatsApp clicks yet.</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
