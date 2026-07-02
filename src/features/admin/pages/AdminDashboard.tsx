@@ -89,6 +89,14 @@ const AdminDashboard = () => {
     return true;
   };
 
+
+  const openUserDashboard = (targetUser: any) => {
+    if (!checkAdmin()) return;
+    const userId = String(targetUser?.id || '');
+    const userName = String(targetUser?.businessName || targetUser?.name || targetUser?.email || userId);
+    navigate(`/dashboard?tab=listings&userId=${encodeURIComponent(userId)}&userName=${encodeURIComponent(userName)}`);
+  };
+
   const handleDeleteUser = async (userId: string) => {
     if (!checkAdmin()) return;
     if (!confirm("Are you sure? This will delete the user permanently.")) return;
@@ -326,6 +334,7 @@ const AdminDashboard = () => {
                                >
                                  <Ban className="h-4 w-4" />
                                </Button>
+                               <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => openUserDashboard(u)}><ExternalLink className="h-4 w-4 mr-2" />Dashboard</Button>
                                <Button variant="ghost" size="sm" className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(u.id)}>
                                  <Trash2 className="h-4 w-4" />
                                </Button>

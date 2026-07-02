@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ type ListingType = "products" | "services" | "requests";
 const EditListing = () => {
   const navigate = useNavigate();
   const { type, id } = useParams<{ type: ListingType; id: string }>();
+  const [searchParams] = useSearchParams();
   const { user, isAuthenticated, isLoading, isAdmin: isContextAdmin } = useAuth();
   
   const [isFetching, setIsFetching] = useState(true);
@@ -55,6 +56,9 @@ const EditListing = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [listingOwnerId, setListingOwnerId] = useState("");
   const [listingOwnerName, setListingOwnerName] = useState("");
+  const adminUserId = searchParams.get("adminUserId") || "";
+  const adminUserName = searchParams.get("adminUserName") || "";
+  const adminManagingOtherUser = !!isAdmin && !!adminUserId && adminUserId !== user?.id;
   
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -78,7 +82,7 @@ const EditListing = () => {
 
           if (listOwner && user && listOwner !== user.id && !userIsAdmin) {
              toast.error("You are not authorized to edit this listing.");
-             navigate("/dashboard");
+             navigate(adminManagingOtherUser ? `/dashboard?tab=listings&userId=${encodeURIComponent(adminUserId)}&userName=${encodeURIComponent(adminUserName)}` : "/dashboard");
              return;
           }
           
@@ -101,7 +105,7 @@ const EditListing = () => {
           setOwnerIsVerified(data.ownerIsVerified || false);
         } else {
           toast.error("Listing not found.");
-          navigate("/dashboard");
+          navigate(adminManagingOtherUser ? `/dashboard?tab=listings&userId=${encodeURIComponent(adminUserId)}&userName=${encodeURIComponent(adminUserName)}` : "/dashboard");
         }
       } catch (error) {
         console.error("Error fetching listing:", error);
@@ -210,7 +214,7 @@ const EditListing = () => {
        if (isAdmin) {
          navigate("/admin");
        } else {
-         navigate("/dashboard?tab=listings");
+         navigate(adminManagingOtherUser ? `/dashboard?tab=listings&userId=${encodeURIComponent(adminUserId)}&userName=${encodeURIComponent(adminUserName)}` : "/dashboard?tab=listings");
        }
     } catch (error: any) {
        console.error("Error updating document: ", error);
@@ -224,10 +228,17 @@ const EditListing = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navbar />
       <div className="container max-w-lg py-4">
-        <Link to="/dashboard" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link to={adminManagingOtherUser ? `/dashboard?tab=listings&userId=${encodeURIComponent(adminUserId)}&userName=${encodeURIComponent(adminUserName)}` : "/dashboard"} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4" /> Back to Dashboard
         </Link>
         <h1 className="text-xl font-bold text-foreground mb-5">Edit {type?.slice(0, -1)}</h1>
+
+        {adminManagingOtherUser && (
+          <div className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-primary">Admin editing mode</p>
+            <p className="text-sm font-semibold text-foreground mt-1">You are editing this listing on behalf of {adminUserName || adminUserId}.</p>
+          </div>
+        )}
 
         <div className="space-y-4">
           {(type === "products" || type === "services") && (

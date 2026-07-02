@@ -45,11 +45,15 @@ const Dashboard = () => {
   const initialTab = (searchParams.get("tab") as Tab) || "overview";
   const [tab, setTab] = useState<Tab>(initialTab);
   const { savedIds, toggle } = useSavedItems();
-  const { user, deleteAccount, updateProfile } = useAuth();
+  const { user, deleteAccount, updateProfile, isAdmin } = useAuth();
   const { referralCode, referralCount, rewardCredits, shareInvite, copyInvite } = useReferralProgram();
   const navigate = useNavigate();
 
   const [myProducts, setMyProducts] = useState<Product[]>([]);
+  const managedUserId = searchParams.get("userId") || "";
+  const managedUserName = searchParams.get("userName") || "";
+  const viewingAsAdmin = !!isAdmin && !!managedUserId && managedUserId !== user?.id;
+  const dashboardOwnerId = viewingAsAdmin ? managedUserId : (user?.id || "");
   const [myServices, setMyServices] = useState<Service[]>([]);
   const [savedProducts, setSavedProducts] = useState<Product[]>([]);
   const [myReviews, setMyReviews] = useState<Review[]>([]);
@@ -83,15 +87,15 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       if (!user) return;
       try {
-        const qProducts = query(collection(db, "products"), where("ownerId", "==", user.id));
+        const qProducts = query(collection(db, "products"), where("ownerId", "==", dashboardOwnerId));
         const prodSnap = await getDocs(qProducts);
         setMyProducts(prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
 
-        const qServices = query(collection(db, "services"), where("ownerId", "==", user.id));
+        const qServices = query(collection(db, "services"), where("ownerId", "==", dashboardOwnerId));
         const servSnap = await getDocs(qServices);
         setMyServices(servSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)));
 
-        const qReviews = query(collection(db, "reviews"), where("ownerId", "==", user.id));
+        const qReviews = query(collection(db, "reviews"), where("ownerId", "==", dashboardOwnerId));
         const reviewSnap = await getDocs(qReviews);
         const fetchedReviews = reviewSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
         fetchedReviews.sort((a, b) => {
@@ -112,7 +116,7 @@ const Dashboard = () => {
     };
     
     fetchDashboardData();
-  }, [user, savedIds]);
+  }, [dashboardOwnerId, user, savedIds]);
   
   useEffect(() => {
     const tabParam = searchParams.get("tab") as Tab | null;
@@ -141,6 +145,19 @@ const Dashboard = () => {
 
   const formatPrice = (price: number) => {
     return `₦${price.toLocaleString("en-NG")}`;
+  };
+
+  const getListingHealthChecks = (listing: any, listingType: "product" | "service") => {
+    const checks = [
+      { label: "Title is strong", done: String(listing?.title || "").trim().length >= 8 },
+      { label: "Description is detailed", done: String(listing?.description || "").trim().length >= 40 },
+      { label: listingType === "product" ? "Has at least 1 photo" : "Has photo", done: Array.isArray(listing?.images) ? listing.images.length > 0 : !!listing?.image },
+      { label: "Price is set", done: Number(listing?.price || listing?.budget || 0) > 0 || listingType === "service" || listingType === "product" ? Number(listing?.price || 0) > 0 : true },
+      { label: "Contact phone ready", done: String(listing?.ownerPhone || listing?.contactPhone || "").trim().length >= 10 },
+      { label: "Boosted recently", done: !!listing?.boostedAt },
+    ];
+    const score = Math.round((checks.filter((check) => check.done).length / checks.length) * 100);
+    return { checks, score };
   };
 
   const handleDeleteListing = async (id: string, type: "products" | "services") => {
@@ -274,6 +291,20 @@ const Dashboard = () => {
     }
   };
 
+
+  const createManagedQuery = () => (
+    viewingAsAdmin
+      ? `?userId=${encodeURIComponent(managedUserId)}&userName=${encodeURIComponent(managedUserName)}`
+      : ""
+  );
+
+  const goToManagedEdit = (listingType: "products" | "services", listingId: string) => {
+    const managedQuery = viewingAsAdmin
+      ? `?adminUserId=${encodeURIComponent(managedUserId)}&adminUserName=${encodeURIComponent(managedUserName)}`
+      : "";
+    navigate(`/dashboard/edit/${listingType}/${listingId}${managedQuery}`);
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] pb-32 md:pb-10">
       <Navbar />
@@ -283,14 +314,14 @@ const Dashboard = () => {
         <div className="px-6 max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div className="flex flex-col gap-4">
             <div className="inline-flex items-center rounded-2xl bg-primary/10 px-4 py-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] w-fit shadow-sm border border-primary/5">
-              Dashboard
+              {viewingAsAdmin ? "Admin View" : "Dashboard"}
             </div>
             <h1 className="text-4xl md:text-7xl font-black text-textPrimary tracking-tight italic uppercase leading-none pr-4">
-              My <span className="text-gradient pr-4 inline-block">Dashboard</span>
+              {viewingAsAdmin ? "User " : "My "}<span className="text-gradient pr-4 inline-block">Dashboard</span>
             </h1>
-            <p className="text-[11px] font-bold text-textMuted uppercase tracking-widest opacity-60 italic max-w-md">Manage your listings, orders, and campus presence from one high-fidelity interface.</p>
+            <p className="text-[11px] font-bold text-textMuted uppercase tracking-widest opacity-60 italic max-w-md">{viewingAsAdmin ? "Admin can manage this user’s listings with the same controls available to the user." : "Manage your listings, orders, and campus presence from one high-fidelity interface."}</p>
           </div>
-          <Link to="/dashboard/new">
+          <Link to={viewingAsAdmin ? `/dashboard/new?ownerId=${encodeURIComponent(managedUserId)}` : "/dashboard/new"}>
             <Button className="h-16 px-10 rounded-[1.5rem] bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all gap-3">
               <Plus className="h-4 w-4" /> Add Listing
             </Button>
@@ -299,6 +330,17 @@ const Dashboard = () => {
       </div>
 
       <div className="px-6 max-w-7xl mx-auto -mt-8 relative z-10">
+        {viewingAsAdmin && (
+          <div className="mb-6 rounded-[2rem] border border-primary/20 bg-primary/5 px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary">Admin user mode</p>
+              <p className="text-sm font-semibold text-textPrimary mt-1">You are managing {managedUserName || managedUserId}'s dashboard and listings.</p>
+            </div>
+            <Button variant="outline" className="rounded-xl" onClick={() => navigate('/admin')}>
+              Back to Admin
+            </Button>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Sidebar Tabs */}
           <div className="md:col-span-3">
@@ -307,7 +349,7 @@ const Dashboard = () => {
                 {tabs.map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => { setTab(t.id); setSearchParams({ tab: t.id }); }}
+                    onClick={() => { setTab(t.id); const next = new URLSearchParams(); next.set("tab", t.id); if (viewingAsAdmin) { next.set("userId", managedUserId); if (managedUserName) next.set("userName", managedUserName); } setSearchParams(next); }}
                     className={`flex items-center gap-4 rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all duration-500 shrink-0 ${
                       tab === t.id
                         ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
@@ -406,44 +448,60 @@ const Dashboard = () => {
                       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Stock & Inventory</h3>
                       {myProducts.length > 0 ? (
                         <div className="grid grid-cols-1 gap-4">
-                          {myProducts.map((p) => (
-                            <div key={p.id} className={`rounded-[2rem] bg-white dark:bg-black/10 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 border border-black/5 transition-all duration-500 hover:shadow-lg ${p.isSold ? "opacity-40 grayscale" : ""}`}>
-                              <img src={p.image} className="h-20 w-20 rounded-2xl object-cover shadow-2xl shrink-0" />
-                              <div className="flex-1 w-full min-w-0">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h4 className="text-lg font-black text-textPrimary uppercase italic leading-none mb-2">{p.title}</h4>
-                                    <p className="text-xl font-black text-primary italic tabular-nums">₦{p.price.toLocaleString()}</p>
+                          {myProducts.map((p) => {
+                            const health = getListingHealthChecks(p, "product");
+                            return (
+                              <div key={p.id} className={`rounded-[2rem] bg-white dark:bg-black/10 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 border border-black/5 transition-all duration-500 hover:shadow-lg ${p.isSold ? "opacity-40 grayscale" : ""}`}>
+                                <img src={p.image} className="h-20 w-20 rounded-2xl object-cover shadow-2xl shrink-0" />
+                                <div className="flex-1 w-full min-w-0">
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <h4 className="text-lg font-black text-textPrimary uppercase italic leading-none mb-2">{p.title}</h4>
+                                      <p className="text-xl font-black text-primary italic tabular-nums">₦{p.price.toLocaleString()}</p>
+                                    </div>
+                                    {p.isSold && <Badge className="bg-black text-white rounded-full px-3 py-1 text-[8px] font-black uppercase tracking-widest">SOLD</Badge>}
                                   </div>
-                                  {p.isSold && <Badge className="bg-black text-white rounded-full px-3 py-1 text-[8px] font-black uppercase tracking-widest">SOLD</Badge>}
-                                </div>
-                                <div className="flex flex-wrap gap-2 mt-4 w-full">
-                                  <Button onClick={() => navigate(`/dashboard/edit/products/${p.id}`)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-black/5 border-none shadow-sm">
-                                    <Edit className="h-3.5 w-3.5" /> Edit
-                                  </Button>
-                                  <Button onClick={() => handleBoostListing(p.id, "products")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-orange-500/10 text-orange-500 border-none shadow-sm">
-                                    <Flame className="h-3.5 w-3.5" /> Boost
-                                  </Button>
-                                  <Button onClick={() => handleShareListing(p, "product")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-emerald-500/10 text-emerald-600 border-none shadow-sm">
-                                    <Share2 className="h-3.5 w-3.5" /> Share
-                                  </Button>
-                                  {!p.isSold && (
-                                    <Button onClick={() => handleMarkSold(p.id)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-primary/10 text-primary border-none shadow-sm">
-                                      <CheckCircle className="h-3.5 w-3.5" /> Mark as Sold
+                                  <div className="mt-4 rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                      <p className="text-[9px] font-black uppercase tracking-widest text-textMuted">Listing Quality</p>
+                                      <p className="text-sm font-black text-primary">{health.score}%</p>
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                      {health.checks.map((check) => (
+                                        <span key={check.label} className={`rounded-full px-3 py-1 text-[8px] font-black uppercase tracking-widest ${check.done ? "bg-primary/10 text-primary" : "bg-black/5 text-textMuted"}`}>
+                                          {check.done ? "✓" : "•"} {check.label}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 mt-4 w-full">
+                                    <Button onClick={() => goToManagedEdit("products", p.id)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-black/5 border-none shadow-sm">
+                                      <Edit className="h-3.5 w-3.5" /> Edit
                                     </Button>
-                                  )}
-                                  {p.isSold && (
-                                    <Button onClick={() => handleMarkLive(p.id)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-emerald-500/10 text-emerald-500 border-none shadow-sm">
-                                      <CheckCircle className="h-3.5 w-3.5" /> Mark Available
+                                    <Button onClick={() => handleBoostListing(p.id, "products")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-orange-500/10 text-orange-500 border-none shadow-sm">
+                                      <Flame className="h-3.5 w-3.5" /> Boost
                                     </Button>
-                                  )}
-                                  <Button onClick={() => handleDeleteListing(p.id, "products")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 text-destructive bg-destructive/5 border-none shadow-sm ml-auto">
-                                    <Trash2 className="h-3.5 w-3.5" /> Delete
-                                  </Button>
+                                    <Button onClick={() => handleShareListing(p, "product")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-emerald-500/10 text-emerald-600 border-none shadow-sm">
+                                      <Share2 className="h-3.5 w-3.5" /> Share
+                                    </Button>
+                                    {!p.isSold && (
+                                      <Button onClick={() => handleMarkSold(p.id)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-primary/10 text-primary border-none shadow-sm">
+                                        <CheckCircle className="h-3.5 w-3.5" /> Mark as Sold
+                                      </Button>
+                                    )}
+                                    {p.isSold && (
+                                      <Button onClick={() => handleMarkLive(p.id)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-emerald-500/10 text-emerald-500 border-none shadow-sm">
+                                        <CheckCircle className="h-3.5 w-3.5" /> Mark Available
+                                      </Button>
+                                    )}
+                                    <Button onClick={() => handleDeleteListing(p.id, "products")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 text-destructive bg-destructive/5 border-none shadow-sm ml-auto">
+                                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : <EmptyState icon={Package} label="No Products" />}
                     </div>
@@ -452,29 +510,45 @@ const Dashboard = () => {
                       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Services</h3>
                       {myServices.length > 0 ? (
                         <div className="grid grid-cols-1 gap-4">
-                          {myServices.map((s) => (
-                            <div key={s.id} className="rounded-[2rem] bg-white dark:bg-black/10 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 border border-black/5 transition-all duration-500 hover:shadow-lg">
-                              <img src={s.image || ""} className="h-20 w-20 rounded-2xl object-cover shadow-2xl shrink-0 bg-black/5" />
-                              <div className="flex-1 w-full min-w-0">
-                                <h4 className="text-lg font-black text-textPrimary uppercase italic leading-none mb-2">{s.title}</h4>
-                                <p className="text-xl font-black text-primary italic tabular-nums">₦{s.price.toLocaleString()}</p>
-                                <div className="flex flex-wrap gap-2 mt-4 w-full">
-                                  <Button onClick={() => navigate(`/dashboard/edit/services/${s.id}`)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-black/5 border-none shadow-sm">
-                                    <Edit className="h-3.5 w-3.5" /> Edit
-                                  </Button>
-                                  <Button onClick={() => handleBoostListing(s.id, "services")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-orange-500/10 text-orange-500 border-none shadow-sm">
-                                    <Flame className="h-3.5 w-3.5" /> Boost
-                                  </Button>
-                                  <Button onClick={() => handleShareListing(s, "service")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-emerald-500/10 text-emerald-600 border-none shadow-sm">
-                                    <Share2 className="h-3.5 w-3.5" /> Share
-                                  </Button>
-                                  <Button onClick={() => handleDeleteListing(s.id, "services")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 text-destructive bg-destructive/5 border-none shadow-sm ml-auto">
-                                    <Trash2 className="h-3.5 w-3.5" /> Delete
-                                  </Button>
+                          {myServices.map((s) => {
+                            const health = getListingHealthChecks(s, "service");
+                            return (
+                              <div key={s.id} className="rounded-[2rem] bg-white dark:bg-black/10 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 border border-black/5 transition-all duration-500 hover:shadow-lg">
+                                <img src={s.image || ""} className="h-20 w-20 rounded-2xl object-cover shadow-2xl shrink-0 bg-black/5" />
+                                <div className="flex-1 w-full min-w-0">
+                                  <h4 className="text-lg font-black text-textPrimary uppercase italic leading-none mb-2">{s.title}</h4>
+                                  <p className="text-xl font-black text-primary italic tabular-nums">₦{s.price.toLocaleString()}</p>
+                                  <div className="mt-4 rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                      <p className="text-[9px] font-black uppercase tracking-widest text-textMuted">Listing Quality</p>
+                                      <p className="text-sm font-black text-primary">{health.score}%</p>
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                      {health.checks.map((check) => (
+                                        <span key={check.label} className={`rounded-full px-3 py-1 text-[8px] font-black uppercase tracking-widest ${check.done ? "bg-primary/10 text-primary" : "bg-black/5 text-textMuted"}`}>
+                                          {check.done ? "✓" : "•"} {check.label}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 mt-4 w-full">
+                                    <Button onClick={() => goToManagedEdit("services", s.id)} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-black/5 border-none shadow-sm">
+                                      <Edit className="h-3.5 w-3.5" /> Edit
+                                    </Button>
+                                    <Button onClick={() => handleBoostListing(s.id, "services")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-orange-500/10 text-orange-500 border-none shadow-sm">
+                                      <Flame className="h-3.5 w-3.5" /> Boost
+                                    </Button>
+                                    <Button onClick={() => handleShareListing(s, "service")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 bg-emerald-500/10 text-emerald-600 border-none shadow-sm">
+                                      <Share2 className="h-3.5 w-3.5" /> Share
+                                    </Button>
+                                    <Button onClick={() => handleDeleteListing(s.id, "services")} variant="outline" className="h-10 rounded-xl px-4 text-[9px] font-black uppercase tracking-widest gap-2 text-destructive bg-destructive/5 border-none shadow-sm ml-auto">
+                                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : <EmptyState icon={Wrench} label="No Services" />}
                     </div>
