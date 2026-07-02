@@ -16,19 +16,18 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
   const cardRef = useRef<HTMLDivElement>(null);
   const reviewCount = service.reviewCount || Math.floor(Math.random() * 30) + 3;
 
-  const displayTitle = String(
-    service.title ||
-    (service as any).name ||
-    (service as any).serviceName ||
-    'Untitled Service'
-  );
-  const normalizedDisplayTitle = normalizedDisplayTitle && normalizedDisplayTitle !== displayOwnerName ? normalizedDisplayTitle : String((service as any)?.title || (service as any)?.name || (service as any)?.serviceName || "Untitled Service");
-
   const displayOwnerName = String(
     service.ownerName ||
     (service as any).businessName ||
     (service as any).shopName ||
     'Provider'
+  );
+
+  const displayTitle = String(
+    service.title ||
+    ((service as any).name && (service as any).name !== displayOwnerName ? (service as any).name : '') ||
+    ((service as any).serviceName && (service as any).serviceName !== displayOwnerName ? (service as any).serviceName : '') ||
+    'Untitled Service'
   );
 
   return (
@@ -53,7 +52,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted/20">
           <motion.img 
             src={getOptimizedUrl(service.image, { width: 600 })} 
-            alt={normalizedDisplayTitle} 
+            alt={displayTitle} 
             crossOrigin="anonymous"
             className="h-full w-full object-cover" 
             loading="lazy"
@@ -86,7 +85,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
 
         <div className="p-4 flex flex-col flex-1">
           <h3 className="text-sm font-black text-textPrimary leading-tight group-hover:text-primary transition-colors duration-300 line-clamp-1 mb-3 italic">
-            "{normalizedDisplayTitle}"
+            "{displayTitle}"
           </h3>
 
           <div className="mt-auto flex items-center justify-between">
