@@ -28,6 +28,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
 
   const ownerPhone = (product as any).ownerPhone || (product as any).contactPhone || "";
 
+  const displayTitle = String(
+    product.title ||
+    (product as any).name ||
+    (product as any).productName ||
+    'Untitled Listing'
+  );
+  const displayOwnerName = String(
+    product.ownerName ||
+    (product as any).businessName ||
+    (product as any).shopName ||
+    'Seller'
+  );
+
   const handleContact = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -41,7 +54,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId: product.id || (product as any)._id, collection: 'products' }),
       }).catch(() => {});
-      const msg = `Hi! I saw your listing on Siyayya: *${product.title}* (₦${product.price?.toLocaleString()}). Is it still available?`;
+      const msg = `Hi! I saw your listing on Siyayya: *${displayTitle}* (₦${product.price?.toLocaleString()}). Is it still available?`;
       window.open(formatWhatsAppUrl(ownerPhone, msg), "_blank", "noopener,noreferrer");
     } else {
       navigate(`/product/${product.id || (product as any)._id}`);
@@ -71,7 +84,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
         <div className="relative aspect-[4/5] sm:aspect-square w-full overflow-hidden bg-muted/20">
           <motion.img
             src={getOptimizedUrl(product.image, { width: 500 })}
-            alt={product.title}
+            alt={displayTitle}
             crossOrigin="anonymous"
             className="h-full w-full object-cover"
             loading="lazy"
@@ -89,17 +102,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
 
           <div className="absolute top-3 left-3 flex items-center gap-2 text-white drop-shadow-md">
             <div className="h-6 w-6 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-[10px] font-black">
-              {product.ownerName?.charAt(0)}
+              {displayOwnerName?.charAt(0)}
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[10px] font-black uppercase tracking-widest truncate max-w-[100px]">{product.ownerName}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest truncate max-w-[100px]">{displayOwnerName}</span>
             </div>
           </div>
         </div>
         
         <div className="px-2 pt-2 pb-1 flex flex-col flex-grow">
           <h3 className="text-xs font-bold text-textPrimary leading-tight group-hover:text-primary transition-colors duration-300 line-clamp-2 mb-1">
-            {product.title}
+            {displayTitle}
           </h3>
           
           <div className="mt-1">
@@ -113,7 +126,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
       <div className="px-2 pb-2 pt-1 mt-auto">
         <button
           onClick={handleContact}
-          aria-label={`Contact seller about ${product.title} via WhatsApp`}
+          aria-label={`Contact seller about ${displayTitle} via WhatsApp`}
           className="h-10 w-full rounded-xl bg-[#25D366] text-white flex items-center justify-center gap-1.5 hover:bg-[#1ebe5d] active:scale-95 transition-all shadow-sm text-[10px] font-black uppercase tracking-widest"
         >
           <MessageCircle className="h-3.5 w-3.5" />

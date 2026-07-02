@@ -16,6 +16,19 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
   const cardRef = useRef<HTMLDivElement>(null);
   const reviewCount = service.reviewCount || Math.floor(Math.random() * 30) + 3;
 
+  const displayTitle = String(
+    service.title ||
+    (service as any).name ||
+    (service as any).serviceName ||
+    'Untitled Service'
+  );
+  const displayOwnerName = String(
+    service.ownerName ||
+    (service as any).businessName ||
+    (service as any).shopName ||
+    'Provider'
+  );
+
   return (
     <motion.div
       ref={cardRef}
@@ -38,7 +51,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted/20">
           <motion.img 
             src={getOptimizedUrl(service.image, { width: 600 })} 
-            alt={service.title} 
+            alt={displayTitle} 
             crossOrigin="anonymous"
             className="h-full w-full object-cover" 
             loading="lazy"
@@ -54,10 +67,10 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
           <div className="absolute bottom-4 left-4 right-4 text-white">
             <div className="flex items-center gap-2 mb-2">
               <div className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-xs font-black border border-white/20">
-                {service.ownerName?.charAt(0)}
+                {displayOwnerName?.charAt(0)}
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest leading-none">{service.ownerName}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest leading-none">{displayOwnerName}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   {service.ownerIsVerified && <VerifiedBadge className="h-2.5 w-2.5" />}
                   <span className="text-[8px] font-bold text-white/60 uppercase tracking-tighter">Verified Provider</span>
@@ -71,7 +84,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
 
         <div className="p-4 flex flex-col flex-1">
           <h3 className="text-sm font-black text-textPrimary leading-tight group-hover:text-primary transition-colors duration-300 line-clamp-1 mb-3 italic">
-            "{service.title}"
+            "{displayTitle}"
           </h3>
 
           <div className="mt-auto flex items-center justify-between">

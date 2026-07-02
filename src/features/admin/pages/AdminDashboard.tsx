@@ -207,6 +207,8 @@ const AdminDashboard = () => {
 
   const totalWhatsappClicks = listings.reduce((sum: number, listing: any) => sum + Number(listing.whatsappClicks || 0), 0);
 
+  const topWhatsappListings = [...listings].sort((a: any, b: any) => Number(b.whatsappClicks || 0) - Number(a.whatsappClicks || 0)).slice(0, 5);
+
   const freshListings24h = listings.filter((l: any) => {
     const raw = l.boostedAt || l.createdAt;
     const date = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
@@ -440,6 +442,51 @@ const AdminDashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                  </div>
+                )}
+
+                {activeTab === 'analytics' && (
+                  <div className="p-6 md:p-8 space-y-8">
+                    <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+                      {[
+                        { label: 'Users', value: users.length, hint: 'registered accounts' },
+                        { label: 'Active 7d', value: activeUsers7d, hint: 'recently active users' },
+                        { label: 'Listings', value: listings.length, hint: 'products + services' },
+                        { label: 'Fresh Today', value: freshListings24h, hint: 'new or boosted' },
+                        { label: 'WhatsApp Clicks', value: totalWhatsappClicks, hint: 'buyer intent' },
+                      ].map((stat) => (
+                        <div key={stat.label} className="rounded-2xl border border-black/5 bg-muted/20 p-5">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary">{stat.label}</p>
+                          <p className="mt-3 text-3xl font-black text-textPrimary tabular-nums">{Number(stat.value).toLocaleString()}</p>
+                          <p className="mt-2 text-xs text-textSecondary font-medium">{stat.hint}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rounded-2xl border border-black/5 bg-muted/20 p-5">
+                      <div className="flex items-center justify-between gap-4 mb-4">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary">Top Contacted Listings</p>
+                          <p className="text-sm text-textSecondary font-medium mt-1">Listings with the highest WhatsApp buyer intent.</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {topWhatsappListings.length > 0 ? topWhatsappListings.map((listing: any) => (
+                          <div key={listing.id} className="rounded-xl bg-surface border border-black/5 px-4 py-3 flex items-center justify-between gap-4">
+                            <div className="min-w-0">
+                              <p className="font-bold text-textPrimary truncate">{listing.title || 'Untitled Listing'}</p>
+                              <p className="text-[10px] uppercase tracking-widest text-textSecondary mt-1">{listing.ownerName || 'Unknown'} • {listing.type}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-lg font-black text-primary tabular-nums">{Number(listing.whatsappClicks || 0).toLocaleString()}</p>
+                              <p className="text-[10px] uppercase tracking-widest text-textSecondary">WhatsApp Clicks</p>
+                            </div>
+                          </div>
+                        )) : (
+                          <p className="text-sm text-textSecondary font-medium">No WhatsApp click data yet.</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
 
