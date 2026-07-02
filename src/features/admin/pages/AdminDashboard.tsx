@@ -20,6 +20,7 @@ import { ADMIN_EMAILS } from "@/lib/config";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user: currentUser, isAdmin } = useAuth();
+  const isEmailAdmin = !!currentUser?.email && ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
   const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "orders" | "analytics" | "referrals">("analytics");
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
