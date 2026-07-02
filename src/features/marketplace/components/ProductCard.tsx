@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthModal } from "@/features/auth/components/AuthModal";
-import { MessageCircle, CreditCard, Share2 } from "lucide-react";
-import { useCart } from "@/features/marketplace/contexts/CartContext";
+import { MessageCircle } from "lucide-react";
 import { formatPrice } from "@/lib/mock-data";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { motion } from "framer-motion";
@@ -24,7 +23,6 @@ function formatWhatsAppUrl(phone: string, message: string): string {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
   const { isAuthenticated } = useAuth();
-  const { addToCart } = useCart();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -45,36 +43,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
     }
   };
 
-  const handleBuyNow = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isAuthenticated) {
-      setShowAuthModal(true);
-      return;
-    }
-    addToCart(product);
-    navigate(`/checkout?product=${product.id || (product as any)._id}`);
-  };
 
-  const handleShare = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const productPath = `/product/${product.slug || product.id || (product as any)._id}`;
-    const shareUrl = `${window.location.origin}${productPath}?ref=share`;
-    const shareText = `Check out ${product.title} on Siyayya Campus Marketplace for ${formatPrice(product.price)}.`;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: product.title, text: shareText, url: shareUrl });
-        return;
-      }
-    } catch (error: any) {
-      if (error?.name === "AbortError") return;
-    }
-
-    window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`, "_blank", "noopener,noreferrer");
-  };
 
   return (
     <motion.div
@@ -136,31 +105,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
         </div>
       </Link>
       
-      {/* Action Buttons */}
-      <div className="px-2 pb-2 pt-1 grid grid-cols-3 gap-1 mt-auto">
+      <div className="px-2 pb-2 pt-1 mt-auto">
         <button
           onClick={handleContact}
           aria-label={`Contact seller about ${product.title} via WhatsApp`}
-          className="h-10 rounded-xl bg-[#25D366] text-white flex items-center justify-center gap-1.5 hover:bg-[#1ebe5d] active:scale-95 transition-all shadow-sm text-[10px] font-black uppercase tracking-widest"
+          className="h-10 w-full rounded-xl bg-[#25D366] text-white flex items-center justify-center gap-1.5 hover:bg-[#1ebe5d] active:scale-95 transition-all shadow-sm text-[10px] font-black uppercase tracking-widest"
         >
           <MessageCircle className="h-3.5 w-3.5" />
-          Chat
-        </button>
-        <button
-          onClick={handleBuyNow}
-          aria-label={`Buy ${product.title} now`}
-          className="h-10 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all shadow-sm text-[10px] font-black uppercase tracking-widest"
-        >
-          <CreditCard className="h-3.5 w-3.5" />
-          Buy
-        </button>
-        <button
-          onClick={handleShare}
-          aria-label={`Share ${product.title}`}
-          className="h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center gap-1.5 hover:bg-primary hover:text-white active:scale-95 transition-all shadow-sm text-[10px] font-black uppercase tracking-widest"
-        >
-          <Share2 className="h-3.5 w-3.5" />
-          Share
+          Chat Seller
         </button>
       </div>
 

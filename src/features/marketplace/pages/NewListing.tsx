@@ -20,6 +20,45 @@ import { MediaRenderer } from "@/components/MediaRenderer";
 
 type ListingType = "product" | "service" | "request";
 
+type ListingChecklistItem = {
+  id: string;
+  label: string;
+  done: boolean;
+};
+
+const getListingChecklist = ({
+  type,
+  title,
+  description,
+  price,
+  category,
+  images,
+  contactPhone,
+}: {
+  type: ListingType;
+  title: string;
+  description: string;
+  price: string;
+  category: string;
+  images: string[];
+  contactPhone: string;
+}): ListingChecklistItem[] => {
+  const numericPrice = Number(price) || 0;
+  return [
+    { id: "title", label: "Strong title", done: title.trim().length >= 8 },
+    { id: "description", label: "Clear description", done: description.trim().length >= 40 },
+    { id: "category", label: "Category selected", done: !!category.trim() },
+    { id: "price", label: type === "request" ? "Budget added" : "Price added", done: type === "request" ? numericPrice >= 0 : numericPrice > 0 },
+    { id: "images", label: type === "product" ? "At least 1 photo" : "Photo added", done: type === "request" ? true : images.length >= 1 },
+    { id: "contact", label: "Contact phone ready", done: contactPhone.trim().length >= 10 },
+  ];
+};
+
+const getListingQualityScore = (items: ListingChecklistItem[]) => {
+  const completed = items.filter((item) => item.done).length;
+  return Math.round((completed / items.length) * 100);
+};
+
 export default function NewListing() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -73,6 +112,18 @@ export default function NewListing() {
   }, [isAuthenticated, isLoading, navigate, user, contactPhone, type]);
 
   if (isLoading) return null;
+
+  const checklist = getListingChecklist({
+    type,
+    title,
+    description,
+    price,
+    category,
+    images,
+    contactPhone,
+  });
+  const qualityScore = getListingQualityScore(checklist);
+  const completedChecklistCount = checklist.filter((item) => item.done).length;
 
   const handleSubmit = async () => {
     if (user?.isBanned) {
@@ -495,6 +546,47 @@ export default function NewListing() {
                  </div>
               </div>
             )}
+
+            <div className="space-y-5 pt-6 border-t border-black/5">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Listing Quality</h3>
+                  <p className="mt-2 text-xs font-semibold text-textSecondary">
+                    {qualityScore >= 80
+                      ? "Strong listing — more likely to get attention faster."
+                      : qualityScore >= 50
+                        ? "Good start — complete the remaining items to improve trust."
+                        : "Complete more details before posting for better results."}
+                  </p>
+                </div>
+                <div className="h-20 w-20 rounded-full border-4 border-primary/10 bg-primary/5 flex items-center justify-center text-xl font-black text-primary shadow-inner">
+                  {qualityScore}%
+                </div>
+              </div>
+
+              <div className="h-3 w-full rounded-full bg-black/5 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${qualityScore}%` }}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {checklist.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`rounded-2xl px-4 py-3 text-xs font-bold border ${item.done ? "bg-primary/5 text-primary border-primary/20" : "bg-black/[0.03] text-textMuted border-black/5"}`}
+                  >
+                    <span className="mr-2">{item.done ? "✓" : "•"}</span>
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-[11px] text-textMuted font-semibold">
+                Completed {completedChecklistCount} of {checklist.length} quality checks.
+              </p>
+            </div>
 
             <Button
               className="w-full h-20 rounded-[2rem] bg-[#111] hover:bg-black text-white shadow-2xl font-black uppercase tracking-[0.25em] text-xs transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50"
