@@ -9,14 +9,6 @@
       "destination": "/robots.txt"
     },
     {
-      "source": "/product/:slug",
-      "destination": "/api/og-product"
-    },
-    {
-      "source": "/service/:slug",
-      "destination": "/api/og-service"
-    },
-    {
       "source": "/((?!api/|assets/|_next/|static/|favicon.ico).*)",
       "destination": "/index.html"
     }
