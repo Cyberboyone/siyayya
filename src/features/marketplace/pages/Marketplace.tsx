@@ -140,12 +140,12 @@ const Marketplace = () => {
   }, [services, category, searchResults, minRating, search, freshFilter]);
 
   const combinedResults = useMemo(() => {
-    if (!search && category === "all" && !freshFilter) return [];
+    if (!search && category === "all" && !freshFilter && sort !== "trending") return [];
     return [
       ...filteredProducts.map(p => ({ ...p, type: 'product' })),
       ...filteredServices.map(s => ({ ...s, type: 'service' }))
-    ].sort((a, b) => getNumericDate(b.createdAt) - getNumericDate(a.createdAt));
-  }, [filteredProducts, filteredServices, search, category, freshFilter]);
+    ].sort((a, b) => getNumericDate((b as any).boostedAt || b.createdAt) - getNumericDate((a as any).boostedAt || a.createdAt));
+  }, [filteredProducts, filteredServices, search, category, freshFilter, sort]);
 
   const clearFilters = () => {
     setCondition("all");
@@ -331,7 +331,7 @@ const Marketplace = () => {
               </div>
             )}
 
-            {(search || category !== "all") && combinedResults.length === 0 ? (
+            {(search || freshFilter || sort === "trending" || category !== "all") && combinedResults.length === 0 ? (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -370,7 +370,7 @@ const Marketplace = () => {
             ) : (
               <div className="mt-8 pb-20">
                 <AnimatePresence mode="popLayout">
-                {(search || freshFilter || (category !== "all" && category !== "services")) ? (
+                {(search || freshFilter || sort === "trending" || (category !== "all" && category !== "services")) ? (
                   <motion.div 
                     key="combined"
                     initial={{ opacity: 0 }}
