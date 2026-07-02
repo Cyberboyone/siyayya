@@ -51,8 +51,9 @@ const Dashboard = () => {
 
   const [myProducts, setMyProducts] = useState<Product[]>([]);
   const managedUserId = searchParams.get("userId") || "";
+  const isEmailAdmin = !!user?.email && user.email.toLowerCase() === 'muhammadmusab372@gmail.com';
   const managedUserName = searchParams.get("userName") || "";
-  const viewingAsAdmin = !!isAdmin && !!managedUserId && managedUserId !== user?.id;
+  const viewingAsAdmin = !!(isAdmin || isEmailAdmin) && !!managedUserId && managedUserId !== user?.id;
   const dashboardOwnerId = viewingAsAdmin ? managedUserId : (user?.id || "");
   const [myServices, setMyServices] = useState<Service[]>([]);
   const [savedProducts, setSavedProducts] = useState<Product[]>([]);
@@ -317,7 +318,7 @@ const Dashboard = () => {
               {viewingAsAdmin ? "Admin View" : "Dashboard"}
             </div>
             <h1 className="text-4xl md:text-7xl font-black text-textPrimary tracking-tight italic uppercase leading-none pr-4">
-              {viewingAsAdmin ? "User " : "My "}<span className="text-gradient pr-4 inline-block">Dashboard</span>
+              {viewingAsAdmin ? `${managedUserName || "User"} ` : "My "}<span className="text-gradient pr-4 inline-block">Dashboard</span>
             </h1>
             <p className="text-[11px] font-bold text-textMuted uppercase tracking-widest opacity-60 italic max-w-md">{viewingAsAdmin ? "Admin can manage this user’s listings with the same controls available to the user." : "Manage your listings, orders, and campus presence from one high-fidelity interface."}</p>
           </div>
