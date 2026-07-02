@@ -28,19 +28,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
 
   const ownerPhone = (product as any).ownerPhone || (product as any).contactPhone || "";
 
-  const displayTitle = String(
-    product.title ||
-    (product as any).name ||
-    (product as any).productName ||
-    'Untitled Listing'
-  );
-  const normalizedDisplayTitle = normalizedDisplayTitle && normalizedDisplayTitle !== displayOwnerName ? normalizedDisplayTitle : String((product as any)?.title || (product as any)?.name || (product as any)?.productName || "Untitled Listing");
-
   const displayOwnerName = String(
     product.ownerName ||
     (product as any).businessName ||
     (product as any).shopName ||
     'Seller'
+  );
+
+  const displayTitle = String(
+    product.title ||
+    ((product as any).name && (product as any).name !== displayOwnerName ? (product as any).name : '') ||
+    ((product as any).productName && (product as any).productName !== displayOwnerName ? (product as any).productName : '') ||
+    'Untitled Listing'
   );
 
   const handleContact = (e: React.MouseEvent) => {
@@ -56,7 +55,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId: product.id || (product as any)._id, collection: 'products' }),
       }).catch(() => {});
-      const msg = `Hi! I saw your listing on Siyayya: *${normalizedDisplayTitle}* (₦${product.price?.toLocaleString()}). Is it still available?`;
+      const msg = `Hi! I saw your listing on Siyayya: *${displayTitle}* (₦${product.price?.toLocaleString()}). Is it still available?`;
       window.open(formatWhatsAppUrl(ownerPhone, msg), "_blank", "noopener,noreferrer");
     } else {
       navigate(`/product/${product.id || (product as any)._id}`);
@@ -86,7 +85,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
         <div className="relative aspect-[4/5] sm:aspect-square w-full overflow-hidden bg-muted/20">
           <motion.img
             src={getOptimizedUrl(product.image, { width: 500 })}
-            alt={normalizedDisplayTitle}
+            alt={displayTitle}
             crossOrigin="anonymous"
             className="h-full w-full object-cover"
             loading="lazy"
@@ -114,7 +113,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
         
         <div className="px-2 pt-2 pb-1 flex flex-col flex-grow">
           <h3 className="text-xs font-bold text-textPrimary leading-tight group-hover:text-primary transition-colors duration-300 line-clamp-2 mb-1">
-            {normalizedDisplayTitle}
+            {displayTitle}
           </h3>
           
           <div className="mt-1">
@@ -128,7 +127,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
       <div className="px-2 pb-2 pt-1 mt-auto">
         <button
           onClick={handleContact}
-          aria-label={`Contact seller about ${normalizedDisplayTitle} via WhatsApp`}
+          aria-label={`Contact seller about ${displayTitle} via WhatsApp`}
           className="h-10 w-full rounded-xl bg-[#25D366] text-white flex items-center justify-center gap-1.5 hover:bg-[#1ebe5d] active:scale-95 transition-all shadow-sm text-[10px] font-black uppercase tracking-widest"
         >
           <MessageCircle className="h-3.5 w-3.5" />
