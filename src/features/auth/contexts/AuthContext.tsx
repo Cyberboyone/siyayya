@@ -75,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         setUser(userData);
+        setIsAdmin(!!(data.account_type === 'admin' || data.isAdmin === true || (userData.email || '').toLowerCase() === 'muhammadmusab372@gmail.com'));
         return { isNewUser: !data.phone };
       } else {
         const newProfile = {
@@ -91,6 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         await setDoc(docRef, newProfile, { merge: true });
         setUser(newProfile as User);
+        setIsAdmin(!!((newProfile.email || '').toLowerCase() === 'muhammadmusab372@gmail.com'));
         return { isNewUser: true };
       }
     } catch (error) {
@@ -199,6 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
               }
               setUser(userData);
+              setIsAdmin(!!(data.account_type === 'admin' || data.isAdmin === true || (userData.email || '').toLowerCase() === 'muhammadmusab372@gmail.com'));
             }
           } else {
             // Returning session — load from Firestore directly (fast path)

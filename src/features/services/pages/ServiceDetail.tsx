@@ -64,10 +64,10 @@ const ServiceDetail = () => {
             const viewKey = `siyayya_viewed_service_${servData.id}`;
             if (!sessionStorage.getItem(viewKey)) {
               sessionStorage.setItem(viewKey, '1');
-              fetch('/api/listings/track-view', {
+              fetch('/api/listings/track-whatsapp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ listingId: servData.id, collection: 'services' }),
+                body: JSON.stringify({ listingId: servData.id, collection: 'services', action: 'view' }),
               }).catch(() => {});
             }
           } catch {}

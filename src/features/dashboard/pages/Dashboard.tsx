@@ -106,9 +106,13 @@ const Dashboard = () => {
         });
         setMyReviews(fetchedReviews);
 
-        const allProdSnap = await getDocs(collection(db, "products"));
-        const allProds = allProdSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        setSavedProducts(allProds.filter(p => savedIds.includes(p.id)));
+        if (savedIds.length > 0) {
+          const allProdSnap = await getDocs(collection(db, "products"));
+          const allProds = allProdSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+          setSavedProducts(allProds.filter(p => savedIds.includes(p.id)));
+        } else {
+          setSavedProducts([]);
+        }
       } catch (error) {
         console.error("Dashboard fetch error:", error);
       } finally {
