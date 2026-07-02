@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Users, Package, Flag, Loader2,
-  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3, Gift
+  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3, Gift, Download, Printer
 } from "lucide-react";
 
 import { ADMIN_EMAILS } from "@/lib/config";
@@ -207,6 +207,120 @@ const AdminDashboard = () => {
 
   const totalWhatsappClicks = listings.reduce((sum: number, listing: any) => sum + Number(listing.whatsappClicks || 0), 0);
 
+  const getUserActivityBucket = (user: any) => {
+    const raw = user.lastActive || user.lastLoginAt || user.updatedAt || user.joinedAt;
+    const date = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
+    if (!date || Number.isNaN(date.getTime())) return 'inactive';
+    const diffDays = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
+    if (diffDays <= 7) return 'active';
+    if (diffDays <= 30) return 'dormant';
+    return 'inactive';
+  };
+
+  const activeUsers = users.filter((u: any) => getUserActivityBucket(u) === 'active');
+  const dormantUsers = users.filter((u: any) => getUserActivityBucket(u) === 'dormant');
+  const inactiveUsers = users.filter((u: any) => getUserActivityBucket(u) === 'inactive');
+
+  const exportUsersReport = () => {
+    const rows = users.map((u: any) => {
+      const raw = u.lastActive || u.lastLoginAt || u.updatedAt || u.joinedAt;
+      const date = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
+      return {
+        name: u.businessName || u.name || '',
+        email: u.email || '',
+        phone: u.phone || '',
+        campus: u.university || u.campusId || '',
+        verified: u.isVerified ? 'Yes' : 'No',
+        banned: u.isBanned ? 'Yes' : 'No',
+        activity: getUserActivityBucket(u),
+        lastActive: date ? date.toISOString() : '',
+        referralCount: u.referralCount || 0,
+      };
+    });
+
+    const headers = ['Name','Email','Phone','Campus','Verified','Banned','Activity','Last Active','Referral Count'];
+    const csv = [
+      headers.join(','),
+      ...rows.map((row: any) => [row.name,row.email,row.phone,row.campus,row.verified,row.banned,row.activity,row.lastActive,row.referralCount]
+        .map((value: any) => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `siyayya-users-report-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Users report downloaded.');
+  };
+
+  const printUsersReport = () => {
+    const reportWindow = window.open('', '_blank', 'width=1200,height=800');
+    if (!reportWindow) {
+      toast.error('Unable to open print window. Please allow popups.');
+      return;
+    }
+
+    const rows = users.map((u: any) => {
+      const raw = u.lastActive || u.lastLoginAt || u.updatedAt || u.joinedAt;
+      const date = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
+      return `
+        <tr>
+          <td>${u.businessName || u.name || ''}</td>
+          <td>${u.email || ''}</td>
+          <td>${u.phone || ''}</td>
+          <td>${u.university || u.campusId || ''}</td>
+          <td>${u.isVerified ? 'Verified' : 'Not Verified'}</td>
+          <td>${u.isBanned ? 'Banned' : 'Active'}</td>
+          <td>${getUserActivityBucket(u)}</td>
+          <td>${date ? date.toLocaleString() : ''}</td>
+        </tr>
+      `;
+    }).join('');
+
+    reportWindow.document.write(`
+      <html>
+        <head>
+          <title>Siyayya Users Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #111; }
+            h1 { margin-bottom: 8px; }
+            p { color: #555; }
+            .stats { display: flex; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+            .card { border: 1px solid #ddd; border-radius: 12px; padding: 12px 16px; min-width: 140px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
+            th { background: #f5f5f5; }
+          </style>
+        </head>
+        <body>
+          <h1>Siyayya Users Report</h1>
+          <p>Generated on ${new Date().toLocaleString()}</p>
+          <div class="stats">
+            <div class="card"><strong>Total Users</strong><br/>${users.length}</div>
+            <div class="card"><strong>Active</strong><br/>${activeUsers.length}</div>
+            <div class="card"><strong>Dormant</strong><br/>${dormantUsers.length}</div>
+            <div class="card"><strong>Inactive</strong><br/>${inactiveUsers.length}</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Phone</th><th>Campus</th><th>Verification</th><th>Status</th><th>Activity</th><th>Last Active</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </body>
+      </html>
+    `);
+    reportWindow.document.close();
+    reportWindow.focus();
+    reportWindow.print();
+  };
+
   const topWhatsappListings = [...listings].sort((a: any, b: any) => Number(b.whatsappClicks || 0) - Number(a.whatsappClicks || 0)).slice(0, 5);
 
   const freshListings24h = listings.filter((l: any) => {
@@ -294,13 +408,38 @@ const AdminDashboard = () => {
             ) : (
               <div className="bg-surface rounded-[2rem] border border-black/5 overflow-hidden shadow-sm">
                 {activeTab === 'users' && (
-                  <div className="overflow-x-auto">
+                  <div className="p-6 space-y-6">
+                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                      {[
+                        { label: 'Total Users', value: users.length, tone: 'text-textPrimary' },
+                        { label: 'Active', value: activeUsers.length, tone: 'text-emerald-600' },
+                        { label: 'Dormant', value: dormantUsers.length, tone: 'text-amber-600' },
+                        { label: 'Inactive', value: inactiveUsers.length, tone: 'text-rose-600' },
+                      ].map((stat) => (
+                        <div key={stat.label} className="rounded-2xl border border-black/5 bg-muted/20 p-4">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary">{stat.label}</p>
+                          <p className={`mt-3 text-3xl font-black tabular-nums ${stat.tone}`}>{Number(stat.value).toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                      <Button variant="outline" className="rounded-xl gap-2" onClick={printUsersReport}>
+                        <Printer className="h-4 w-4" /> Print Users Report
+                      </Button>
+                      <Button className="rounded-xl gap-2" onClick={exportUsersReport}>
+                        <Download className="h-4 w-4" /> Download CSV
+                      </Button>
+                    </div>
+
+                    <div className="overflow-x-auto">
                   <table className="min-w-[700px] w-full text-left border-collapse">
                     <thead className="bg-muted/30 border-b border-black/5">
                       <tr>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">User</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Email</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Verification</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Activity</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Status</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest text-right">Actions</th>
                       </tr>
@@ -314,6 +453,9 @@ const AdminDashboard = () => {
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${u.isVerified ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
                               {u.isVerified ? 'Verified' : 'Not Verified'}
                             </span>
+                          </td>
+                          <td className="px-6 py-4">
+                             {(() => { const bucket = getUserActivityBucket(u); return <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${bucket === 'active' ? 'bg-emerald-100 text-emerald-600' : bucket === 'dormant' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>{bucket}</span>; })()}
                           </td>
                           <td className="px-6 py-4">
                              <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${u.isBanned ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-100 text-blue-600'}`}>
@@ -348,6 +490,7 @@ const AdminDashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                   </div>
                 )}
 
@@ -730,59 +873,7 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
-                {activeTab === 'analytics' && (
-                  <div className="p-4 sm:p-8 space-y-8">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Total Revenue</p>
-                        <h3 className="text-3xl font-black text-textPrimary">
-                          ₦{orders.reduce((acc, order) => acc + (order.totalAmount || 0), 0).toLocaleString()}
-                        </h3>
-                      </div>
-                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Total Users</p>
-                        <h3 className="text-3xl font-black text-textPrimary">{users.length}</h3>
-                      </div>
-                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">7-Day Active Users</p>
-                        <h3 className="text-3xl font-black text-textPrimary">{activeUsers7d}</h3>
-                      </div>
-                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Active Listings</p>
-                        <h3 className="text-3xl font-black text-textPrimary">{listings.filter(l => l.status === 'approved').length}</h3>
-                      </div>
-                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Fresh Today</p>
-                        <h3 className="text-3xl font-black text-textPrimary">{freshListings24h}</h3>
-                      </div>
-                      <div className="bg-muted/10 p-6 rounded-2xl border border-black/5">
-                        <p className="text-[10px] font-black uppercase text-textSecondary tracking-widest mb-2">Referral Signups</p>
-                        <h3 className="text-3xl font-black text-textPrimary">{referrals.length}</h3>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="bg-muted/10 rounded-2xl border border-black/5 p-6">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-textPrimary mb-4">Engagement Playbook</h3>
-                        <div className="space-y-3 text-sm text-textSecondary font-medium">
-                          <p>1. Feature 5–10 strong listings daily so Fresh Today looks alive.</p>
-                          <p>2. Verify reliable sellers to increase buyer confidence.</p>
-                          <p>3. Ask sellers to use Share/Boost after posting to bring WhatsApp traffic back.</p>
-                          <p>4. Watch Fresh Today, listings, and active users weekly.</p>
-                        </div>
-                      </div>
-                      <div className="bg-muted/10 rounded-2xl border border-black/5 p-6">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-textPrimary mb-4">Admin Quick Access</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                          <Button onClick={() => setActiveTab('listings')} className="rounded-xl h-12 font-black text-[10px] uppercase tracking-widest">Feature Listings</Button>
-                          <Button onClick={() => setActiveTab('users')} variant="outline" className="rounded-xl h-12 font-black text-[10px] uppercase tracking-widest">Verify Sellers</Button>
-                          <Link to="/marketplace?fresh=today" className="rounded-xl h-12 bg-primary/10 text-primary font-black text-[10px] uppercase tracking-widest flex items-center justify-center">View Fresh</Link>
-                          <Link to="/dashboard/new" className="rounded-xl h-12 bg-black text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center">Seed Listing</Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
