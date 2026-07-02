@@ -8,9 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Product, Service } from "@/lib/mock-data";
 import { useSavedItems } from "@/hooks/use-saved-items";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
-import { collection, query, where, getDocs, getDoc, doc, deleteDoc, updateDoc, serverTimestamp, increment } from "firebase/firestore";
-import { deleteFromCloudinary } from "@/lib/cloudinary";
-import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, increment } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { Plus, Edit, Trash2, Package, Wrench, Settings, Eye, Star, CheckCircle, Heart, Loader2, AlertTriangle, Flame, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -151,29 +150,34 @@ const Dashboard = () => {
       desc: "Are you sure you want to permanently delete this listing? This action cannot be undone and will remove all associated media.",
       action: async () => {
         try {
-          const docRef = doc(db, type, id);
-          const docSnap = await getDoc(docRef);
-          
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (data.mediaData && Array.isArray(data.mediaData)) {
-              await Promise.all(
-                data.mediaData.map((m: any) => deleteFromCloudinary(m.publicId, m.resourceType || 'image'))
-              );
-            } else if (data.public_id) {
-              await deleteFromCloudinary(data.public_id, data.resource_type || 'image');
-            }
+          if (!auth.currentUser) {
+            toast.error("Please sign in again before deleting.");
+            return;
           }
 
-          await deleteDoc(docRef);
-          
+          const idToken = await auth.currentUser.getIdToken(true);
+          const response = await fetch('/api/listings/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              idToken,
+              listingId: id,
+              collection: type,
+            }),
+          });
+
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(result?.message || 'Failed to delete listing');
+          }
+
           if (type === "products") setMyProducts(prev => prev.filter(p => p.id !== id));
           if (type === "services") setMyServices(prev => prev.filter(s => s.id !== id));
-          
-          toast.success("Listing deleted successfully");
-        } catch (error) {
+
+          toast.success(result?.message || "Listing deleted successfully");
+        } catch (error: any) {
           console.error("Error deleting listing:", error);
-          toast.error("Failed to delete listing");
+          toast.error(error?.message || "Failed to delete listing");
         }
       }
     });

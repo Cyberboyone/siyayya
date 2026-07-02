@@ -5,11 +5,10 @@ import { Navbar } from "@/components/Navbar";
 import { formatPrice, Service, CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
 import { ServiceCard } from "../components/ServiceCard";
 import { Button } from "@/components/ui/button";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, getDocs, limit, deleteDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { useAuth } from "../../auth/contexts/AuthContext";
 import { toast } from "sonner";
-import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { ReviewSection } from "@/components/ReviewSection";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useSEO } from "@/hooks/useSEO";
@@ -160,20 +159,31 @@ const ServiceDetail = () => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      if (service.mediaData && Array.isArray(service.mediaData)) {
-        await Promise.all(
-          service.mediaData.map((m: any) => deleteFromCloudinary(m.publicId, m.resourceType || 'image'))
-        );
-      } else if (service.public_id) {
-        await deleteFromCloudinary(service.public_id, service.resource_type || 'image');
+      if (!auth.currentUser) {
+        throw new Error("Please sign in again before deleting.");
       }
 
-      await deleteDoc(doc(db, "services", service.id));
-      toast.success("Service deleted successfully");
+      const idToken = await auth.currentUser.getIdToken(true);
+      const response = await fetch('/api/listings/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idToken,
+          listingId: service.id,
+          collection: 'services',
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.message || 'Failed to delete service');
+      }
+
+      toast.success(result?.message || "Service deleted successfully");
       navigate("/marketplace?category=services");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting service:", error);
-      toast.error("Failed to delete service");
+      toast.error(error?.message || "Failed to delete service");
     } finally {
       setIsDeleting(false);
       setConfirmOpen(false);

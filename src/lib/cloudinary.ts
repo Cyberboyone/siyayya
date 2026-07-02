@@ -49,7 +49,11 @@ export async function uploadToCloudinary(file: File): Promise<CloudinaryResponse
  * Note: Direct client-side deletion from Cloudinary requires Cloudinary API Key/Secret
  * which shouldn't be exposed on the frontend. This function calls a secure backend endpoint.
  */
-export async function deleteFromCloudinary(publicId: string, resourceType: string = 'image'): Promise<boolean> {
+export async function deleteFromCloudinary(
+  publicId: string,
+  resourceType: string = 'image',
+  idToken?: string
+): Promise<boolean> {
   if (!publicId) return false;
 
   console.log(`Attempting to delete Cloudinary asset: ${publicId} (${resourceType})`);
@@ -57,12 +61,15 @@ export async function deleteFromCloudinary(publicId: string, resourceType: strin
   try {
     const response = await fetch('/api/cloudinary/delete', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+      },
       body: JSON.stringify({ public_id: publicId, resource_type: resourceType }),
     });
 
     if (!response.ok) {
-      return false; // Safely return false if the backend isn't there
+      return false;
     }
 
     return response.ok;

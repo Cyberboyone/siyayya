@@ -7,10 +7,9 @@ import { ProductCard } from "../components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { useRecentlyViewed } from "@/hooks/use-recently-viewed";
 import { useSavedItems } from "@/hooks/use-saved-items";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, getDocs, limit, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, collection, query, where, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
-import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { ReviewSection } from "@/components/ReviewSection";
 import { formatDate } from "@/lib/utils";
 import { CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
@@ -205,19 +204,31 @@ const ProductDetail = () => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      if (product.mediaData && Array.isArray(product.mediaData)) {
-        await Promise.all(
-          product.mediaData.map((m: any) => deleteFromCloudinary(m.publicId, m.resourceType || 'image'))
-        );
-      } else if (product.public_id) {
-        await deleteFromCloudinary(product.public_id, product.resource_type || 'image');
+      if (!auth.currentUser) {
+        throw new Error("Please sign in again before deleting.");
       }
-      await deleteDoc(doc(db, "products", product.id));
-      toast.success("Listing deleted successfully");
+
+      const idToken = await auth.currentUser.getIdToken(true);
+      const response = await fetch('/api/listings/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idToken,
+          listingId: product.id,
+          collection: 'products',
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.message || 'Failed to delete listing');
+      }
+
+      toast.success(result?.message || "Listing deleted successfully");
       navigate("/marketplace");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting listing:", error);
-      toast.error("Failed to delete listing");
+      toast.error(error?.message || "Failed to delete listing");
     } finally {
       setIsDeleting(false);
       setConfirmOpen(false);
