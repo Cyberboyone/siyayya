@@ -277,6 +277,11 @@ const ProductDetail = () => {
     }
     const phone = product.ownerPhone || product.contactPhone || "";
     if (phone) {
+      fetch('/api/listings/track-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: product.id, collection: 'products' }),
+      }).catch(() => {});
       const cleaned = phone.replace(/\D/g, "");
       const intl = cleaned.startsWith("234") ? cleaned : cleaned.startsWith("0") ? "234" + cleaned.slice(1) : "234" + cleaned;
       const msg = encodeURIComponent(`Hi! I saw your listing on Siyayya: *${product.title}* (₦${product.price?.toLocaleString()}). Is it still available?`);

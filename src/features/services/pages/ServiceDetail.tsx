@@ -198,6 +198,11 @@ const ServiceDetail = () => {
     }
     const phone = service.ownerPhone || service.contactPhone || "";
     if (phone) {
+      fetch('/api/listings/track-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: service.id, collection: 'services' }),
+      }).catch(() => {});
       const cleaned = phone.replace(/\D/g, "");
       const intl = cleaned.startsWith("234") ? cleaned : cleaned.startsWith("0") ? "234" + cleaned.slice(1) : "234" + cleaned;
       const msg = encodeURIComponent(`Hi! I found your service on Siyayya: *${service.title}* (${service.priceLabel || "Starting from"} ₦${service.price?.toLocaleString()}). I'd like to book. Are you available?`);

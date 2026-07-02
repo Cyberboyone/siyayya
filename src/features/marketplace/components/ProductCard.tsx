@@ -36,6 +36,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
       return;
     }
     if (ownerPhone) {
+      fetch('/api/listings/track-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: product.id || (product as any)._id, collection: 'products' }),
+      }).catch(() => {});
       const msg = `Hi! I saw your listing on Siyayya: *${product.title}* (₦${product.price?.toLocaleString()}). Is it still available?`;
       window.open(formatWhatsAppUrl(ownerPhone, msg), "_blank", "noopener,noreferrer");
     } else {

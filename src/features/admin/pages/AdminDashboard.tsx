@@ -205,6 +205,8 @@ const AdminDashboard = () => {
     return date && Date.now() - date.getTime() <= 7 * 24 * 60 * 60 * 1000;
   }).length;
 
+  const totalWhatsappClicks = listings.reduce((sum: number, listing: any) => sum + Number(listing.whatsappClicks || 0), 0);
+
   const freshListings24h = listings.filter((l: any) => {
     const raw = l.boostedAt || l.createdAt;
     const date = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
