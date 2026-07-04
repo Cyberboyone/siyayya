@@ -430,94 +430,167 @@ const AdminDashboard = () => {
             ) : (
               <div className="bg-surface rounded-[2rem] border border-black/5 overflow-hidden shadow-sm">
                 {activeTab === 'users' && (
-                  <div className="p-6 space-y-6">
-                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                  <div className="p-4 sm:p-6 space-y-6">
+                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                       {[
                         { label: 'Total Users', value: users.length, tone: 'text-textPrimary' },
                         { label: 'Active', value: activeUsers.length, tone: 'text-emerald-600' },
                         { label: 'Dormant', value: dormantUsers.length, tone: 'text-amber-600' },
                         { label: 'Inactive', value: inactiveUsers.length, tone: 'text-rose-600' },
                       ].map((stat) => (
-                        <div key={stat.label} className="rounded-2xl border border-black/5 bg-muted/20 p-4">
+                        <div key={stat.label} className="rounded-2xl border border-black/5 bg-muted/20 p-3 sm:p-4">
                           <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary">{stat.label}</p>
-                          <p className={`mt-3 text-3xl font-black tabular-nums ${stat.tone}`}>{Number(stat.value).toLocaleString()}</p>
+                          <p className={`mt-2 text-2xl sm:text-3xl font-black tabular-nums ${stat.tone}`}>{Number(stat.value).toLocaleString()}</p>
                         </div>
                       ))}
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                      <Button variant="outline" className="rounded-xl gap-2" onClick={printUsersReport}>
-                        <Printer className="h-4 w-4" /> Print Users Report
+                      <Button variant="outline" className="rounded-xl gap-2 text-xs" onClick={printUsersReport}>
+                        <Printer className="h-4 w-4" /> Print Report
                       </Button>
-                      <Button className="rounded-xl gap-2" onClick={exportUsersReport}>
+                      <Button className="rounded-xl gap-2 text-xs" onClick={exportUsersReport}>
                         <Download className="h-4 w-4" /> Download CSV
                       </Button>
                     </div>
 
-                    <div className="overflow-x-auto">
-                  <table className="min-w-[700px] w-full text-left border-collapse">
-                    <thead className="bg-muted/30 border-b border-black/5">
-                      <tr>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">User</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Email</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Verification</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Activity</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Status</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.filter(u => u.businessName?.toLowerCase().includes(searchQuery.toLowerCase()) || u.email?.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
-                        <tr key={u.id} className="border-b border-black/5 hover:bg-muted/10 transition-colors">
-                          <td className="px-6 py-4 font-bold text-textPrimary">{u.businessName || u.name}</td>
-                          <td className="px-6 py-4 text-textSecondary text-sm">{u.email}</td>
-                          <td className="px-6 py-4">
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${u.isVerified ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
-                              {u.isVerified ? 'Verified' : 'Not Verified'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                             {(() => { const bucket = getUserActivityBucket(u); return <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${bucket === 'active' ? 'bg-emerald-100 text-emerald-600' : bucket === 'dormant' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>{bucket}</span>; })()}
-                          </td>
-                          <td className="px-6 py-4">
-                             <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${u.isBanned ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-100 text-blue-600'}`}>
-                               {u.isBanned ? 'Banned' : 'Active'}
-                             </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                             <div className="flex justify-end gap-2">
-                               <Button 
-                                 variant="ghost" 
-                                 size="sm" 
-                                 className={`${u.isVerified ? 'text-gray-400' : 'text-green-600'} hover:bg-muted`}
-                                 onClick={() => handleToggleVerify(u.id, u.isVerified ?? false)}
-                               >
-                                 <CheckCircle className={`h-4 w-4 ${u.isVerified ? 'fill-green-600 text-white' : ''}`} />
-                               </Button>
-                               <Button 
-                                 variant="ghost" 
-                                 size="sm" 
-                                 className={`${u.isBanned ? 'text-blue-600' : 'text-error'} hover:bg-muted`}
-                                 onClick={() => handleToggleBan(u.id, u.isBanned ?? false)}
-                               >
-                                 <Ban className="h-4 w-4" />
-                               </Button>
-                               <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => openUserDashboard(u)}><ExternalLink className="h-4 w-4 mr-2" />Dashboard</Button>
-                               <Button variant="ghost" size="sm" className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(u.id)}>
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  </div>
+                    {/* Mobile cards */}
+                    <div className="flex flex-col gap-3 md:hidden">
+                      {users.filter(u => u.businessName?.toLowerCase().includes(searchQuery.toLowerCase()) || u.email?.toLowerCase().includes(searchQuery.toLowerCase())).map(u => {
+                        const bucket = getUserActivityBucket(u);
+                        return (
+                          <div key={u.id} className="rounded-2xl border border-black/5 bg-muted/10 p-4 space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-black text-textPrimary truncate">{u.businessName || u.name || 'No name'}</p>
+                                <p className="text-xs text-textSecondary truncate mt-0.5">{u.email}</p>
+                              </div>
+                              <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase shrink-0 ${u.isBanned ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                                {u.isBanned ? 'Banned' : 'Active'}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${u.isVerified ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
+                                {u.isVerified ? 'Verified' : 'Unverified'}
+                              </span>
+                              <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${bucket === 'active' ? 'bg-emerald-100 text-emerald-600' : bucket === 'dormant' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>
+                                {bucket}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2 pt-1 border-t border-black/5">
+                              <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${u.isVerified ? 'text-gray-400' : 'text-green-600'}`} onClick={() => handleToggleVerify(u.id, u.isVerified ?? false)}>
+                                <CheckCircle className={`h-3.5 w-3.5 mr-1 ${u.isVerified ? 'fill-green-600 text-white' : ''}`} />{u.isVerified ? 'Unverify' : 'Verify'}
+                              </Button>
+                              <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${u.isBanned ? 'text-blue-600' : 'text-error'}`} onClick={() => handleToggleBan(u.id, u.isBanned ?? false)}>
+                                <Ban className="h-3.5 w-3.5 mr-1" />{u.isBanned ? 'Unban' : 'Ban'}
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-black text-primary" onClick={() => openUserDashboard(u)}>
+                                <ExternalLink className="h-3.5 w-3.5 mr-1" />Dashboard
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-black text-error ml-auto" onClick={() => handleDeleteUser(u.id)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Desktop table */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="min-w-[700px] w-full text-left border-collapse">
+                        <thead className="bg-muted/30 border-b border-black/5">
+                          <tr>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">User</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Email</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Verification</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Activity</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Status</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {users.filter(u => u.businessName?.toLowerCase().includes(searchQuery.toLowerCase()) || u.email?.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
+                            <tr key={u.id} className="border-b border-black/5 hover:bg-muted/10 transition-colors">
+                              <td className="px-6 py-4 font-bold text-textPrimary">{u.businessName || u.name}</td>
+                              <td className="px-6 py-4 text-textSecondary text-sm">{u.email}</td>
+                              <td className="px-6 py-4">
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${u.isVerified ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}`}>
+                                  {u.isVerified ? 'Verified' : 'Not Verified'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                {(() => { const bucket = getUserActivityBucket(u); return <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${bucket === 'active' ? 'bg-emerald-100 text-emerald-600' : bucket === 'dormant' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>{bucket}</span>; })()}
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${u.isBanned ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-100 text-blue-600'}`}>
+                                  {u.isBanned ? 'Banned' : 'Active'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="ghost" size="sm" className={`${u.isVerified ? 'text-gray-400' : 'text-green-600'} hover:bg-muted`} onClick={() => handleToggleVerify(u.id, u.isVerified ?? false)}>
+                                    <CheckCircle className={`h-4 w-4 ${u.isVerified ? 'fill-green-600 text-white' : ''}`} />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className={`${u.isBanned ? 'text-blue-600' : 'text-error'} hover:bg-muted`} onClick={() => handleToggleBan(u.id, u.isBanned ?? false)}>
+                                    <Ban className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => openUserDashboard(u)}><ExternalLink className="h-4 w-4 mr-2" />Dashboard</Button>
+                                  <Button variant="ghost" size="sm" className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(u.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'listings' && (
-                  <div className="overflow-x-auto">
+                  <div className="p-4 sm:p-0">
+                    {/* Mobile listing cards */}
+                    <div className="flex flex-col gap-3 md:hidden p-2">
+                      {listings.filter(l => l.title?.toLowerCase().includes(searchQuery.toLowerCase())).map(l => (
+                        <div key={l.id} className="rounded-2xl border border-black/5 bg-muted/10 p-4 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-xl bg-muted overflow-hidden flex-shrink-0 border border-black/5">
+                              {l.image && <img src={l.image} alt="" className="h-full w-full object-cover" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-black text-textPrimary truncate text-sm">{l.title}</p>
+                              <p className="text-[10px] text-textMuted font-black uppercase tabular-nums">₦{l.price?.toLocaleString()} • {l.ownerName || 'Unknown'}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${l.status === 'approved' ? 'bg-green-100 text-green-600' : l.status === 'removed' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}`}>
+                              {l.status || 'pending'}
+                            </span>
+                            <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${l.type === 'service' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>{l.type}</span>
+                            {l.isFeatured && <span className="text-[9px] font-black px-2 py-0.5 rounded uppercase bg-primary text-white">Featured</span>}
+                          </div>
+                          <div className="flex flex-wrap gap-2 pt-1 border-t border-black/5">
+                            <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-black text-primary" onClick={() => { const rt = l.type === 'product' ? 'products' : 'services'; navigate(`/dashboard/edit/${rt}/${l.id}`); }}>
+                              <Edit className="h-3.5 w-3.5 mr-1" />Edit
+                            </Button>
+                            <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${l.status === 'approved' ? 'text-gray-300' : 'text-green-600'}`} onClick={() => handleUpdateStatus(l.id, l.type, 'approved')}>
+                              <CheckCircle className="h-3.5 w-3.5 mr-1" />Approve
+                            </Button>
+                            <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${l.isFeatured ? 'text-primary' : 'text-textMuted'}`} onClick={() => handleToggleFeature(l.id, l.type, !!l.isFeatured)}>
+                              <Flag className="h-3.5 w-3.5 mr-1" />{l.isFeatured ? 'Unfeature' : 'Feature'}
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-black text-error ml-auto" onClick={() => handleDeleteListing(l.id, l.type)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop table */}
+                    <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-[700px] w-full text-left border-collapse">
                     <thead className="bg-muted/30 border-b border-black/5">
                       <tr>
@@ -607,12 +680,13 @@ const AdminDashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'analytics' && (
-                  <div className="p-6 md:p-8 space-y-8">
-                    <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+                  <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
                       {[
                         { label: 'Users', value: users.length, hint: 'registered accounts' },
                         { label: 'Active 7d', value: activeUsers7d, hint: 'recently active users' },
@@ -733,7 +807,55 @@ const AdminDashboard = () => {
                   <div className="p-20 text-center text-textSecondary font-bold italic">No orders yet</div>
                 )}
                 {activeTab === 'orders' && orders.length > 0 && (
-                  <div className="overflow-x-auto">
+                  <div>
+                    {/* Mobile order cards */}
+                    <div className="flex flex-col gap-3 md:hidden p-4">
+                      {orders.filter(o =>
+                        o.buyerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        o.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        o.buyerEmail?.toLowerCase().includes(searchQuery.toLowerCase())
+                      ).map(o => {
+                        const orderDate = o.createdAt?.toDate ? o.createdAt.toDate() : (o.createdAt ? new Date(o.createdAt) : null);
+                        const items = o.items || o.products || [];
+                        return (
+                          <div key={o.id} className="rounded-2xl border border-black/5 bg-muted/10 p-4 space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-black text-textPrimary text-sm">{o.buyerName || 'Unknown'}</p>
+                                <p className="text-[10px] text-textSecondary truncate">{o.buyerEmail}</p>
+                                <p className="text-[9px] font-mono text-textMuted mt-0.5">#{o.id.slice(0,8)}</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="font-black text-primary tabular-nums">₦{o.totalAmount?.toLocaleString()}</p>
+                                <p className="text-[9px] text-textSecondary">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${o.status === 'delivered' ? 'bg-green-100 text-green-600' : o.status === 'cancelled' ? 'bg-red-100 text-red-600' : o.status === 'processing' ? 'bg-yellow-100 text-yellow-600' : o.status === 'shipped' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
+                                {o.status || 'paid'}
+                              </span>
+                              <span className="text-[9px] text-textMuted">{orderDate ? orderDate.toLocaleDateString() : 'N/A'}</span>
+                            </div>
+                            <div className="pt-1 border-t border-black/5">
+                              <select
+                                className="w-full text-[10px] font-black uppercase bg-muted/50 border border-black/5 rounded-xl px-3 py-2 outline-none"
+                                value={o.status || 'paid'}
+                                onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
+                              >
+                                <option value="paid">Paid</option>
+                                <option value="processing">Processing</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                              </select>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Desktop orders table */}
+                  <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-[900px] w-full text-left border-collapse">
                     <thead className="bg-muted/30 border-b border-black/5">
                       <tr>
@@ -911,43 +1033,72 @@ const AdminDashboard = () => {
                     </tbody>
                   </table>
                   </div>
+                  </div>
                 )}
 
                 {activeTab === 'referrals' && referrals.length === 0 && (
                   <div className="p-20 text-center text-textSecondary font-bold italic">No referrals yet</div>
                 )}
                 {activeTab === 'referrals' && referrals.length > 0 && (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-[760px] w-full text-left border-collapse">
-                      <thead className="bg-muted/30 border-b border-black/5">
-                        <tr>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">New User</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Referrer ID</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Code</th>
-                          <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {referrals.filter(r =>
-                          r.referredUserName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          r.referredUserEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          r.referralCode?.toLowerCase().includes(searchQuery.toLowerCase())
-                        ).map(r => {
-                          const date = r.createdAt?.toDate ? r.createdAt.toDate() : (r.createdAt ? new Date(r.createdAt) : null);
-                          return (
-                            <tr key={r.id} className="border-b border-black/5 hover:bg-muted/10 transition-colors">
-                              <td className="px-6 py-4">
-                                <p className="font-bold text-textPrimary text-sm">{r.referredUserName || 'Unknown'}</p>
-                                <p className="text-[10px] text-textSecondary">{r.referredUserEmail}</p>
-                              </td>
-                              <td className="px-6 py-4 text-xs font-mono text-textSecondary">{r.referrerId}</td>
-                              <td className="px-6 py-4"><span className="rounded bg-primary/10 px-2 py-1 text-[10px] font-black uppercase text-primary">{r.referralCode}</span></td>
-                              <td className="px-6 py-4 text-xs text-textSecondary">{date ? date.toLocaleDateString() : 'N/A'}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  <div>
+                    {/* Mobile referral cards */}
+                    <div className="flex flex-col gap-3 md:hidden p-4">
+                      {referrals.filter(r =>
+                        r.referredUserName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        r.referredUserEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        r.referralCode?.toLowerCase().includes(searchQuery.toLowerCase())
+                      ).map(r => {
+                        const date = r.createdAt?.toDate ? r.createdAt.toDate() : (r.createdAt ? new Date(r.createdAt) : null);
+                        return (
+                          <div key={r.id} className="rounded-2xl border border-black/5 bg-muted/10 p-4 space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-black text-textPrimary text-sm">{r.referredUserName || 'Unknown'}</p>
+                                <p className="text-[10px] text-textSecondary truncate">{r.referredUserEmail}</p>
+                              </div>
+                              <span className="rounded bg-primary/10 px-2 py-1 text-[10px] font-black uppercase text-primary shrink-0">{r.referralCode}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <p className="text-[9px] font-mono text-textMuted truncate max-w-[60%]">Ref: {r.referrerId}</p>
+                              <p className="text-[9px] text-textSecondary">{date ? date.toLocaleDateString() : 'N/A'}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Desktop referral table */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="min-w-[760px] w-full text-left border-collapse">
+                        <thead className="bg-muted/30 border-b border-black/5">
+                          <tr>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">New User</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Referrer ID</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Code</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {referrals.filter(r =>
+                            r.referredUserName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            r.referredUserEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            r.referralCode?.toLowerCase().includes(searchQuery.toLowerCase())
+                          ).map(r => {
+                            const date = r.createdAt?.toDate ? r.createdAt.toDate() : (r.createdAt ? new Date(r.createdAt) : null);
+                            return (
+                              <tr key={r.id} className="border-b border-black/5 hover:bg-muted/10 transition-colors">
+                                <td className="px-6 py-4">
+                                  <p className="font-bold text-textPrimary text-sm">{r.referredUserName || 'Unknown'}</p>
+                                  <p className="text-[10px] text-textSecondary">{r.referredUserEmail}</p>
+                                </td>
+                                <td className="px-6 py-4 text-xs font-mono text-textSecondary">{r.referrerId}</td>
+                                <td className="px-6 py-4"><span className="rounded bg-primary/10 px-2 py-1 text-[10px] font-black uppercase text-primary">{r.referralCode}</span></td>
+                                <td className="px-6 py-4 text-xs text-textSecondary">{date ? date.toLocaleDateString() : 'N/A'}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
 

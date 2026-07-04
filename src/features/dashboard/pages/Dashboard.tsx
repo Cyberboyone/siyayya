@@ -10,7 +10,7 @@ import { useSavedItems } from "@/hooks/use-saved-items";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, increment } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { Plus, Edit, Trash2, Package, Wrench, Settings, Eye, Star, CheckCircle, Heart, Loader2, AlertTriangle, Flame, Share2 } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Wrench, Settings, Eye, Star, CheckCircle, Heart, Loader2, AlertTriangle, Flame, Share2, TrendingUp, MessageCircle, BarChart2 } from "lucide-react";
 import { toast } from "sonner";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { NotificationSettings } from "@/features/notifications/components/NotificationSettings";
@@ -444,6 +444,90 @@ const Dashboard = () => {
                         </div>
                       ))}
                     </div>
+
+                    {/* Seller Analytics Panel */}
+                    {(myProducts.length > 0 || myServices.length > 0) && (() => {
+                      const allListings = [
+                        ...myProducts.map(p => ({ ...p as any, _type: 'product' })),
+                        ...myServices.map(s => ({ ...s as any, _type: 'service' })),
+                      ];
+                      const totalViews = allListings.reduce((s, l) => s + Number((l as any).views || 0), 0);
+                      const totalClicks = allListings.reduce((s, l) => s + Number((l as any).whatsappClicks || 0), 0);
+                      const overallCTR = totalViews > 0 ? Math.round((totalClicks / totalViews) * 100) : 0;
+                      const topListing = [...allListings].sort((a, b) => Number((b as any).whatsappClicks || 0) - Number((a as any).whatsappClicks || 0))[0];
+                      const lowConversion = allListings.filter(l => Number((l as any).views || 0) >= 5 && Number((l as any).whatsappClicks || 0) === 0);
+                      return (
+                        <div className="rounded-[2.5rem] bg-white dark:bg-black/10 border border-black/5 shadow-sm p-8 space-y-6">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                              <BarChart2 className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Seller Insights</p>
+                              <h3 className="text-sm font-black text-textPrimary uppercase tracking-wide">Your Listing Performance</h3>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-3">
+                            {[
+                              { label: 'Total Views', value: totalViews, icon: Eye, color: 'text-primary' },
+                              { label: 'WhatsApp Clicks', value: totalClicks, icon: MessageCircle, color: 'text-[#25D366]' },
+                              { label: 'Conversion Rate', value: `${overallCTR}%`, icon: TrendingUp, color: overallCTR >= 10 ? 'text-emerald-500' : 'text-amber-500' },
+                            ].map(s => (
+                              <div key={s.label} className="rounded-2xl bg-muted/20 p-4 text-center border border-black/5">
+                                <s.icon className={`h-5 w-5 mx-auto mb-2 ${s.color}`} />
+                                <p className={`text-2xl font-black tabular-nums italic ${s.color}`}>{s.value}</p>
+                                <p className="text-[8px] font-black text-textMuted uppercase tracking-widest mt-1">{s.label}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="space-y-3">
+                            {allListings.map(l => {
+                              const views = Number((l as any).views || 0);
+                              const clicks = Number((l as any).whatsappClicks || 0);
+                              const ctr = views > 0 ? Math.round((clicks / views) * 100) : 0;
+                              const isLowConv = views >= 5 && clicks === 0;
+                              return (
+                                <div key={(l as any).id} className={`rounded-2xl border px-4 py-3 flex items-center justify-between gap-4 ${isLowConv ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-900/10' : 'border-black/5 bg-muted/10'}`}>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-black text-textPrimary text-sm truncate">{(l as any).title || 'Untitled'}</p>
+                                    <p className="text-[9px] text-textSecondary uppercase tracking-widest mt-0.5">
+                                      {views} views • {clicks} clicks • {ctr}% CTR
+                                      {isLowConv && <span className="text-amber-600 ml-2">⚠ Low conversion — try boosting</span>}
+                                    </p>
+                                  </div>
+                                  <div className="shrink-0 text-right">
+                                    <p className={`text-lg font-black tabular-nums ${ctr >= 10 ? 'text-emerald-500' : ctr >= 5 ? 'text-primary' : 'text-textMuted'}`}>{ctr}%</p>
+                                    <p className="text-[8px] text-textMuted uppercase">CTR</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {topListing && Number((topListing as any).whatsappClicks || 0) > 0 && (
+                            <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 px-4 py-3 flex items-center gap-3">
+                              <span className="text-xl">🏆</span>
+                              <div>
+                                <p className="font-black text-emerald-700 text-sm">Best Performer: {(topListing as any).title}</p>
+                                <p className="text-[9px] text-emerald-600 uppercase tracking-widest">{(topListing as any).whatsappClicks} WhatsApp clicks</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {lowConversion.length > 0 && (
+                            <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 px-4 py-3 flex items-start gap-3">
+                              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                              <div>
+                                <p className="font-black text-amber-700 text-sm">{lowConversion.length} listing{lowConversion.length > 1 ? 's' : ''} need attention</p>
+                                <p className="text-[9px] text-amber-600 uppercase tracking-widest">5+ views but zero WhatsApp clicks. Consider better photos, price or boosting.</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
 

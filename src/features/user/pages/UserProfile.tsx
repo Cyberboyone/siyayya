@@ -395,10 +395,20 @@ const UserProfile = () => {
                   </Button>
 
                   <Button 
-                    className="h-14 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20"
-                    onClick={() => navigate(`/messages?userId=${userInfo.id}`)}
+                    className="h-14 rounded-2xl bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-green-500/20"
+                    onClick={() => {
+                      const phone = userInfo?.phone || userInfo?.ownerPhone || userInfo?.contactPhone || '';
+                      if (phone) {
+                        const cleaned = phone.replace(/\D/g, '');
+                        const intl = cleaned.startsWith('234') ? cleaned : cleaned.startsWith('0') ? '234' + cleaned.slice(1) : '234' + cleaned;
+                        const msg = encodeURIComponent(`Hi ${userInfo?.businessName || userInfo?.name || 'there'}! I saw your profile on Siyayya and I'd like to connect.`);
+                        window.open(`https://wa.me/${intl}?text=${msg}`, '_blank', 'noopener,noreferrer');
+                      } else {
+                        toast.info('This seller has not added a WhatsApp contact number.');
+                      }
+                    }}
                   >
-                    <Mail className="h-4 w-4 mr-2" /> Message
+                    <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
                   </Button>
                 </div>
               )}
