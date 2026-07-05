@@ -32,15 +32,15 @@ export const createOrder = async (orderDetails: OrderDetails) => {
         const adminIds = adminSnap.docs.map(doc => doc.id);
         
         if (adminIds.length > 0) {
-          await notificationService.sendNotification(
-            adminIds,
-            "New Order Received",
-            `Order from ${orderDetails.buyerName} — ₦${orderDetails.totalAmount.toLocaleString()}`,
-            "order",
-            `/admin?tab=orders`,
-            orderDetails.buyerId,
-            orderDetails.buyerName
-          );
+          await notificationService.sendNotification({
+            targetUserIds: adminIds,
+            title: "New Order Received",
+            body: `Order from ${orderDetails.buyerName} — ₦${orderDetails.totalAmount.toLocaleString()}`,
+            type: "order",
+            link: `/admin?tab=orders`,
+            senderId: orderDetails.buyerId,
+            senderName: orderDetails.buyerName,
+          });
         }
       } catch (notifyError) {
         console.error("Failed to notify admins about order:", notifyError);

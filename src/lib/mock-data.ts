@@ -49,6 +49,7 @@ export type NotificationType =
   | "follow" 
   | "announcement" 
   | "dailyDigest"
+  | "forum_reply"
   | "admin";
 
 export interface AppNotification {
