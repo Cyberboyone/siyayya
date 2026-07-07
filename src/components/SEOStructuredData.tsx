@@ -8,7 +8,7 @@ export function getOrganizationSchema() {
     "@type": "Organization",
     "name": "Siyayya",
     "url": window.location.origin,
-    "logo": `${window.location.origin}/logo.png`,
+    "logo": `${window.location.origin}/pwa-512x512.png`,
     "sameAs": [
       "https://twitter.com/siyayya",
       "https://facebook.com/siyayya"
@@ -97,7 +97,7 @@ export function getLocalBusinessSchema(business: {
   return {
     "@type": "LocalBusiness",
     "name": business.name,
-    "image": business.image || `${window.location.origin}/logo.png`,
+    "image": business.image || `${window.location.origin}/pwa-512x512.png`,
     "description": business.description || "Campus Business Listing on Siyayya",
     "telephone": business.phone,
     "address": {

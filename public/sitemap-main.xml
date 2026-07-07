@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://siyayya.app/</loc>
+    <loc>https://siyayya.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://siyayya.app/marketplace</loc>
+    <loc>https://siyayya.com/marketplace</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://siyayya.app/forum</loc>
+    <loc>https://siyayya.com/forum</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://siyayya.app/about</loc>
+    <loc>https://siyayya.com/about</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://siyayya.app/contact</loc>
+    <loc>https://siyayya.com/contact</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>

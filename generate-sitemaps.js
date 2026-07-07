@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const SITE_URL = 'https://siyayya.app';
+const SITE_URL = 'https://siyayya.com';
 
 // Static campuses from the system
 const CAMPUSES = [
