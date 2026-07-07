@@ -22,7 +22,7 @@ export const useSEO = ({
   twitterCard = "summary_large_image",
 }: SEOProps = {}) => {
   const siteName = "Siyayya";
-  const fullTitle = title ? `${title} | ${siteName}` : "Siyayya.com : Your Campus Marketplace";
+  const fullTitle = title ? `${title} | ${siteName}` : "Siyayya : Your Campus Marketplace";
   const defaultDescription = "Buy, sell, and discover products and services across Nigerian university campuses. Your campus marketplace.";
 
   useEffect(() => {

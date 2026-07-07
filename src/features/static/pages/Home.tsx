@@ -59,7 +59,7 @@ const Home = () => {
 
   // SEO
   useSEO({
-    title: `Siyayya.com : Your Campus Marketplace`,
+    title: `Siyayya : Your Campus Marketplace`,
     description: `Buy, sell, and discover products near ${nearestCampus?.name || "your campus"}. Electronics, fashion, books & more across Nigerian university campuses.`,
   });
 

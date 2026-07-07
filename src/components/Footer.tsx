@@ -41,7 +41,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 pt-8 border-t border-black/5 text-center text-[10px] font-black uppercase tracking-widest text-textMuted">
-          <p>© {new Date().getFullYear()} Siyayya.com — Your Campus Marketplace</p>
+          <p>© {new Date().getFullYear()} Siyayya — Your Campus Marketplace</p>
         </div>
       </div>
     </footer>

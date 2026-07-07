@@ -29,8 +29,8 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
     const notificationTitle = payload.notification?.title || 'Siyayya Notification';
     const notificationOptions = {
       body: payload.notification?.body || 'You have a new notification.',
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
       data: payload.data, // Contains the URL to open
     };
 
