@@ -65,6 +65,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response = await messaging.sendEachForMulticast({
       notification: { title, body },
       data: { ...(data || {}), notificationType: notificationType || 'general' },
+      webpush: {
+        fcmOptions: data?.link ? { link: data.link } : undefined,
+        notification: {
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-192x192.png',
+        },
+      },
       tokens,
     });
 
