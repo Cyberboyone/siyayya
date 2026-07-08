@@ -243,7 +243,7 @@ const Marketplace = () => {
           <>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <span className="text-xs font-bold text-textSecondary bg-surface px-3 py-1.5 rounded-full shadow-sm border border-black/5">
-                {(search || category !== "all") 
+                {(search || freshFilter || sort === "trending" || category !== "all") 
                   ? `${combinedResults.length} Results`
                   : `${products.length + services.length} Items Available`
                 }
@@ -331,7 +331,7 @@ const Marketplace = () => {
               </div>
             )}
 
-            {(search || freshFilter || sort === "trending" || category !== "all") && combinedResults.length === 0 ? (
+            {filteredProducts.length === 0 && filteredServices.length === 0 ? (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -344,10 +344,35 @@ const Marketplace = () => {
                    <SearchX className="h-10 w-10 text-primary/30" />
                 </div>
                 
-                <h2 className="text-3xl font-black text-textPrimary tracking-tighter leading-tight mb-2 italic">No results for <span className="text-primary italic">"{search}"</span></h2>
+                <h2 className="text-3xl font-black text-textPrimary tracking-tighter leading-tight mb-2 italic">
+                  {search ? (
+                    <>No results for <span className="text-primary italic">"{search}"</span></>
+                  ) : freshFilter ? (
+                    "Nothing fresh right now"
+                  ) : sort === "trending" ? (
+                    "No trending items yet"
+                  ) : (
+                    "No results found"
+                  )}
+                </h2>
                 <p className="text-sm text-textSecondary mb-10 font-medium px-4">
-                  We couldn't find any matches. Would you like to add it to the marketplace or request it from others?
+                  {search
+                    ? "We couldn't find any matches. Would you like to add it to the marketplace or request it from others?"
+                    : freshFilter
+                      ? "No new or boosted listings in the last 24 hours. Check back soon or post your own."
+                      : hasActiveFilters
+                        ? "No listings match your filters. Try adjusting or clearing them."
+                        : "We couldn't find any matches. Would you like to add it to the marketplace or request it from others?"}
                 </p>
+
+                {hasActiveFilters && !search && (
+                  <button
+                    onClick={clearFilters}
+                    className="mb-6 text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                  >
+                    Clear Filters
+                  </button>
+                )}
                 
                 <div className="flex flex-col sm:flex-row gap-3 relative z-10">
                   <Button 
