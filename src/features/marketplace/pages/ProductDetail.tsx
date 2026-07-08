@@ -90,9 +90,6 @@ const ProductDetail = () => {
         }
 
         if (prodData) {
-          if (prodData.title && prodData.title.includes('Back to School Skirts')) {
-            prodData.isSold = false;
-          }
           setProduct(prodData);
           addViewed(prodData.id);
           try {
@@ -160,7 +157,7 @@ const ProductDetail = () => {
 
   useSEO({
     title: product ? `${product.title} for Sale in ${product.location || 'Nigeria'} | Siyayya` : "Product Detail",
-    description: product ? `${product.description.slice(0, 150)}... Buy and sell in Siyayya.` : "View details of this product.",
+    description: product ? `${String(product.description || "").slice(0, 150)}... Buy and sell in Siyayya.` : "View details of this product.",
     ogType: "product",
     ogImage: product?.images?.[0] || product?.image || "https://siyayya.com/og-product.png",
     twitterCard: "summary",

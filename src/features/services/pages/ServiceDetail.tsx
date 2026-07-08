@@ -6,7 +6,7 @@ import { formatPrice, Service, CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
 import { ServiceCard } from "../components/ServiceCard";
 import { Button } from "@/components/ui/button";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "../../auth/contexts/AuthContext";
 import { toast } from "sonner";
 import { ReviewSection } from "@/components/ReviewSection";
@@ -33,13 +33,15 @@ const ServiceDetail = () => {
   const [relatedServices, setRelatedServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [reportOpen, setReportOpen] = useState(false);
+  const [reportText, setReportText] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const { user: authUser, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Dynamic SEO
   useSEO({
     title: service ? `${service.title} - Siyayya Services` : "Service Detail",
-    description: service ? `${service.description.slice(0, 160)}...` : "Book this service on Siyayya campus marketplace.",
+    description: service ? `${String(service.description || "").slice(0, 160)}...` : "Book this service on Siyayya campus marketplace.",
     ogImage: service?.images?.[0] || service?.image,
     ogType: "article",
     canonical: window.location.href,
@@ -55,10 +57,35 @@ const ServiceDetail = () => {
         return;
       }
       try {
-        const docRef = doc(db, "services", id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const servData = { id: docSnap.id, ...docSnap.data() } as any;
+        let servData: any = null;
+
+        // 1. Try direct doc-ID lookup first
+        try {
+          const docRef = doc(db, "services", id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            servData = { id: docSnap.id, ...docSnap.data() };
+          }
+        } catch (e) {
+          // Ignore lookup error if it wasn't a valid ID format
+        }
+
+        // 2. Fall back to slug lookup (services created with a slug field,
+        // and links built from s.slug || s.id, otherwise 404'd here)
+        if (!servData) {
+          const slugQuery = query(
+            collection(db, "services"),
+            where("slug", "==", id),
+            limit(1)
+          );
+          const slugSnaps = await getDocs(slugQuery);
+          if (!slugSnaps.empty) {
+            const docSnap = slugSnaps.docs[0];
+            servData = { id: docSnap.id, ...docSnap.data() };
+          }
+        }
+
+        if (servData) {
           setService(servData);
           try {
             const viewKey = `siyayya_viewed_service_${servData.id}`;
@@ -198,6 +225,37 @@ const ServiceDetail = () => {
     } finally {
       setIsDeleting(false);
       setConfirmOpen(false);
+    }
+  };
+
+  const handleSubmitReport = async () => {
+    if (!reportText.trim()) {
+      toast.error("Please describe the issue before submitting.");
+      return;
+    }
+    if (!isAuthenticated || !authUser) {
+      navigate("/signin");
+      return;
+    }
+    setIsSubmittingReport(true);
+    try {
+      await addDoc(collection(db, "reports"), {
+        listingId: service.id,
+        listingTitle: service.title,
+        listingType: "service",
+        reportedBy: authUser.id,
+        reportedByName: authUser.businessName || authUser.name,
+        reason: reportText.trim(),
+        createdAt: serverTimestamp(),
+      });
+      toast.success("Report submitted. Our team will review it.");
+      setReportOpen(false);
+      setReportText("");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to submit report. Try again.");
+    } finally {
+      setIsSubmittingReport(false);
     }
   };
 
@@ -362,6 +420,31 @@ const ServiceDetail = () => {
               </Button>
             )}
           </div>
+
+          {reportOpen && (
+            <div className="mt-2 mb-8 rounded-xl border border-destructive/20 bg-destructive/5 p-5 animate-in fade-in slide-in-from-top-2">
+              <h3 className="text-base flex items-center gap-2 font-semibold text-destructive mb-1">
+                <Flag className="h-4 w-4" />
+                Report Service
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">Help us keep the marketplace safe. What's wrong with this service?</p>
+              <textarea
+                className="w-full rounded-lg border border-destructive/20 bg-background p-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-destructive/50 transition-shadow resize-none"
+                rows={3}
+                placeholder="e.g. Inappropriate content, spam, fake service..."
+                value={reportText}
+                onChange={(e) => setReportText(e.target.value)}
+              />
+              <div className="mt-4 flex gap-3 justify-end items-center">
+                <Button size="sm" variant="ghost" className="text-muted-foreground" onClick={() => { setReportOpen(false); setReportText(""); }}>
+                  Cancel
+                </Button>
+                <Button size="sm" variant="destructive" className="shadow" onClick={handleSubmitReport} disabled={isSubmittingReport}>
+                  {isSubmittingReport ? "Submitting..." : "Submit Report"}
+                </Button>
+              </div>
+            </div>
+          )}
 
           <ReviewSection listingId={service.id} ownerId={service.ownerId} />
 

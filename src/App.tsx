@@ -86,7 +86,7 @@ import { lazy, Suspense } from "react";
                         <Route path="/market/:campusSlug" element={<MarketCampus />} />
                         <Route path="/product/:slug" element={<ProductDetail />} />
                         <Route path="/services" element={<Services />} />
-                        <Route path="/service/:slug" element={<ServiceDetail />} />
+                        <Route path="/service/:id" element={<ServiceDetail />} />
                         <Route path="/campus/:campusSlug" element={<CampusDetail />} />
                         <Route path="/campuses" element={<Campuses />} />
                         <Route path="/business/:businessSlug" element={<BusinessDetail />} />
