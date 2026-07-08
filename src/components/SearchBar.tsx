@@ -3,15 +3,15 @@ import { Search, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 interface SearchBarProps {
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
   onSubmit?: (value: string) => void;
   placeholder?: string;
   className?: string;
   autoFocus?: boolean;
 }
 
-export function SearchBar({ value, onChange, onSubmit, placeholder = "What are you looking for today?", className = "", autoFocus = false }: SearchBarProps) {
+export function SearchBar({ value = "", onChange, onSubmit, placeholder = "What are you looking for today?", className = "", autoFocus = false }: SearchBarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [localValue, setLocalValue] = useState(value);
@@ -30,10 +30,10 @@ export function SearchBar({ value, onChange, onSubmit, placeholder = "What are y
         if (location.pathname !== "/marketplace") {
           navigate(`/marketplace?search=${encodeURIComponent(localValue.trim())}`);
         } else {
-          onChange(localValue);
+          onChange?.(localValue);
         }
       } else if (value && !localValue.trim()) {
-        onChange("");
+        onChange?.("");
       }
     }, 500);
 
@@ -48,7 +48,7 @@ export function SearchBar({ value, onChange, onSubmit, placeholder = "What are y
         if (location.pathname !== "/marketplace") {
           navigate(`/marketplace?search=${encodeURIComponent(val)}`);
         } else {
-          onChange(val);
+          onChange?.(val);
         }
       }
       onSubmit?.(localValue);
@@ -83,7 +83,7 @@ export function SearchBar({ value, onChange, onSubmit, placeholder = "What are y
         <button
           onClick={() => {
             setLocalValue("");
-            onChange("");
+            onChange?.("");
           }}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-textMuted hover:text-destructive transition-all p-1.5 rounded-xl hover:bg-destructive/5 active:scale-90"
         >

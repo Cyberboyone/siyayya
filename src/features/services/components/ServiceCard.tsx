@@ -14,7 +14,6 @@ export interface ServiceCardProps {
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
-  const reviewCount = service.reviewCount || Math.floor(Math.random() * 30) + 3;
 
   const displayOwnerName = String(
     service.ownerName ||
