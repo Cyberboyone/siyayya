@@ -6,7 +6,7 @@ import { lazy, Suspense } from "react";
   import { TooltipProvider } from "@/components/ui/tooltip";
   import { AuthProvider } from "./features/auth/contexts/AuthContext";
   import { CampusProvider } from "./features/campus/contexts/CampusContext";
-  import { ProtectedRoute, PublicRoute } from "./features/auth/components/RouteGuards";
+  import { ProtectedRoute, PublicRoute, ListingRoute } from "./features/auth/components/RouteGuards";
   import { AdminRoute } from "./features/admin/components/AdminRoute";
   import ErrorBoundary from "./components/ErrorBoundary";
   import { ScrollToTop } from "./components/ScrollToTop";
@@ -38,6 +38,7 @@ import { lazy, Suspense } from "react";
   const ContactUs = lazy(() => import("./features/static/pages/ContactUs.tsx"));
   const NotFound = lazy(() => import("./features/static/pages/NotFound.tsx"));
   const CampusDetail = lazy(() => import("./features/campus/pages/CampusDetail.tsx"));
+  const Campuses = lazy(() => import("./features/campus/pages/Campuses.tsx"));
   const BusinessDetail = lazy(() => import("./features/business/pages/BusinessDetail.tsx"));
   const HostelDetail = lazy(() => import("./features/hostel/pages/HostelDetail.tsx"));
   const NotificationsPage = lazy(() => import("./features/notifications/pages/NotificationsPage.tsx"));
@@ -87,6 +88,7 @@ import { lazy, Suspense } from "react";
                         <Route path="/services" element={<Services />} />
                         <Route path="/service/:slug" element={<ServiceDetail />} />
                         <Route path="/campus/:campusSlug" element={<CampusDetail />} />
+                        <Route path="/campuses" element={<Campuses />} />
                         <Route path="/business/:businessSlug" element={<BusinessDetail />} />
                         <Route path="/hostels/:campus" element={<HostelDetail />} />
                         <Route path="/hostels/:campus/:hostelType" element={<HostelDetail />} />
@@ -94,7 +96,7 @@ import { lazy, Suspense } from "react";
                         <Route path="/user/:username" element={<UserProfile />} />
                         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
                         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                        <Route path="/dashboard/new" element={<ProtectedRoute><NewListing /></ProtectedRoute>} />
+                        <Route path="/dashboard/new" element={<ListingRoute><NewListing /></ListingRoute>} />
                         <Route path="/dashboard/edit/:type/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
                         <Route path="/orders" element={<ProtectedRoute><OrderHistoryPage /></ProtectedRoute>} />
                         <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { isAdmin } from "@/lib/config";
@@ -77,6 +77,56 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to={`/complete-signup?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   }
   
+  if (targetPath === "/dashboard" && currentPath === "/complete-signup") {
+    redirectPathRef.current = "/dashboard";
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+/**
+ * 🟡 LISTING ROUTE (New Listing page)
+ * Same protection as ProtectedRoute, EXCEPT it allows unauthenticated guests
+ * through when the URL explicitly asks for the guest "request" flow
+ * (?type=request), since NewListing.tsx has a built-in guest request form
+ * (name/email/captcha) backed by /api/requests/guest.
+ */
+export function ListingRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const redirectPathRef = useRef<string | null>(null);
+  const lastUserIdRef = useRef<string | null>(null);
+
+  if (user?.id !== lastUserIdRef.current) {
+    redirectPathRef.current = null;
+    lastUserIdRef.current = user?.id || null;
+  }
+
+  if (isLoading) return <LoadingScreen />;
+
+  const isGuestRequestFlow = searchParams.get("type") === "request";
+
+  if (!user) {
+    if (isGuestRequestFlow) {
+      return <>{children}</>;
+    }
+    return <Navigate to={`/signin?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  const targetPath = getSmartRedirectPath(user);
+  const currentPath = location.pathname;
+
+  if (redirectPathRef.current === currentPath) {
+    return <>{children}</>;
+  }
+
+  if (targetPath === "/complete-signup" && currentPath !== "/complete-signup") {
+    redirectPathRef.current = "/complete-signup";
+    return <Navigate to={`/complete-signup?from=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
   if (targetPath === "/dashboard" && currentPath === "/complete-signup") {
     redirectPathRef.current = "/dashboard";
     return <Navigate to="/dashboard" replace />;

@@ -359,7 +359,7 @@ const Marketplace = () => {
                   </Button>
                   <Button 
                     variant="ghost"
-                    onClick={() => navigate(`/request?title=${encodeURIComponent(search)}`)} 
+                    onClick={() => navigate(`/dashboard/new?type=request&title=${encodeURIComponent(search)}`)} 
                     className="flex-1 rounded-2xl h-14 bg-muted hover:bg-gray-200 transition-all font-black uppercase tracking-widest flex items-center justify-center gap-2 text-textPrimary"
                   >
                     <FileText className="h-5 w-5" />

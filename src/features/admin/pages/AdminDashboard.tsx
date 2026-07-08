@@ -930,7 +930,7 @@ const AdminDashboard = () => {
                                           <p className="text-xs text-textSecondary">{o.buyerEmail || 'No email'}</p>
                                           {o.buyerPhone && <p className="text-xs text-textSecondary">📞 {o.buyerPhone}</p>}
                                           {o.buyerId && (
-                                            <Link to={`/profile/${o.buyerId}`} className="text-xs text-primary font-bold hover:underline inline-flex items-center gap-1 mt-1">
+                                            <Link to={`/user/${o.buyerId}`} className="text-xs text-primary font-bold hover:underline inline-flex items-center gap-1 mt-1">
                                               View Profile <ExternalLink className="h-3 w-3" />
                                             </Link>
                                           )}
@@ -1007,7 +1007,7 @@ const AdminDashboard = () => {
                                                 )}
                                               </div>
                                               {(item.productId || item.id) && (
-                                                <Link to={`/products/${item.productId || item.id}`} className="flex-shrink-0 text-primary hover:text-primary/80 transition-colors" onClick={(e) => e.stopPropagation()}>
+                                                <Link to={`/product/${item.productId || item.id}`} className="flex-shrink-0 text-primary hover:text-primary/80 transition-colors" onClick={(e) => e.stopPropagation()}>
                                                   <ExternalLink className="h-4 w-4" />
                                                 </Link>
                                               )}
