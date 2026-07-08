@@ -52,6 +52,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (docSnap.exists()) {
         const data = docSnap.data();
+        // Older accounts (and the Google auth API route) only ever saved the
+        // Google profile picture to `avatar`, but the UI displays `photoUrl`.
+        // Backfill photoUrl from avatar/Firebase Auth so existing users' profile
+        // photos show up instead of silently disappearing.
+        const resolvedPhotoUrl = data.photoUrl || data.avatar || firebaseUser.photoURL || "";
         const userData = {
           ...data,
           // Always trust Firebase Auth UID over any stale id saved in Firestore.
@@ -60,11 +65,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: firebaseUser.uid,
           email: data.email || firebaseUser.email || "",
           name: data.name || firebaseUser.displayName || "Unknown User",
-          businessName: data.businessName || ""
+          businessName: data.businessName || "",
+          photoUrl: resolvedPhotoUrl,
         } as User;
 
-        if (data.id !== firebaseUser.uid) {
-          setDoc(docRef, { id: firebaseUser.uid }, { merge: true }).catch(() => {});
+        if (data.id !== firebaseUser.uid || (!data.photoUrl && resolvedPhotoUrl)) {
+          setDoc(docRef, { id: firebaseUser.uid, photoUrl: resolvedPhotoUrl }, { merge: true }).catch(() => {});
         }
 
         if (userData.isBanned) {
@@ -83,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: firebaseUser.displayName || "User",
           email: firebaseUser.email || "",
           avatar: firebaseUser.photoURL || "",
+          photoUrl: firebaseUser.photoURL || "",
           businessName: "",
           status: "active",
           rating: 0,

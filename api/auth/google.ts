@@ -39,6 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         name: name || 'Unknown User',
         email,
         avatar: picture || '',
+        photoUrl: picture || '',
         businessName: '',
         status: 'active',
         rating: 0,
@@ -52,6 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         name: name || userDoc.data()?.name,
         email: email || userDoc.data()?.email,
         avatar: picture || userDoc.data()?.avatar,
+        photoUrl: picture || userDoc.data()?.photoUrl || userDoc.data()?.avatar || '',
       });
       if (!userDoc.data()?.businessName) isNewUser = true;
     }
