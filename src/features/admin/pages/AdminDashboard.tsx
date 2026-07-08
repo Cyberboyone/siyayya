@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, Fragment } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import {
   collection, getDocs, doc, updateDoc, deleteDoc,
   query, where, writeBatch
@@ -100,11 +100,34 @@ const AdminDashboard = () => {
 
   const handleDeleteUser = async (userId: string) => {
     if (!checkAdmin()) return;
-    if (!confirm("Are you sure? This will delete the user permanently.")) return;
+    if (!confirm("Are you sure? This will delete the user's account, listings and reviews permanently. This does not remove their sign-in credentials.")) return;
     try {
+      // Clean up owned listings and reviews first to avoid leaving orphaned
+      // data behind (deleting only the user doc left dangling products/
+      // services/reviews that still pointed at a non-existent owner).
+      const [productsSnap, servicesSnap, reviewsSnap] = await Promise.all([
+        getDocs(query(collection(db, "products"), where("ownerId", "==", userId))),
+        getDocs(query(collection(db, "services"), where("ownerId", "==", userId))),
+        getDocs(query(collection(db, "reviews"), where("ownerId", "==", userId))),
+      ]);
+
+      const allRefs = [
+        ...productsSnap.docs.map(d => d.ref),
+        ...servicesSnap.docs.map(d => d.ref),
+        ...reviewsSnap.docs.map(d => d.ref),
+      ];
+
+      const BATCH_LIMIT = 450;
+      for (let i = 0; i < allRefs.length; i += BATCH_LIMIT) {
+        const batch = writeBatch(db);
+        allRefs.slice(i, i + BATCH_LIMIT).forEach(ref => batch.delete(ref));
+        await batch.commit();
+      }
+
       await deleteDoc(doc(db, "users", userId));
       setUsers(prev => prev.filter(u => u.id !== userId));
-      toast.success("User deleted");
+      setListings(prev => prev.filter(l => l.ownerId !== userId));
+      toast.success("User, listings and reviews deleted");
     } catch (e) {
       toast.error("Delete failed");
     }
@@ -181,11 +204,24 @@ const AdminDashboard = () => {
     if (!confirm("Delete this listing?")) return;
     try {
       const coll = type === 'service' ? 'services' : 'products';
-      await deleteDoc(doc(db, coll, id));
+      if (!auth.currentUser) {
+        toast.error("Please sign in again before deleting.");
+        return;
+      }
+      const idToken = await auth.currentUser.getIdToken(true);
+      const response = await fetch('/api/listings/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, listingId: id, collection: coll }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.message || 'Failed to delete listing');
+      }
       setListings(prev => prev.filter(l => l.id !== id));
-      toast.success("Listing removed");
-    } catch (e) {
-      toast.error("Action failed");
+      toast.success(result?.message || "Listing removed");
+    } catch (e: any) {
+      toast.error(e?.message || "Action failed");
     }
   };
 

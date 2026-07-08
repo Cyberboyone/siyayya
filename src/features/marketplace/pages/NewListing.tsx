@@ -187,8 +187,7 @@ export default function NewListing() {
             whatsapp: whatsapp || contactPhone,
             email: guestEmail,
             name: guestName,
-            expectedMathResult: captchaNum1 + captchaNum2,
-            actualMathResult: captchaAnswer
+            captchaAnswer: parseInt(captchaAnswer, 10)
           })
         });
 
@@ -305,8 +304,8 @@ export default function NewListing() {
       {/* Header Area */}
       <div className="relative pt-16 pb-12 overflow-hidden border-b border-black/5 bg-surface">
         <div className="px-6 max-w-2xl mx-auto flex flex-col gap-4">
-           <Link to="/dashboard" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-textMuted hover:text-primary transition-colors">
-            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+           <Link to={isAuthenticated ? "/dashboard" : "/marketplace"} className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-textMuted hover:text-primary transition-colors">
+            <ArrowLeft className="h-4 w-4" /> {isAuthenticated ? "Back to Dashboard" : "Back to Marketplace"}
           </Link>
           <h1 className="text-4xl md:text-5xl font-black text-textPrimary tracking-tight italic uppercase leading-none pr-4">
             Create <span className="text-gradient pr-4 inline-block">Listing</span>

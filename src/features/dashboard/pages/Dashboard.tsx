@@ -157,7 +157,7 @@ const Dashboard = () => {
       { label: "Title is strong", done: String(listing?.title || "").trim().length >= 8 },
       { label: "Description is detailed", done: String(listing?.description || "").trim().length >= 40 },
       { label: listingType === "product" ? "Has at least 1 photo" : "Has photo", done: Array.isArray(listing?.images) ? listing.images.length > 0 : !!listing?.image },
-      { label: "Price is set", done: Number(listing?.price || listing?.budget || 0) > 0 || listingType === "service" || listingType === "product" ? Number(listing?.price || 0) > 0 : true },
+      { label: "Price is set", done: Number(listing?.price || listing?.budget || 0) > 0 },
       { label: "Contact phone ready", done: String(listing?.ownerPhone || listing?.contactPhone || "").trim().length >= 10 },
       { label: "Boosted recently", done: !!listing?.boostedAt },
     ];
