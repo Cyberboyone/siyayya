@@ -9,6 +9,7 @@ import { Youtube, Info, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { auth } from "@/lib/firebase";
 import { CloudinaryUpload } from "@/components/CloudinaryUpload";
+import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { extractYouTubeId } from "@/lib/utils";
 import { ProductListingSchema, ServiceListingSchema, RequestListingSchema } from "@/lib/validations";
 import {
@@ -407,9 +408,21 @@ export default function NewListing() {
                         setMediaData([data]);
                       }
                     }}
-                    onRemove={(index) => {
+                    onRemove={async (index) => {
+                      const removedMedia = mediaData[index];
                       setImages(prev => prev.filter((_, i) => i !== index));
                       setMediaData(prev => prev.filter((_, i) => i !== index));
+                      // Clean up the Cloudinary asset if the user uploads a photo
+                      // then removes it before ever submitting the listing —
+                      // previously this left the file orphaned in storage forever.
+                      if (removedMedia?.publicId && auth.currentUser) {
+                        try {
+                          const idToken = await auth.currentUser.getIdToken();
+                          deleteFromCloudinary(removedMedia.publicId, removedMedia.resourceType || 'image', idToken).catch(() => {});
+                        } catch {
+                          // Best-effort — don't block the UI on cleanup failures
+                        }
+                      }
                     }}
                     onUploadingChange={setIsUploadingMedia}
                     multiple={type === "product"}

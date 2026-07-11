@@ -50,6 +50,18 @@ export const MediaRenderer: React.FC<MediaRendererProps> = ({
     }
   }, [optimizedUrl, initialType]);
 
+  // Reset load/error/aspect state whenever the URL changes. Without this,
+  // switching between images in a gallery (e.g. clicking a thumbnail) reused
+  // the same MediaRenderer instance and kept isLoaded=true from the previous
+  // image, so the new image would render at full opacity before it actually
+  // loaded (or silently stay blank on a slow connection) instead of showing
+  // the loading spinner again.
+  useEffect(() => {
+    setIsLoaded(false);
+    setError(false);
+    setAspectRatio(null);
+  }, [optimizedUrl]);
+
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { naturalWidth, naturalHeight } = e.currentTarget;
     if (naturalWidth && naturalHeight) {

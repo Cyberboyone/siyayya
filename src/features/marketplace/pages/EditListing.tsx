@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { categories, CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
 import { ArrowLeft, Loader2, Youtube, Info, X } from "lucide-react";
 import { toast } from "sonner";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { CloudinaryUpload } from "@/components/CloudinaryUpload";
+import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { extractYouTubeId } from "@/lib/utils";
 import { ProductListingSchema, ServiceListingSchema, RequestListingSchema, sanitizeText } from "@/lib/validations";
 import { ADMIN_EMAILS } from "@/lib/config";
@@ -270,9 +271,21 @@ const EditListing = () => {
                         containerClassName="aspect-square"
                       />
                       <button
-                        onClick={() => {
+                        onClick={async () => {
+                          const removedMedia = mediaData[idx];
                           setImages(prev => prev.filter((_, i) => i !== idx));
                           setMediaData(prev => prev.filter((_, i) => i !== idx));
+                          // Clean up the orphaned Cloudinary asset in the background —
+                          // previously, removing a photo only updated local state and
+                          // left the file sitting in Cloudinary storage forever.
+                          if (removedMedia?.publicId && auth.currentUser) {
+                            try {
+                              const idToken = await auth.currentUser.getIdToken();
+                              deleteFromCloudinary(removedMedia.publicId, removedMedia.resourceType || 'image', idToken).catch(() => {});
+                            } catch {
+                              // Best-effort — don't block the UI on cleanup failures
+                            }
+                          }
                         }}
                         className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error z-20"
                       >
