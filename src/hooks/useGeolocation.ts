@@ -72,12 +72,16 @@ const tryBrowserGPS = (): Promise<{ lat: number; lng: number } | null> => {
 
 const tryIPGeolocation = async (): Promise<{ lat: number; lng: number } | null> => {
   try {
-    const response = await fetch("http://ip-api.com/json/?fields=lat,lon,status", {
+    // NOTE: ip-api.com only serves plain HTTP, which browsers block as mixed
+    // content on an HTTPS site like siyayya.com — that made this fallback
+    // fail silently on every request in production. ipwho.is supports HTTPS
+    // and requires no API key.
+    const response = await fetch("https://ipwho.is/", {
       signal: AbortSignal.timeout(5000),
     });
     const data = await response.json();
-    if (data.status === "success") {
-      return { lat: data.lat, lng: data.lon };
+    if (data.success && typeof data.latitude === "number" && typeof data.longitude === "number") {
+      return { lat: data.latitude, lng: data.longitude };
     }
     return null;
   } catch {
