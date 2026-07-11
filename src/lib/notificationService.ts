@@ -94,25 +94,34 @@ export const notificationService = {
   },
 
   /**
-   * Mark all unread notifications as read for a user
+   * Mark all unread notifications as read for a user.
+   * Loops in batches of 450 (under Firestore's 500 write limit) so users
+   * with more than one batch of unread notifications don't get stuck with
+   * some silently left unread.
    */
   markAllAsRead: async (userId: string) => {
     try {
-      const q = query(
-        collection(db, 'users', userId, 'notifications'),
-        where('read', '==', false),
-        limit(50) // Batch limits
-      );
-      const snapshot = await getDocs(q);
-      
-      if (snapshot.empty) return;
+      const BATCH_SIZE = 450;
+      // Cap total iterations as a safety net against pathological loops
+      for (let i = 0; i < 20; i++) {
+        const q = query(
+          collection(db, 'users', userId, 'notifications'),
+          where('read', '==', false),
+          limit(BATCH_SIZE)
+        );
+        const snapshot = await getDocs(q);
 
-      const batch = writeBatch(db);
-      snapshot.docs.forEach((docSnap) => {
-        batch.update(docSnap.ref, { read: true });
-      });
+        if (snapshot.empty) return;
 
-      await batch.commit();
+        const batch = writeBatch(db);
+        snapshot.docs.forEach((docSnap) => {
+          batch.update(docSnap.ref, { read: true });
+        });
+
+        await batch.commit();
+
+        if (snapshot.size < BATCH_SIZE) return;
+      }
     } catch (error) {
       console.error('[NotificationService] Error marking all as read:', error);
     }
