@@ -37,11 +37,18 @@ export function Navbar() {
   
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState(initialSearch);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin: hasAdminClaim } = useAuth();
   const navigate = useNavigate();
   
   const { totalItems, setIsCartOpen } = useCart();
   const { isInstallable, isInstalled, handleInstall } = usePWAInstall();
+  // Check both the email whitelist AND the real Firebase custom claim —
+  // isAdmin(email) alone missed any user granted admin access dynamically
+  // via the admin dashboard's "Make Admin" action (which sets a claim/
+  // account_type, not an env-var whitelist entry), so a newly-promoted
+  // admin never saw the Admin Console link even though /admin itself
+  // already let them in.
+  const isUserAdmin = hasAdminClaim || isAdmin(user?.email);
 
   useEffect(() => {
     setSearch(new URLSearchParams(location.search).get("search") || "");
@@ -183,7 +190,7 @@ export function Navbar() {
                       <Package className="mr-3 h-4 w-4" />
                       <span>My Listings</span>
                     </DropdownMenuItem>
-                    {isAdmin(user?.email) && (
+                    {isUserAdmin && (
                       <DropdownMenuItem onClick={() => navigate("/admin")} className="cursor-pointer rounded-xl p-3 font-black text-[10px] uppercase tracking-widest focus:bg-purple-500/10 text-purple-600">
                         <Shield className="mr-3 h-4 w-4" />
                         <span>Admin Console</span>
@@ -242,7 +249,7 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
-                {isAdmin(user?.email) && (
+                {isUserAdmin && (
                   <Link
                     to="/admin"
                     onClick={() => setMobileOpen(false)}

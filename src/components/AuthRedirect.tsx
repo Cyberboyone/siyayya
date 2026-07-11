@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
-import { isAdmin } from "@/lib/config";
-import { isProfileComplete } from "@/features/auth/components/RouteGuards";
+import { getSmartRedirectPath, isProfileComplete } from "@/features/auth/components/RouteGuards";
 
 /**
  * 🎯 AUTH REDIRECT HANDLER
@@ -10,7 +9,7 @@ import { isProfileComplete } from "@/features/auth/components/RouteGuards";
  * Uses a guard to prevent redirect loops or multiple triggerings.
  */
 const AuthRedirect = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAdmin: hasAdminClaim } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const hasRedirected = useRef(false);
@@ -24,17 +23,20 @@ const AuthRedirect = () => {
     // Get the return path if it exists
     const searchParams = new URLSearchParams(location.search);
     const fromPath = searchParams.get("from");
-    
-    // 🔴 1. Isolated Admin Whitelist Check
-    const isUserAdmin = isAdmin(user.email);
 
-    if (isUserAdmin) {
-      console.log("[AuthRedirect] Admin whitelist match detected, redirecting to /admin");
+    // Checks the email whitelist, Firestore account_type/isAdmin, AND the
+    // live Firebase custom claim from AuthContext — using getSmartRedirectPath
+    // directly keeps this in sync with ProtectedRoute/PublicRoute instead of
+    // duplicating an email-only check that missed dynamically-promoted admins.
+    const targetPath = getSmartRedirectPath({ ...user, isAdmin: hasAdminClaim || (user as any).isAdmin });
+
+    if (targetPath === "/admin") {
+      console.log("[AuthRedirect] Admin detected, redirecting to /admin");
       navigate(fromPath || "/admin", { replace: true });
       return;
     }
 
-    // 🔴 2. Profile Completeness Check
+    // Profile Completeness Check
     if (isProfileComplete(user)) {
       console.log(`[AuthRedirect] Existing user ${user.email} (profile complete) redirecting to ${fromPath || "/dashboard"}`);
       navigate(fromPath || "/dashboard", { replace: true });
@@ -45,7 +47,7 @@ const AuthRedirect = () => {
         : "/complete-signup";
       navigate(targetUrl, { replace: true });
     }
-  }, [user, isLoading, navigate, location.search]);
+  }, [user, isLoading, navigate, location.search, hasAdminClaim]);
 
   return null;
 };

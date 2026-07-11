@@ -15,6 +15,8 @@ type AuthUserProfile = {
   name?: string;
   campusId?: string;
   profile_completed?: boolean;
+  account_type?: string;
+  isAdmin?: boolean;
 };
 
 export const isProfileComplete = (user: AuthUserProfile | null | undefined) => {
@@ -26,11 +28,20 @@ export const isProfileComplete = (user: AuthUserProfile | null | undefined) => {
   return user.profile_completed === true || (hasDisplayName && hasCampus);
 };
 
+// Checks both the email whitelist AND the account's real admin claim/flag —
+// email-only checks missed any user granted admin access dynamically via
+// the admin dashboard's "Make Admin" action (which sets account_type/a
+// Firebase custom claim, not an env-var whitelist entry). Without this, a
+// freshly-promoted admin logging in would land on /dashboard instead of
+// /admin, even though /admin itself already let them in.
+const isUserAdminAccount = (user: AuthUserProfile | null | undefined) =>
+  !!user && (isAdmin(user.email) || user.account_type === 'admin' || user.isAdmin === true);
+
 export const getSmartRedirectPath = (user: AuthUserProfile | null | undefined) => {
   if (!user) return "/signin";
   
   // 1. Admins go to the admin panel
-  if (isAdmin(user.email)) return "/admin";
+  if (isUserAdminAccount(user)) return "/admin";
   
   // 2. Users with incomplete profiles go to signup completion
   if (!isProfileComplete(user)) return "/complete-signup";
