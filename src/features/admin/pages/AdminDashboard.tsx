@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Users, Package, Flag, Loader2,
-  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3, Gift, Download, Printer
+  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3, Gift, Download, Printer, Shield
 } from "lucide-react";
 
 import { ADMIN_EMAILS } from "@/lib/config";
@@ -158,6 +158,32 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleToggleAdmin = async (userId: string, currentStatus: boolean, userEmail?: string) => {
+    if (!checkAdmin()) return;
+    const nextStatus = !currentStatus;
+    if (!confirm(`${nextStatus ? "Grant" : "Remove"} admin access ${nextStatus ? "to" : "from"} ${userEmail || userId}?`)) return;
+    try {
+      if (!auth.currentUser) {
+        toast.error("Please sign in again before changing admin access.");
+        return;
+      }
+      const idToken = await auth.currentUser.getIdToken(true);
+      const response = await fetch('/api/admin/set-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body: JSON.stringify({ targetUid: userId, isAdmin: nextStatus }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.message || 'Failed to update admin access');
+      }
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, account_type: nextStatus ? 'admin' : 'buyer', isAdmin: nextStatus } : u));
+      toast.success(nextStatus ? "Admin access granted" : "Admin access removed");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to update admin access");
+    }
+  };
+
   const handleToggleBan = async (userId: string, currentStatus: boolean) => {
     if (!checkAdmin()) return;
     try {
@@ -196,6 +222,17 @@ const AdminDashboard = () => {
       toast.success(currentStatus ? "Feature removed" : "Listing featured and boosted to Fresh Today!");
     } catch (e) {
       toast.error("Update failed");
+    }
+  };
+
+  const handleDismissReport = async (reportId: string) => {
+    if (!checkAdmin()) return;
+    try {
+      await deleteDoc(doc(db, "reports", reportId));
+      setReports(prev => prev.filter(r => r.id !== reportId));
+      toast.success("Report dismissed");
+    } catch (e) {
+      toast.error("Failed to dismiss report");
     }
   };
 
@@ -523,6 +560,9 @@ const AdminDashboard = () => {
                               <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-black text-primary" onClick={() => openUserDashboard(u)}>
                                 <ExternalLink className="h-3.5 w-3.5 mr-1" />Dashboard
                               </Button>
+                              <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${u.account_type === 'admin' || u.isAdmin ? 'text-amber-600' : 'text-textMuted'}`} onClick={() => handleToggleAdmin(u.id, u.account_type === 'admin' || !!u.isAdmin, u.email)}>
+                                <Shield className="h-3.5 w-3.5 mr-1" />{u.account_type === 'admin' || u.isAdmin ? 'Revoke Admin' : 'Make Admin'}
+                              </Button>
                               <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-black text-error ml-auto" onClick={() => handleDeleteUser(u.id)}>
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
@@ -572,6 +612,9 @@ const AdminDashboard = () => {
                                     <Ban className="h-4 w-4" />
                                   </Button>
                                   <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => openUserDashboard(u)}><ExternalLink className="h-4 w-4 mr-2" />Dashboard</Button>
+                                  <Button variant="ghost" size="sm" title={u.account_type === 'admin' || u.isAdmin ? 'Revoke admin access' : 'Grant admin access'} className={`${u.account_type === 'admin' || u.isAdmin ? 'text-amber-600' : 'text-textMuted'} hover:bg-muted`} onClick={() => handleToggleAdmin(u.id, u.account_type === 'admin' || !!u.isAdmin, u.email)}>
+                                    <Shield className="h-4 w-4" />
+                                  </Button>
                                   <Button variant="ghost" size="sm" className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(u.id)}>
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -825,17 +868,43 @@ const AdminDashboard = () => {
                   <div className="p-20 text-center text-textSecondary font-bold italic">No pending reports</div>
                 )}
                 {activeTab === 'reports' && reports.length > 0 && (
-                   <div className="p-6 space-y-4">
-                      {reports.map(r => (
-                        <div key={r.id} className="p-4 bg-muted/20 rounded-2xl border border-black/5 flex items-start justify-between">
-                          <div>
-                            <p className="font-bold text-textPrimary">{r.listingTitle}</p>
-                            <p className="text-xs text-error font-medium">{r.reason}</p>
-                            <p className="text-[10px] text-textSecondary mt-1 italic">{r.description}</p>
+                   <div className="p-4 sm:p-6 space-y-4">
+                      {reports.map(r => {
+                        const isUserReport = r.type === 'user';
+                        const listingRoute = r.listingType === 'service' ? `/service/${r.listingId}` : `/product/${r.listingId}`;
+                        return (
+                          <div key={r.id} className="p-4 bg-muted/20 rounded-2xl border border-black/5 flex flex-col sm:flex-row sm:items-start gap-3 sm:justify-between">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-bold text-textPrimary">{r.listingTitle || r.reportedName || 'Unknown'}</p>
+                                {isUserReport && <span className="text-[9px] font-black px-2 py-0.5 rounded uppercase bg-purple-100 text-purple-600">User Report</span>}
+                              </div>
+                              <p className="text-xs text-error font-medium mt-1">{r.reason}</p>
+                              {r.description && <p className="text-[10px] text-textSecondary mt-1 italic">{r.description}</p>}
+                              {r.reportedByName && <p className="text-[9px] text-textMuted uppercase tracking-widest mt-1">Reported by {r.reportedByName}</p>}
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              {!isUserReport && r.listingId && (
+                                <a href={listingRoute} target="_blank" rel="noopener noreferrer">
+                                  <Button variant="outline" size="sm" className="whitespace-nowrap">
+                                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> View Listing
+                                  </Button>
+                                </a>
+                              )}
+                              {isUserReport && r.reportedId && (
+                                <a href={`/user/${r.reportedId}`} target="_blank" rel="noopener noreferrer">
+                                  <Button variant="outline" size="sm" className="whitespace-nowrap">
+                                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> View Profile
+                                  </Button>
+                                </a>
+                              )}
+                              <Button variant="ghost" size="sm" className="text-textMuted hover:text-error whitespace-nowrap" onClick={() => handleDismissReport(r.id)}>
+                                Dismiss
+                              </Button>
+                            </div>
                           </div>
-                          <Button variant="outline" size="sm" onClick={() => setActiveTab('listings')}>Review</Button>
-                        </div>
-                      ))}
+                        );
+                      })}
                    </div>
                 )}
 
