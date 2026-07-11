@@ -59,6 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       properties = {},
       videoId = null,
       youtubeUrl = '',
+      ownerId: requestedOwnerId,
     } = req.body || {};
 
     if (!idToken || typeof idToken !== 'string') {
@@ -70,11 +71,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const decoded = await auth.verifyIdToken(idToken);
-    const uid = decoded.uid;
+    const callerUid = decoded.uid;
+
+    const adminEmails = (process.env.ADMIN_EMAILS || '')
+      .split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+    const callerIsAdmin = decoded.admin === true
+      || (decoded.email || '').toLowerCase() === 'muhammadmusab372@gmail.com'
+      || adminEmails.includes((decoded.email || '').toLowerCase());
+
+    // Admins managing another user's dashboard can post on that user's
+    // behalf (ownerId is passed from NewListing.tsx's admin posting mode).
+    // Any non-admin caller has this ignored entirely, so nobody can spoof
+    // ownership of a listing they don't own.
+    const uid = (callerIsAdmin && typeof requestedOwnerId === 'string' && requestedOwnerId.trim())
+      ? requestedOwnerId.trim()
+      : callerUid;
 
     const userRef = db.collection('users').doc(uid);
     const userSnap = await userRef.get();
     const user = userSnap.exists ? userSnap.data() || {} : {};
+
+    if (!userSnap.exists && uid !== callerUid) {
+      return res.status(404).json({ message: 'Target user account not found.' });
+    }
 
     if (user.status === 'banned' || user.status === 'suspended' || user.isBanned === true) {
       return res.status(403).json({ message: 'You cannot post. Account banned or suspended.' });

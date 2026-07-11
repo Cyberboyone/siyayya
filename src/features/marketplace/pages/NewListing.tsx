@@ -64,8 +64,19 @@ export default function NewListing() {
   const [searchParams] = useSearchParams();
   const initialType = (searchParams.get("type") as ListingType) || "product";
   const initialTitle = searchParams.get("title") || "";
+  // When an admin opens "Add Listing" from a managed user's dashboard,
+  // Dashboard.tsx passes ?ownerId=<managedUserId> so the listing is created
+  // under that user's account instead of the admin's own — without this,
+  // every listing an admin posted while "managing" a user was silently
+  // attributed to the admin's account instead of the user they were helping.
+  const targetOwnerId = searchParams.get("ownerId") || "";
+  const targetOwnerName = searchParams.get("ownerName") || "";
   
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, isAdmin } = useAuth();
+  const postingForOtherUser = isAdmin && !!targetOwnerId && targetOwnerId !== user?.id;
+  const dashboardReturnPath = postingForOtherUser
+    ? `/dashboard?tab=listings&userId=${encodeURIComponent(targetOwnerId)}&userName=${encodeURIComponent(targetOwnerName)}`
+    : "/dashboard?tab=listings";
   const [type, setType] = useState<ListingType>(initialType);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -245,6 +256,10 @@ export default function NewListing() {
             videoId: videoId || null,
             youtubeUrl,
             campusId: user?.campusId,
+            // Only meaningful when the caller is an admin managing another
+            // user's dashboard — the server verifies admin status independently
+            // before honoring this, so a non-admin can't spoof ownership.
+            ...(isAdmin && targetOwnerId ? { ownerId: targetOwnerId } : {}),
           }),
         });
 
@@ -258,7 +273,7 @@ export default function NewListing() {
         if (type === "product") {
           const shareUrl = `${window.location.origin}/product/${result.slug}?ref=share`;
           const shareText = `I just posted ${title} on Siyayya Campus Marketplace. Check it out: ${shareUrl}`;
-          const openDashboard = () => navigate("/dashboard?tab=listings");
+          const openDashboard = () => navigate(dashboardReturnPath);
 
           toast.success("Listing is live — share it to WhatsApp to get buyers faster.", {
             action: {
@@ -280,7 +295,7 @@ export default function NewListing() {
 
           openDashboard();
         } else {
-          navigate("/dashboard?tab=listings");
+          navigate(dashboardReturnPath);
         }
       }
     } catch (error: any) {
@@ -304,9 +319,15 @@ export default function NewListing() {
       {/* Header Area */}
       <div className="relative pt-16 pb-12 overflow-hidden border-b border-black/5 bg-surface">
         <div className="px-6 max-w-2xl mx-auto flex flex-col gap-4">
-           <Link to={isAuthenticated ? "/dashboard" : "/marketplace"} className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-textMuted hover:text-primary transition-colors">
-            <ArrowLeft className="h-4 w-4" /> {isAuthenticated ? "Back to Dashboard" : "Back to Marketplace"}
+           <Link to={postingForOtherUser ? dashboardReturnPath : (isAuthenticated ? "/dashboard" : "/marketplace")} className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-textMuted hover:text-primary transition-colors">
+            <ArrowLeft className="h-4 w-4" /> {postingForOtherUser ? "Back to Managed Dashboard" : (isAuthenticated ? "Back to Dashboard" : "Back to Marketplace")}
           </Link>
+          {postingForOtherUser && (
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary">Admin Posting Mode</p>
+              <p className="text-xs font-semibold text-textPrimary mt-1">This listing will be created under {targetOwnerName || "this user"}'s account, not yours.</p>
+            </div>
+          )}
           <h1 className="text-4xl md:text-5xl font-black text-textPrimary tracking-tight italic uppercase leading-none pr-4">
             Create <span className="text-gradient pr-4 inline-block">Listing</span>
           </h1>
