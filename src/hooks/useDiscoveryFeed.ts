@@ -50,6 +50,23 @@ const WEIGHT_VERIFIED_SELLER = 2.0;
 const WEIGHT_AFFINITY = 4.0; // Category match
 const WEIGHT_LOCATION = 3.0; // Same campus
 const WEIGHT_LISTING_QUALITY = 1.0; // Multiple images, long desc
+const WEIGHT_DAILY_JITTER = 14; // Rotates ranking daily so the feed isn't frozen
+const WEIGHT_DISCOVERY_BOOST = 12; // Gives older/under-viewed listings a fair shot
+
+/** Deterministic 0..1 pseudo-random value for a given seed string. */
+const seededRandom = (seed: string): number => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  return (Math.abs(hash) % 10000) / 10000;
+};
+
+// Rotates once per calendar day (not on every render) so visitors see a
+// refreshed order across visits instead of the exact same ranking forever,
+// while staying stable throughout a single day/session.
+const getDayKey = () => new Date().toISOString().slice(0, 10);
 
 export const useDiscoveryFeed = (
   feedMode: FeedMode = "nearby",
@@ -86,7 +103,7 @@ export const useDiscoveryFeed = (
   // Scoring Engine
   const scoredProducts = useMemo(() => {
     const now = Date.now();
-    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    const dayKey = getDayKey();
     
     return northernProducts.map(product => {
       let score = 0;
@@ -119,6 +136,22 @@ export const useDiscoveryFeed = (
       // 6. Location Match
       if (nearestCampus && product.campusId === nearestCampus.id) {
         score += WEIGHT_LOCATION * 5;
+      }
+
+      // 7. Daily rotation jitter — without this, scoring was 100%
+      // deterministic (views/verified/freshness never change moment to
+      // moment), so the exact same handful of top listings dominated every
+      // single visit forever. This reshuffles the ranking once per day.
+      score += seededRandom(`${product.id}-${dayKey}`) * WEIGHT_DAILY_JITTER;
+
+      // 8. Discovery boost for older, under-exposed listings. Views mostly
+      // only grow for listings that already rank high, so older/low-view
+      // items could never earn enough score to ever be shown — a
+      // rich-get-richer loop that buried genuinely available older listings
+      // completely. This gives them a rotating chance to surface so they
+      // can actually accumulate views/interest too.
+      if (ageDays > 10 && views < 20) {
+        score += seededRandom(`${product.id}-${dayKey}-boost`) * WEIGHT_DISCOVERY_BOOST;
       }
 
       return { product, score, ageDays, views };

@@ -30,17 +30,11 @@ const Home = () => {
     nearestCampus,
     nearbyCampuses,
     trendingNow,
-    recommendedForYou,
     nearYourCampus,
     freshToday,
-    recentlyAdded,
-    popularThisWeek,
-    hiddenGems,
     discoveryFeed,
-    campusProducts,
     isLocationLoading,
     isProductsLoading,
-    locationSource,
     isOutOfRegion,
   } = useDiscoveryFeed(feedMode, selectedCampusId);
 
@@ -276,46 +270,6 @@ const Home = () => {
             </FeedSection>
           )}
 
-
-          {/* 🎯 Recommended For You */}
-          {recommendedForYou.length > 0 && feedMode === "nearby" && (
-            <FeedSection
-              icon="🎯"
-              title="Recommended For You"
-              subtitle="Top Picks"
-              viewAllLink="/marketplace"
-            >
-              {recommendedForYou.slice(0, 4).map((product, i) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  index={i}
-                  isSaved={checkIsSaved(product.id)}
-                  onToggleSave={handleToggleSave}
-                />
-              ))}
-            </FeedSection>
-          )}
-
-          {/* 🕐 Recently Added */}
-          {recentlyAdded.length > 0 && feedMode === "nearby" && (
-            <FeedSection
-              icon="🕐"
-              title="Recently Added"
-              subtitle="Just In"
-              viewAllLink="/marketplace?sort=newest"
-            >
-              {recentlyAdded.slice(0, 4).map((product, i) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  index={i}
-                  isSaved={checkIsSaved(product.id)}
-                  onToggleSave={handleToggleSave}
-                />
-              ))}
-            </FeedSection>
-          )}
 
           {/* Explore Nearby Campuses (pills) */}
           {feedMode === "nearby" && nearbyCampuses.length > 1 && (

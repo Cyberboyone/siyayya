@@ -9,7 +9,7 @@ const normalizeCampusId = (data: any) => {
   return String(campusId).toLowerCase();
 };
 
-const QUERY_LIMIT = 200;
+const QUERY_LIMIT = 500;
 
 export const useProducts = () => {
   return useQuery({
