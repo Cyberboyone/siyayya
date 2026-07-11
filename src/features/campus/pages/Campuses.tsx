@@ -2,9 +2,15 @@ import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { getNorthernCampuses } from "@/lib/campus";
+import { useSEO } from "@/hooks/useSEO";
 
 const Campuses = () => {
   const allCampuses = getNorthernCampuses();
+
+  useSEO({
+    title: "All Campus Marketplaces | Siyayya",
+    description: "Browse Siyayya campus marketplaces across Northern Nigerian universities. Find your campus and start buying or selling with verified students.",
+  });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

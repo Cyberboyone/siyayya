@@ -106,8 +106,7 @@ export default function BusinessDetail() {
       description: merchant.businessDescription || `Student business offering items and services at ${merchant.campusName || 'Nigeria'}.`,
       image: merchant.photoUrl || "",
       phone: merchant.phoneNumber || merchant.contactPhone || "",
-      address: merchant.location || merchant.campusName || "Nigeria",
-      priceRange: "$$"
+      location: merchant.location || merchant.campusName || "Nigeria",
     });
   }, [merchant]);
 
@@ -187,7 +186,20 @@ export default function BusinessDetail() {
               </div>
             </div>
 
-
+            {phone && (
+              <Button
+                className="h-12 px-6 rounded-2xl bg-[#25D366] hover:bg-[#1ebe5d] text-white active:scale-95 transition-all gap-2 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-green-500/20 shrink-0"
+                onClick={() => {
+                  const cleaned = phone.replace(/\D/g, "");
+                  const intl = cleaned.startsWith("234") ? cleaned : cleaned.startsWith("0") ? "234" + cleaned.slice(1) : "234" + cleaned;
+                  const msg = encodeURIComponent(`Hi! I found your business on Siyayya: *${merchant.businessName || merchant.name}*. I'd like to know more.`);
+                  window.open(`https://wa.me/${intl}?text=${msg}`, "_blank", "noopener,noreferrer");
+                }}
+              >
+                <MessageSquare className="h-4 w-4" />
+                WhatsApp
+              </Button>
+            )}
           </div>
         </div>
       </div>

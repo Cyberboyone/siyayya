@@ -28,7 +28,7 @@ export default function CampusDetail() {
 
       // Match in static list first
       const matched = CAMPUSES.find(
-        (u) => u.slug.toLowerCase() === campusSlug.toLowerCase() || u.id.toLowerCase() === campusSlug.toLowerCase()
+        (u) => u.id.toLowerCase() === campusSlug.toLowerCase()
       );
       
       if (matched) {
@@ -71,7 +71,7 @@ export default function CampusDetail() {
     return [
       { name: "Home", item: "/" },
       { name: "Campuses", item: "/marketplace" },
-      { name: campus.name, item: `/campus/${campus.slug}` }
+      { name: campus.name, item: `/campus/${campus.id}` }
     ];
   }, [campus]);
 
@@ -260,7 +260,7 @@ export default function CampusDetail() {
               </h3>
               <div className="grid grid-cols-1 gap-2">
                 {relatedCampuses.map((rel) => (
-                  <Link key={rel.id} to={`/campus/${rel.slug}`} className="flex items-center justify-between p-2 rounded-xl hover:bg-black/5 transition-colors text-xs font-bold text-textSecondary hover:text-primary">
+                  <Link key={rel.id} to={`/campus/${rel.id}`} className="flex items-center justify-between p-2 rounded-xl hover:bg-black/5 transition-colors text-xs font-bold text-textSecondary hover:text-primary">
                     <span className="truncate">{rel.name}</span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-textMuted" />
                   </Link>

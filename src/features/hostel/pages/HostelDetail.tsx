@@ -25,7 +25,7 @@ export default function HostelDetail() {
       if (!campus) return;
 
       const matched = CAMPUSES.find(
-        u => u.id.toLowerCase() === campus.toLowerCase() || u.slug.toLowerCase() === campus.toLowerCase()
+        u => u.id.toLowerCase() === campus.toLowerCase()
       );
 
       if (matched) {
