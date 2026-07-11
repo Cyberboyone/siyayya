@@ -594,9 +594,11 @@ const ProductDetail = () => {
       isOpen={purchaseOpen} 
       onClose={() => setPurchaseOpen(false)}
       product={{
+        id: product.id,
         title: product.title,
         price: product.price,
         image: product.images?.[0] || product.image,
+        ownerId: product.ownerId,
         ownerName: product.ownerName
       }}
     />

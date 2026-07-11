@@ -15,14 +15,19 @@ import { usePaystackPayment } from 'react-paystack';
 import { useAuth } from '@/features/auth/contexts/AuthContext';
 import { PAYSTACK_PUBLIC_KEY } from '@/lib/config';
 import { toast } from 'sonner';
+import { createOrder } from '@/features/marketplace/services/orderService';
+import { notificationService } from '@/lib/notificationService';
+import type { CartItem } from '@/features/marketplace/contexts/CartContext';
 
 interface PurchaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: {
+    id: string;
     title: string;
     price: number;
     image: string;
+    ownerId: string;
     ownerName: string;
   };
 }
@@ -30,15 +35,18 @@ interface PurchaseModalProps {
 export function PurchaseModal({ isOpen, onClose, product }: PurchaseModalProps) {
   const [step, setStep] = useState<'details' | 'payment' | 'success'>('details');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentReference, setPaymentReference] = useState('');
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Paystack Configuration
   const config = {
-    reference: (new Date()).getTime().toString(),
+    reference: paymentReference,
     email: user?.email || "guest@siyayya.com",
     amount: product.price * 100, // Paystack uses Kobo (100 kobo = 1 Naira)
     publicKey: PAYSTACK_PUBLIC_KEY,
     metadata: {
+      order_id: pendingOrderId,
       custom_fields: [
         {
           display_name: "Item Title",
@@ -51,8 +59,25 @@ export function PurchaseModal({ isOpen, onClose, product }: PurchaseModalProps) 
 
   const initializePayment = usePaystackPayment(config);
 
-  const onSuccess = (reference: any) => {
+  const onSuccess = async (reference: any) => {
     console.log("[Paystack] Payment Successful:", reference);
+    // The webhook confirms payment server-side; here we just notify the
+    // seller immediately so they don't have to wait to find out.
+    try {
+      if (product.ownerId) {
+        await notificationService.sendNotification({
+          targetUserIds: [product.ownerId],
+          title: "You have a new order!",
+          body: `${user?.businessName || user?.name || 'A buyer'} just paid for "${product.title}" (${formatPrice(product.price)}).`,
+          type: "order",
+          link: "/dashboard?tab=listings",
+          senderId: user?.id,
+          senderName: user?.businessName || user?.name,
+        });
+      }
+    } catch (e) {
+      console.error("Failed to notify seller of purchase:", e);
+    }
     setIsProcessing(false);
     setStep('success');
     toast.success("Payment verified successfully!");
@@ -62,6 +87,54 @@ export function PurchaseModal({ isOpen, onClose, product }: PurchaseModalProps) 
     console.log("[Paystack] Payment Closed");
     setIsProcessing(false);
     toast.error("Payment was cancelled.");
+  };
+
+  // Creates the pending order BEFORE charging so the Paystack webhook has a
+  // real order_id to reconcile against — without this, "Buy Now" purchases
+  // took real money but left no order record anywhere and never notified
+  // the seller, despite the success screen claiming they had been.
+  const proceedToPayment = async () => {
+    if (!user) {
+      toast.error("Please sign in to complete your purchase.");
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      const freshReference = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      // PurchaseModal only receives a minimal product summary (not a full
+      // Product record), so we build a best-effort CartItem for the order
+      // record — full listing details remain available via ownerId/id.
+      const orderItem = {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        ownerId: product.ownerId,
+        ownerName: product.ownerName,
+        quantity: 1,
+      } as unknown as CartItem;
+
+      const orderId = await createOrder({
+        buyerId: user.id,
+        buyerName: user.businessName || user.name || "Buyer",
+        buyerEmail: user.email || "",
+        buyerPhone: user.phone || "",
+        shippingAddress: "Arrange meeting with seller directly",
+        deliveryInstructions: "Buy Now — meet seller on campus to collect item",
+        items: [orderItem],
+        totalAmount: product.price,
+        paymentReference: freshReference,
+        status: 'pending',
+      });
+      setPaymentReference(freshReference);
+      setPendingOrderId(orderId);
+      setStep('payment');
+    } catch (error) {
+      console.error("Failed to create pending order:", error);
+      toast.error("Failed to initialize order. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handlePayment = () => {
@@ -119,11 +192,16 @@ export function PurchaseModal({ isOpen, onClose, product }: PurchaseModalProps) 
 
               <DialogFooter className="mt-8">
                 <Button 
-                  onClick={() => setStep('payment')}
+                  onClick={proceedToPayment}
+                  disabled={isProcessing}
                   className="w-full h-14 btn-premium text-white font-black uppercase tracking-widest rounded-2xl group"
                 >
-                  Proceed to Payment
-                  <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  {isProcessing ? (
+                    <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Preparing...</>
+                  ) : (
+                    <>Proceed to Payment
+                    <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /></>
+                  )}
                 </Button>
               </DialogFooter>
             </motion.div>
