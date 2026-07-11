@@ -108,6 +108,18 @@ service cloud.firestore {
       // Any authenticated user can file a report
       allow create: if isAuthenticated();
     }
+
+    // 🔴 Contact Us Messages
+    // The /contact page is public (no sign-in required), so anyone — including
+    // guests — must be able to submit. Only admins can read/manage submissions
+    // to prevent messages (which may include personal contact info) from being
+    // publicly readable.
+    match /contact_messages/{messageId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if request.resource.data.name is string && request.resource.data.name.size() > 0 &&
+                    request.resource.data.email is string && request.resource.data.email.size() > 0 &&
+                    request.resource.data.message is string && request.resource.data.message.size() > 0;
+    }
     
     // 🔴 Referrals
     match /referrals/{referralId} {

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Users, Package, Flag, Loader2,
-  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3, Gift, Download, Printer, Shield
+  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3, Gift, Download, Printer, Shield, Mail
 } from "lucide-react";
 
 import { ADMIN_EMAILS } from "@/lib/config";
@@ -21,26 +21,28 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user: currentUser, isAdmin } = useAuth();
   const isEmailAdmin = !!currentUser?.email && ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
-  const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "orders" | "analytics" | "referrals">("analytics");
+  const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "orders" | "analytics" | "referrals" | "messages">("analytics");
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [referrals, setReferrals] = useState<any[]>([]);
+  const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [usersSnap, productsSnap, servicesSnap, reportsSnap, ordersSnap, referralsSnap] = await Promise.all([
+      const [usersSnap, productsSnap, servicesSnap, reportsSnap, ordersSnap, referralsSnap, messagesSnap] = await Promise.all([
         getDocs(collection(db, "users")),
         getDocs(collection(db, "products")),
         getDocs(collection(db, "services")),
         getDocs(collection(db, "reports")),
         getDocs(collection(db, "orders")),
         getDocs(collection(db, "referrals")),
+        getDocs(collection(db, "contact_messages")),
       ]);
 
       setUsers(usersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -63,6 +65,12 @@ const AdminDashboard = () => {
       }));
       
       setOrders(ordersSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        return (dateB as any) - (dateA as any);
+      }));
+
+      setContactMessages(messagesSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
         const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
         const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
         return (dateB as any) - (dateA as any);
@@ -233,6 +241,29 @@ const AdminDashboard = () => {
       toast.success("Report dismissed");
     } catch (e) {
       toast.error("Failed to dismiss report");
+    }
+  };
+
+  const handleResolveMessage = async (messageId: string) => {
+    if (!checkAdmin()) return;
+    try {
+      await updateDoc(doc(db, "contact_messages", messageId), { status: "resolved" });
+      setContactMessages(prev => prev.map(m => m.id === messageId ? { ...m, status: "resolved" } : m));
+      toast.success("Marked as resolved");
+    } catch (e) {
+      toast.error("Failed to update message");
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!checkAdmin()) return;
+    if (!confirm("Delete this message?")) return;
+    try {
+      await deleteDoc(doc(db, "contact_messages", messageId));
+      setContactMessages(prev => prev.filter(m => m.id !== messageId));
+      toast.success("Message deleted");
+    } catch (e) {
+      toast.error("Failed to delete message");
     }
   };
 
@@ -431,6 +462,7 @@ const AdminDashboard = () => {
     { id: "reports" as const, label: `Reports (${reports.length})`, icon: Flag },
     { id: "orders" as const, label: `Orders (${orders.length})`, icon: ShoppingBag },
     { id: "referrals" as const, label: `Referrals (${referrals.length})`, icon: Gift },
+    { id: "messages" as const, label: `Messages (${contactMessages.filter(m => m.status !== 'resolved').length})`, icon: Mail },
   ];
 
   return (
@@ -1207,6 +1239,48 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
+                {activeTab === 'messages' && contactMessages.length === 0 && (
+                  <div className="p-20 text-center text-textSecondary font-bold italic">No contact messages yet</div>
+                )}
+                {activeTab === 'messages' && contactMessages.length > 0 && (
+                  <div className="p-4 sm:p-6 space-y-4">
+                    {contactMessages
+                      .filter(m =>
+                        m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        m.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        m.subject?.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map(m => {
+                        const date = m.createdAt?.toDate ? m.createdAt.toDate() : (m.createdAt ? new Date(m.createdAt) : null);
+                        const isResolved = m.status === 'resolved';
+                        return (
+                          <div key={m.id} className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-start gap-3 sm:justify-between ${isResolved ? 'bg-muted/10 border-black/5 opacity-60' : 'bg-surface border-primary/10 shadow-sm'}`}>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-black text-textPrimary">{m.subject || 'No subject'}</p>
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${isResolved ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                                  {isResolved ? 'Resolved' : 'New'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-textSecondary mt-1">{m.name} • <a href={`mailto:${m.email}`} className="text-primary hover:underline">{m.email}</a></p>
+                              <p className="text-sm text-textPrimary mt-2 whitespace-pre-wrap">{m.message}</p>
+                              <p className="text-[9px] text-textMuted uppercase tracking-widest mt-2">{date ? date.toLocaleString() : 'Unknown date'}</p>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              {!isResolved && (
+                                <Button variant="outline" size="sm" className="whitespace-nowrap" onClick={() => handleResolveMessage(m.id)}>
+                                  <CheckCircle className="h-3.5 w-3.5 mr-1.5" /> Resolve
+                                </Button>
+                              )}
+                              <Button variant="ghost" size="sm" className="text-textMuted hover:text-error whitespace-nowrap" onClick={() => handleDeleteMessage(m.id)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
 
               </div>
             )}

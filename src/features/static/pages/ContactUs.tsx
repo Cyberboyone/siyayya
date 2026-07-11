@@ -1,9 +1,12 @@
 import { Navbar } from "@/components/Navbar";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Phone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useSEO } from "@/hooks/useSEO";
+import { db } from "@/lib/firebase";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { toast } from "sonner";
 
 const ContactUs = () => {
   useSEO({
@@ -11,12 +14,34 @@ const ContactUs = () => {
     description: "Got questions or feedback? Contact the Siyayya support team. We're here to help the community.",
   });
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Thank you for your message! Our support team will get back to you soon.");
-    setFormData({ name: "", email: "", subject: "", message: "" });
+    if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, "contact_messages"), {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+        status: "new",
+        createdAt: serverTimestamp(),
+      });
+      toast.success("Thank you for your message! Our support team will get back to you soon.");
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (error) {
+      console.error("Failed to submit contact message:", error);
+      toast.error("Failed to send your message. Please try emailing us directly at info@siyayya.com.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   return (
     <div className="min-h-screen bg-background pb-28 md:pb-0">
@@ -119,8 +144,8 @@ const ContactUs = () => {
                   placeholder="Describe your issue or feedback in detail..."
                 />
               </div>
-              <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground font-medium mt-2">
-                Send Message
+              <Button type="submit" disabled={isSubmitting} className="w-full h-12 bg-primary text-primary-foreground font-medium mt-2">
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Message"}
               </Button>
             </form>
           </div>
