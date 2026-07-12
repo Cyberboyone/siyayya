@@ -87,8 +87,18 @@ export const useFCM = () => {
 
     const setupFCM = async () => {
       try {
+        // Registered at Firebase's own dedicated push scope (NOT the default
+        // '/' scope) so it never collides with vite-plugin-pwa's workbox
+        // service worker (sw.js), which also registers at '/' with
+        // skipWaiting+clientsClaim. Previously both service workers fought
+        // over the same scope — whichever registered last on a given page
+        // load silently evicted the other, so push notifications worked
+        // right after granting permission but stopped again once the PWA
+        // service worker reclaimed the scope on a later visit/update. Each
+        // worker now owns its own scope permanently, so this can't happen.
         const registration = await navigator.serviceWorker.register(
-          `/firebase-messaging-sw.js?${getFirebaseConfigParams().toString()}`
+          `/firebase-messaging-sw.js?${getFirebaseConfigParams().toString()}`,
+          { scope: '/firebase-cloud-messaging-push-scope' }
         );
         
         await navigator.serviceWorker.ready;
@@ -137,7 +147,8 @@ export const useFCM = () => {
       
       if (currentPermission === 'granted') {
         const registration = await navigator.serviceWorker.register(
-          `/firebase-messaging-sw.js?${getFirebaseConfigParams().toString()}`
+          `/firebase-messaging-sw.js?${getFirebaseConfigParams().toString()}`,
+          { scope: '/firebase-cloud-messaging-push-scope' }
         );
         await retrieveToken(registration);
         toast.success('Push notifications enabled');

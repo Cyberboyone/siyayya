@@ -37,9 +37,30 @@ export function NotificationDropdown() {
         id: doc.id,
         ...doc.data()
       })) as AppNotification[];
-      
+
       setNotifications(list);
-      setUnreadCount(list.filter(n => !n.read).length);
+    });
+
+    return () => unsubscribe();
+  }, [user?.id]);
+
+  // The badge count is driven by its own uncapped `read == false` query,
+  // independent of the 20-item preview list above. Previously the count was
+  // just `list.filter(n => !n.read).length` on that same capped list, so any
+  // unread notification older than the 20 most recent (e.g. after a burst of
+  // reads/new items push it out of the window) silently vanished from the
+  // badge even though it was still unread — the badge could under-count or
+  // even show 0 while unread notifications existed.
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const unreadQuery = query(
+      collection(db, "users", user.id, "notifications"),
+      where("read", "==", false)
+    );
+
+    const unsubscribe = onSnapshot(unreadQuery, (snapshot) => {
+      setUnreadCount(snapshot.size);
     });
 
     return () => unsubscribe();

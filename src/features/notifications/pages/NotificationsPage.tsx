@@ -4,7 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { AppNotification } from "@/lib/mock-data";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, where } from "firebase/firestore";
 import { notificationService } from "@/lib/notificationService";
 import { Bell, Heart, MessageSquare, UserPlus, Sparkles, CheckCircle2, Package, Megaphone, Shield, Clock, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -30,9 +30,27 @@ export default function NotificationsPage() {
         id: doc.id,
         ...doc.data()
       })) as AppNotification[];
-      
+
       setNotifications(list);
-      setUnreadCount(list.filter(n => !n.read).length);
+    });
+
+    return () => unsubscribe();
+  }, [user?.id]);
+
+  // Independent uncapped count so "You have N unread" stays accurate even
+  // when there are more than 100 unread items (see NotificationDropdown.tsx
+  // for the full explanation of why this must not be derived from the
+  // capped preview list).
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const unreadQuery = query(
+      collection(db, "users", user.id, "notifications"),
+      where("read", "==", false)
+    );
+
+    const unsubscribe = onSnapshot(unreadQuery, (snapshot) => {
+      setUnreadCount(snapshot.size);
     });
 
     return () => unsubscribe();

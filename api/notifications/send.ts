@@ -62,15 +62,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const messaging = getAdminMessaging();
+    // Data-only payload (no top-level `notification` or `webpush.notification`
+    // key) is sent deliberately. When a `notification` payload is present,
+    // the browser auto-displays it as soon as the push event arrives AND our
+    // firebase-messaging-sw.js's onBackgroundMessage handler also calls
+    // showNotification() manually — resulting in the exact same notification
+    // rendering twice for background/closed-tab pushes. Sending data-only
+    // hands full, single control to onBackgroundMessage (background) and
+    // onMessage (foreground), so it is shown exactly once either way.
     const response = await messaging.sendEachForMulticast({
-      notification: { title, body },
-      data: { ...(data || {}), notificationType: notificationType || 'general' },
+      data: {
+        ...(data || {}),
+        title,
+        body,
+        notificationType: notificationType || 'general',
+        icon: '/pwa-192x192.png',
+        badge: '/pwa-192x192.png',
+      },
       webpush: {
         fcmOptions: data?.link ? { link: data.link } : undefined,
-        notification: {
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
-        },
       },
       tokens,
     });

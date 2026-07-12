@@ -230,12 +230,20 @@ async function runListingCleanup(
       const tokens = tokensByOwner[item.ownerId];
       if (!tokens || tokens.length === 0) continue;
       try {
+        // Data-only payload (see api/notifications/send.ts for why) so the
+        // service worker's onBackgroundMessage is the single source of
+        // truth for display and this never double-shows.
         await messaging.sendEachForMulticast({
-          notification: { title: item.title, body: item.body },
-          data: { link: item.link, notificationType: 'listing_lifecycle' },
+          data: {
+            title: item.title,
+            body: item.body,
+            link: item.link,
+            notificationType: 'listing_lifecycle',
+            icon: '/pwa-192x192.png',
+            badge: '/pwa-192x192.png',
+          },
           webpush: {
             fcmOptions: { link: item.link },
-            notification: { icon: '/pwa-192x192.png', badge: '/pwa-192x192.png' },
           },
           tokens,
         });
@@ -335,22 +343,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const invalidTokens: string[] = [];
 
     for (const tokenChunk of chunk(tokens, 500)) {
+      // Data-only payload (see api/notifications/send.ts for why) — avoids
+      // the daily digest push rendering twice (once auto-displayed by the
+      // browser from a `notification` payload, once from our SW's
+      // onBackgroundMessage handler).
       const response = await messaging.sendEachForMulticast({
-        notification: message,
         data: {
+          title: message.title,
+          body: message.body,
           link: '/',
           notificationType: 'announcement',
           campaign: 'daily_engagement',
           dateKey: todayKey,
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-192x192.png',
+          tag: `siyayya-daily-${todayKey}`,
         },
         webpush: {
           fcmOptions: { link: '/' },
-          notification: {
-            icon: '/pwa-192x192.png',
-            badge: '/pwa-192x192.png',
-            tag: `siyayya-daily-${todayKey}`,
-            requireInteraction: false,
-          },
         },
         tokens: tokenChunk,
       });
