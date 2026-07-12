@@ -6,7 +6,7 @@ import { AppNotification } from "@/lib/mock-data";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { notificationService } from "@/lib/notificationService";
-import { Bell, Heart, MessageSquare, UserPlus, Sparkles, CheckCircle2, Package, Megaphone, Shield } from "lucide-react";
+import { Bell, Heart, MessageSquare, UserPlus, Sparkles, CheckCircle2, Package, Megaphone, Shield, Clock, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 
@@ -70,6 +70,10 @@ export default function NotificationsPage() {
         return <Megaphone className="h-4 w-4 text-yellow-500" />;
       case "admin":
         return <Shield className="h-4 w-4 text-zinc-800" />;
+      case "listing_expiring":
+        return <Clock className="h-4 w-4 text-amber-500 stroke-[3px]" />;
+      case "listing_expired":
+        return <Trash2 className="h-4 w-4 text-red-500 stroke-[3px]" />;
       default:
         return <Bell className="h-4 w-4 text-zinc-400" />;
     }

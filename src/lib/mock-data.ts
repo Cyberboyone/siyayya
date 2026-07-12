@@ -50,6 +50,8 @@ export type NotificationType =
   | "announcement" 
   | "dailyDigest"
   | "forum_reply"
+  | "listing_expiring"
+  | "listing_expired"
   | "admin";
 
 export interface AppNotification {
