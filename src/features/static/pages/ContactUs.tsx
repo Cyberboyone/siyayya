@@ -90,7 +90,7 @@ const ContactUs = () => {
                   <h3 className="font-black text-textPrimary uppercase tracking-widest text-xs mb-1">Office Address</h3>
                   <p className="text-sm text-textSecondary font-bold leading-relaxed">
                     Block K Male Hostel,<br />
-                    Your University Campus,<br />
+                    Federal University of Kashere,<br />
                     Gombe State, Nigeria.
                   </p>
                 </div>

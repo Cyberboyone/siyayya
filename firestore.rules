@@ -31,9 +31,35 @@ service cloud.firestore {
       );
     }
 
+    // 👑 Only this single account may grant/revoke admin access. Kept
+    // separate from isAdmin() so that even an admin promoted through the
+    // dashboard can never escalate anyone's privileges (including their
+    // own) via a direct Firestore write, only the account owner can.
+    function isSuperAdminToken() {
+      return isAuthenticated() &&
+        'email' in request.auth.token &&
+        request.auth.token.email.lower() == 'muhammadmusab372@gmail.com';
+    }
+
+    // True if this write is attempting to change admin-escalation fields.
+    // request.resource is null on delete, so that's never treated as an
+    // escalation attempt here (deletion is governed separately below).
+    function touchesAdminFields() {
+      return request.resource != null && (
+        ('account_type' in request.resource.data &&
+           (resource == null || request.resource.data.account_type != resource.data.account_type)) ||
+        ('isAdmin' in request.resource.data &&
+           (resource == null || request.resource.data.isAdmin != resource.data.isAdmin))
+      );
+    }
+
     // 🟢 GLOBAL ADMIN ACCESS
     match /{document=**} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
+      // Regular admins retain full write access for moderation, EXCEPT they
+      // can never change account_type/isAdmin on any document — only the
+      // super admin account can grant or revoke admin privileges.
+      allow write: if isAdmin() && (!touchesAdminFields() || isSuperAdminToken());
     }
 
     // 🔴 User Profiles

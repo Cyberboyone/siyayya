@@ -2,6 +2,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getAdminAuth, getAdminDb } from '../_lib/firebase-admin.js';
 import { z } from 'zod';
 
+// Only this single account may grant or revoke admin access. Every other
+// admin (even ones promoted through this very endpoint) can manage users,
+// listings, and reports, but must never be able to escalate anyone's
+// privileges — including their own — so this stays hardcoded rather than
+// reading from the ADMIN_EMAILS list, which can contain multiple people.
+const SUPER_ADMIN_EMAIL = 'muhammadmusab372@gmail.com';
+
 const SetClaimSchema = z.object({
   targetUid: z.string().min(1).max(128),
   isAdmin: z.boolean(),
@@ -23,14 +30,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const auth = getAdminAuth();
     const decodedToken = await auth.verifyIdToken(idToken);
 
-    const adminEmails = (process.env.ADMIN_EMAILS || '')
-      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    const callerEmail = (decodedToken.email || '').toLowerCase();
+    const isCallerSuperAdmin = callerEmail === SUPER_ADMIN_EMAIL;
 
-    const isEmailAdmin = adminEmails.includes(decodedToken.email?.toLowerCase() || '');
-    const hasAdminClaim = decodedToken.admin === true;
-
-    if (!isEmailAdmin && !hasAdminClaim) {
-      return res.status(403).json({ message: 'Forbidden.' });
+    if (!isCallerSuperAdmin) {
+      return res.status(403).json({ message: 'Only the super admin can grant or revoke admin access.' });
     }
 
     const parsed = SetClaimSchema.safeParse(req.body);
@@ -39,6 +43,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const { targetUid, isAdmin: makeAdmin } = parsed.data;
+
+    // The super admin account can never be demoted, including by itself.
+    const targetUser = await auth.getUser(targetUid).catch(() => null);
+    if (!makeAdmin && (targetUser?.email || '').toLowerCase() === SUPER_ADMIN_EMAIL) {
+      return res.status(400).json({ message: 'The super admin account cannot be demoted.' });
+    }
 
     await auth.setCustomUserClaims(targetUid, { admin: makeAdmin });
     await getAdminDb().collection('users').doc(targetUid).update({

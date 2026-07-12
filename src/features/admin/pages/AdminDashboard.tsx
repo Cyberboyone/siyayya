@@ -15,12 +15,16 @@ import {
   Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3, Gift, Download, Printer, Shield, Mail
 } from "lucide-react";
 
-import { ADMIN_EMAILS } from "@/lib/config";
+import { ADMIN_EMAILS, isSuperAdmin } from "@/lib/config";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user: currentUser, isAdmin } = useAuth();
   const isEmailAdmin = !!currentUser?.email && ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
+  // Only the super admin account may grant/revoke admin access — other
+  // admins can manage everything else, but must never be able to promote
+  // or demote anyone (including themselves).
+  const isCurrentUserSuperAdmin = isSuperAdmin(currentUser?.email);
   const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "orders" | "analytics" | "referrals" | "messages">("analytics");
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
@@ -106,8 +110,12 @@ const AdminDashboard = () => {
     navigate(`/dashboard?tab=listings&userId=${encodeURIComponent(userId)}&userName=${encodeURIComponent(userName)}`);
   };
 
-  const handleDeleteUser = async (userId: string) => {
+  const handleDeleteUser = async (userId: string, userEmail?: string) => {
     if (!checkAdmin()) return;
+    if (isSuperAdmin(userEmail)) {
+      toast.error("The super admin account cannot be deleted.");
+      return;
+    }
     if (!confirm("Are you sure? This will delete the user's account, listings and reviews permanently. This does not remove their sign-in credentials.")) return;
     try {
       // Clean up owned listings and reviews first to avoid leaving orphaned
@@ -168,6 +176,10 @@ const AdminDashboard = () => {
 
   const handleToggleAdmin = async (userId: string, currentStatus: boolean, userEmail?: string) => {
     if (!checkAdmin()) return;
+    if (!isCurrentUserSuperAdmin) {
+      toast.error("Only the super admin can grant or revoke admin access.");
+      return;
+    }
     const nextStatus = !currentStatus;
     if (!confirm(`${nextStatus ? "Grant" : "Remove"} admin access ${nextStatus ? "to" : "from"} ${userEmail || userId}?`)) return;
     try {
@@ -192,8 +204,12 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleToggleBan = async (userId: string, currentStatus: boolean) => {
+  const handleToggleBan = async (userId: string, currentStatus: boolean, userEmail?: string) => {
     if (!checkAdmin()) return;
+    if (isSuperAdmin(userEmail)) {
+      toast.error("The super admin account cannot be banned.");
+      return;
+    }
     try {
       await updateDoc(doc(db, "users", userId), {
         isBanned: !currentStatus
@@ -586,16 +602,18 @@ const AdminDashboard = () => {
                               <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${u.isVerified ? 'text-gray-400' : 'text-green-600'}`} onClick={() => handleToggleVerify(u.id, u.isVerified ?? false)}>
                                 <CheckCircle className={`h-3.5 w-3.5 mr-1 ${u.isVerified ? 'fill-green-600 text-white' : ''}`} />{u.isVerified ? 'Unverify' : 'Verify'}
                               </Button>
-                              <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${u.isBanned ? 'text-blue-600' : 'text-error'}`} onClick={() => handleToggleBan(u.id, u.isBanned ?? false)}>
+                              <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${u.isBanned ? 'text-blue-600' : 'text-error'}`} onClick={() => handleToggleBan(u.id, u.isBanned ?? false, u.email)}>
                                 <Ban className="h-3.5 w-3.5 mr-1" />{u.isBanned ? 'Unban' : 'Ban'}
                               </Button>
                               <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-black text-primary" onClick={() => openUserDashboard(u)}>
                                 <ExternalLink className="h-3.5 w-3.5 mr-1" />Dashboard
                               </Button>
-                              <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${u.account_type === 'admin' || u.isAdmin ? 'text-amber-600' : 'text-textMuted'}`} onClick={() => handleToggleAdmin(u.id, u.account_type === 'admin' || !!u.isAdmin, u.email)}>
-                                <Shield className="h-3.5 w-3.5 mr-1" />{u.account_type === 'admin' || u.isAdmin ? 'Revoke Admin' : 'Make Admin'}
-                              </Button>
-                              <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-black text-error ml-auto" onClick={() => handleDeleteUser(u.id)}>
+                              {isCurrentUserSuperAdmin && (
+                                <Button variant="ghost" size="sm" className={`h-8 px-2 text-[10px] font-black ${u.account_type === 'admin' || u.isAdmin ? 'text-amber-600' : 'text-textMuted'}`} onClick={() => handleToggleAdmin(u.id, u.account_type === 'admin' || !!u.isAdmin, u.email)}>
+                                  <Shield className="h-3.5 w-3.5 mr-1" />{u.account_type === 'admin' || u.isAdmin ? 'Revoke Admin' : 'Make Admin'}
+                                </Button>
+                              )}
+                              <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-black text-error ml-auto" onClick={() => handleDeleteUser(u.id, u.email)}>
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
@@ -640,14 +658,16 @@ const AdminDashboard = () => {
                                   <Button variant="ghost" size="sm" className={`${u.isVerified ? 'text-gray-400' : 'text-green-600'} hover:bg-muted`} onClick={() => handleToggleVerify(u.id, u.isVerified ?? false)}>
                                     <CheckCircle className={`h-4 w-4 ${u.isVerified ? 'fill-green-600 text-white' : ''}`} />
                                   </Button>
-                                  <Button variant="ghost" size="sm" className={`${u.isBanned ? 'text-blue-600' : 'text-error'} hover:bg-muted`} onClick={() => handleToggleBan(u.id, u.isBanned ?? false)}>
+                                  <Button variant="ghost" size="sm" className={`${u.isBanned ? 'text-blue-600' : 'text-error'} hover:bg-muted`} onClick={() => handleToggleBan(u.id, u.isBanned ?? false, u.email)}>
                                     <Ban className="h-4 w-4" />
                                   </Button>
                                   <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => openUserDashboard(u)}><ExternalLink className="h-4 w-4 mr-2" />Dashboard</Button>
-                                  <Button variant="ghost" size="sm" title={u.account_type === 'admin' || u.isAdmin ? 'Revoke admin access' : 'Grant admin access'} className={`${u.account_type === 'admin' || u.isAdmin ? 'text-amber-600' : 'text-textMuted'} hover:bg-muted`} onClick={() => handleToggleAdmin(u.id, u.account_type === 'admin' || !!u.isAdmin, u.email)}>
-                                    <Shield className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="sm" className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(u.id)}>
+                                  {isCurrentUserSuperAdmin && (
+                                    <Button variant="ghost" size="sm" title={u.account_type === 'admin' || u.isAdmin ? 'Revoke admin access' : 'Grant admin access'} className={`${u.account_type === 'admin' || u.isAdmin ? 'text-amber-600' : 'text-textMuted'} hover:bg-muted`} onClick={() => handleToggleAdmin(u.id, u.account_type === 'admin' || !!u.isAdmin, u.email)}>
+                                      <Shield className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  <Button variant="ghost" size="sm" className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(u.id, u.email)}>
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
