@@ -4,8 +4,9 @@ import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { AppNotification } from "@/lib/mock-data";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, onSnapshot, where } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { notificationService } from "@/lib/notificationService";
+import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 import { Bell, Heart, MessageSquare, UserPlus, Sparkles, CheckCircle2, Package, Megaphone, Shield, Clock, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,12 @@ export default function NotificationsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  // Independent, uncapped `read == false` listener shared with the navbar
+  // badge — see useUnreadNotifications for why this must never be derived
+  // from the capped preview list below (a count based on only the 100 most
+  // recent notifications could under-count or show 0 once enough newer
+  // notifications pushed an unread one out of that window).
+  const unreadCount = useUnreadNotifications();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -32,25 +38,6 @@ export default function NotificationsPage() {
       })) as AppNotification[];
 
       setNotifications(list);
-    });
-
-    return () => unsubscribe();
-  }, [user?.id]);
-
-  // Independent uncapped count so "You have N unread" stays accurate even
-  // when there are more than 100 unread items (see NotificationDropdown.tsx
-  // for the full explanation of why this must not be derived from the
-  // capped preview list).
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const unreadQuery = query(
-      collection(db, "users", user.id, "notifications"),
-      where("read", "==", false)
-    );
-
-    const unsubscribe = onSnapshot(unreadQuery, (snapshot) => {
-      setUnreadCount(snapshot.size);
     });
 
     return () => unsubscribe();

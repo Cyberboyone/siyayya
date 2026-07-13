@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X } from 'lucide-react';
+import { X, Share, PlusSquare } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 export function InstallPrompt() {
-  const { isInstallable, isInstalled, handleInstall } = usePWAInstall();
+  const { isInstallable, isInstalled, isIOS, canPromptInstall, handleInstall } = usePWAInstall();
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
@@ -33,7 +33,11 @@ export function InstallPrompt() {
       
       const pageViews = parseInt(sessionStorage.getItem('siyayya_page_views') || '0', 10);
       
-      // Trigger logic: > 45 seconds OR >= 2 page views
+      // Trigger logic: > 45 seconds OR >= 2 page views. `isInstallable` now
+      // covers both the native-prompt (Chrome/Edge/Android) and iOS
+      // manual-instructions cases, so this prompt reaches users on either
+      // platform instead of silently never firing on iOS (which never
+      // fires `beforeinstallprompt` at all).
       if ((timeSpent >= 45 || pageViews >= 2) && isInstallable && !showPrompt) {
         setShowPrompt(true);
         clearInterval(timer);
@@ -46,6 +50,7 @@ export function InstallPrompt() {
   }, [isInstallable, isInstalled, showPrompt]);
 
   const onInstallClick = async () => {
+    if (isIOS) return; // iOS has no programmatic install — instructions are shown inline instead.
     const success = await handleInstall();
     if (success) {
       setShowPrompt(false);
@@ -74,8 +79,8 @@ export function InstallPrompt() {
           </button>
           
           <div className="flex items-start gap-4">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-lg">
-              <Download className="h-6 w-6 text-white" />
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-lg overflow-hidden">
+              <img src="/pwa-192x192.png" alt="" className="h-full w-full object-cover" />
             </div>
             
             <div>
@@ -87,6 +92,19 @@ export function InstallPrompt() {
               </p>
             </div>
           </div>
+
+          {isIOS ? (
+            <div className="mt-4 rounded-2xl bg-black/5 p-4 space-y-2.5">
+              <div className="flex items-center gap-2.5 text-xs font-bold text-textPrimary">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white text-[10px] font-black">1</span>
+                Tap the <Share className="h-3.5 w-3.5 inline mx-0.5" /> Share icon in your browser toolbar
+              </div>
+              <div className="flex items-center gap-2.5 text-xs font-bold text-textPrimary">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white text-[10px] font-black">2</span>
+                Scroll down and tap <PlusSquare className="h-3.5 w-3.5 inline mx-0.5" /> "Add to Home Screen"
+              </div>
+            </div>
+          ) : null}
           
           <div className="flex gap-3 mt-5">
             <button
@@ -95,12 +113,14 @@ export function InstallPrompt() {
             >
               Maybe Later
             </button>
-            <button
-              onClick={onInstallClick}
-              className="flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest text-white bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all"
-            >
-              Install Now
-            </button>
+            {!isIOS && (
+              <button
+                onClick={onInstallClick}
+                className="flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest text-white bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all"
+              >
+                Install Now
+              </button>
+            )}
           </div>
         </motion.div>
       )}

@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       manifest: {
-        name: 'Siyayya Marketplace',
+        name: 'Siyayya : Your Campus Marketplace',
         short_name: 'Siyayya',
         description: 'Campus Deals & Marketplace',
         theme_color: '#000000',
@@ -63,12 +63,19 @@ export default defineConfig(({ mode }) => ({
             src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any'
           },
           {
             src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: '/maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       }

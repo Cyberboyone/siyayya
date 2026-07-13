@@ -52,8 +52,16 @@ const Home = () => {
   const selectedCampus = selectedCampusId ? getCampusById(selectedCampusId) : null;
 
   // SEO
+  // No `title` override here — useSEO's own fallback already renders exactly
+  // "Siyayya : Your Campus Marketplace" (matching index.html's static
+  // <title>, which is what search engines see before JS runs). Passing that
+  // same string in as `title` used to make useSEO append " | Siyayya" again
+  // (title ? `${title} | ${siteName}` : ...), producing the malformed
+  // "Siyayya : Your Campus Marketplace | Siyayya" once React mounted and
+  // overwrote document.title — which is very likely why Google's indexed
+  // title looked stale/wrong even though the (unrelated) favicon updated
+  // fine, since Google indexes the post-render title for a JS app like this.
   useSEO({
-    title: `Siyayya : Your Campus Marketplace`,
     description: `Buy, sell, and discover products near ${nearestCampus?.name || "your campus"}. Electronics, fashion, books & more across Nigerian university campuses.`,
   });
 

@@ -41,6 +41,24 @@ const getInitialInstalledState = () => isStandaloneDisplayMode() || hasInstallMa
 
 let globalIsInstalled = getInitialInstalledState();
 
+// iOS Safari (and other iOS browsers, since they all use WebKit) never fires
+// `beforeinstallprompt` — there is no native install API at all. The only
+// way to install there is the manual Share -> "Add to Home Screen" flow, so
+// we detect the platform up front and surface it separately from
+// `isInstallable`, letting the UI show instructions instead of a native
+// prompt button when there's no other way to trigger installation.
+const detectIsIOS = () => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || (navigator as any).vendor || (window as any).opera || '';
+  const isIOSDevice = /iPad|iPhone|iPod/.test(ua);
+  // iPadOS 13+ reports as "Macintosh" but exposes touch support, unlike a
+  // real Mac.
+  const isIPadOS13Plus = navigator.platform === 'MacIntel' && (navigator as any).maxTouchPoints > 1;
+  return isIOSDevice || isIPadOS13Plus;
+};
+
+const isIOS = detectIsIOS();
+
 const notifyPromptListeners = () => {
   promptListeners.forEach(listener => listener(globalDeferredPrompt));
 };
@@ -130,8 +148,15 @@ export function usePWAInstall() {
     return false;
   };
 
+  // `canPromptInstall` = the browser gave us a real native install prompt
+  // (Chrome/Edge/Android). `isIOS` = no native prompt exists on this
+  // platform at all, so the UI must fall back to manual instructions.
+  // `isInstallable` stays true for either case so any existing "should I
+  // show an install CTA at all" check keeps working without changes.
   return {
-    isInstallable: !isInstalled && !!deferredPrompt,
+    isInstallable: !isInstalled && (!!deferredPrompt || isIOS),
+    canPromptInstall: !isInstalled && !!deferredPrompt,
+    isIOS: !isInstalled && isIOS,
     isInstalled,
     handleInstall,
   };
