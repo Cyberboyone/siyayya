@@ -19,7 +19,6 @@ import { useSEO } from "@/hooks/useSEO";
 import { getProductSchema, getBreadcrumbSchema } from "@/components/SEOStructuredData";
 import { MediaRenderer } from "@/components/MediaRenderer";
 import { useAuth } from "../../auth/contexts/AuthContext";
-import { useCart } from "../contexts/CartContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,8 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { SafetyTips } from "@/components/SafetyTips";
-import { PurchaseModal } from "@/components/PurchaseModal";
-import { ShieldCheck, Clock, CheckCircle, ShoppingCart } from "lucide-react";
+import { Clock, CheckCircle } from "lucide-react";
 import { AuthModal } from "../../auth/components/AuthModal";
 
 const ProductDetail = () => {
@@ -47,8 +45,6 @@ const ProductDetail = () => {
   const { addViewed } = useRecentlyViewed();
   const { isSaved, toggle } = useSavedItems();
   const { isAuthenticated, user: authUser } = useAuth();
-  const { addToCart, items } = useCart();
-  const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -476,34 +472,6 @@ const ProductDetail = () => {
             WhatsApp Seller
           </Button>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              className="h-14 btn-premium text-white active:scale-95 transition-all gap-2 text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 w-full"
-              onClick={() => {
-                if (!isAuthenticated) {
-                  setAuthModalOpen(true);
-                  return;
-                }
-                setPurchaseOpen(true);
-              }}
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Buy Now
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-14 border-primary/20 text-primary hover:bg-primary/10 active:scale-95 transition-all gap-2 text-[10px] font-black uppercase tracking-widest rounded-2xl w-full"
-              onClick={() => {
-                addToCart(product);
-                toast.success(`Added to cart!`, { description: product.title });
-              }}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              {items.find(i => i.id === product.id) ? 'Add More' : 'Add to Cart'}
-            </Button>
-          </div>
-
           <Button
             variant="outline"
             className="h-14 border-error/20 text-error hover:bg-error/10 hover:text-error transition-all rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-inner shadow-error/5"
@@ -590,18 +558,6 @@ const ProductDetail = () => {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-    <PurchaseModal 
-      isOpen={purchaseOpen} 
-      onClose={() => setPurchaseOpen(false)}
-      product={{
-        id: product.id,
-        title: product.title,
-        price: product.price,
-        image: product.images?.[0] || product.image,
-        ownerId: product.ownerId,
-        ownerName: product.ownerName
-      }}
-    />
     <AuthModal 
       isOpen={authModalOpen} 
       onClose={() => {

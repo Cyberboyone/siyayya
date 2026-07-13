@@ -73,7 +73,7 @@ export function NotificationSettings() {
 
   const notificationTypes = [
     { key: 'message', label: 'Direct Messages', description: 'When someone sends you a message' },
-    { key: 'order', label: 'Order Updates', description: 'When there are updates to your listings or purchases' },
+    { key: 'order', label: 'Listing Updates', description: 'Updates about your listings' },
     { key: 'like', label: 'Likes & Reactions', description: 'When someone reacts to your posts' },
     { key: 'follow', label: 'New Followers', description: 'When someone starts following you' },
     { key: 'mention', label: 'Mentions', description: 'When you are mentioned in a discussion' },

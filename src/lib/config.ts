@@ -28,9 +28,3 @@ export const isSuperAdmin = (email: string | null | undefined): boolean => {
   if (!email) return false;
   return email.trim().toLowerCase() === SUPER_ADMIN_EMAIL;
 };
-
-/**
- * 💳 PAYSTACK CONFIGURATION
- * Replace with your actual public key from Paystack Dashboard.
- */
-export const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_your_actual_public_key_here";

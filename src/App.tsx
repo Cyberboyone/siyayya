@@ -11,13 +11,11 @@ import { lazy, Suspense } from "react";
   import ErrorBoundary from "./components/ErrorBoundary";
   import { ScrollToTop } from "./components/ScrollToTop";
   import { CommandMenu } from "./components/CommandMenu";
-  import { CartProvider } from "./features/marketplace/contexts/CartContext";
   import { PageTracker } from "./components/PageTracker";
   import { NotificationBootstrap } from "./components/NotificationBootstrap";
   import { ReferralBootstrap } from "./components/ReferralBootstrap";
 
   // Deferred — not needed for first paint
-  const CartSidebar = lazy(() => import("./components/CartSidebar").then(m => ({ default: m.CartSidebar })));
   const InstallPrompt = lazy(() => import("./components/InstallPrompt").then(m => ({ default: m.InstallPrompt })));
   const Footer = lazy(() => import("./components/Footer").then(m => ({ default: m.Footer })));
 
@@ -42,8 +40,6 @@ import { lazy, Suspense } from "react";
   const BusinessDetail = lazy(() => import("./features/business/pages/BusinessDetail.tsx"));
   const HostelDetail = lazy(() => import("./features/hostel/pages/HostelDetail.tsx"));
   const NotificationsPage = lazy(() => import("./features/notifications/pages/NotificationsPage.tsx"));
-  const CheckoutPage = lazy(() => import("./features/marketplace/pages/CheckoutPage.tsx"));
-  const OrderHistoryPage = lazy(() => import("./features/dashboard/pages/OrderHistoryPage.tsx"));
 
   function PageLoader() {
     return (
@@ -66,9 +62,8 @@ import { lazy, Suspense } from "react";
         <BrowserRouter>
           <AuthProvider>
             <CampusProvider>
-              <CartProvider>
+              <>
                 <CommandMenu />
-                <Suspense fallback={null}><CartSidebar /></Suspense>
                 <Toaster />
                 <Sonner />
                 <ScrollToTop />
@@ -98,8 +93,6 @@ import { lazy, Suspense } from "react";
                         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                         <Route path="/dashboard/new" element={<ListingRoute><NewListing /></ListingRoute>} />
                         <Route path="/dashboard/edit/:type/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
-                        <Route path="/orders" element={<ProtectedRoute><OrderHistoryPage /></ProtectedRoute>} />
-                        <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
                         <Route path="/signin" element={<PublicRoute><SignIn /></PublicRoute>} />
                         <Route path="/signup" element={<PublicRoute><SignIn /></PublicRoute>} />
                         <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
@@ -111,7 +104,7 @@ import { lazy, Suspense } from "react";
                   </main>
                   <Suspense fallback={<div className="h-48" />}><Footer /></Suspense>
                 </div>
-              </CartProvider>
+              </>
             </CampusProvider>
           </AuthProvider>
         </BrowserRouter>

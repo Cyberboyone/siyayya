@@ -11,8 +11,6 @@ import { isAdmin } from "@/lib/config";
 import { BottomNav } from "./BottomNav";
 import { motion, AnimatePresence } from "framer-motion";
 import { NotificationDropdown } from "@/features/notifications/components/NotificationDropdown";
-import { useCart } from "@/features/marketplace/contexts/CartContext";
-import { ShoppingCart } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 import {
@@ -40,7 +38,6 @@ export function Navbar() {
   const { user, isAuthenticated, logout, isAdmin: hasAdminClaim } = useAuth();
   const navigate = useNavigate();
   
-  const { totalItems, setIsCartOpen } = useCart();
   const { isInstallable, isInstalled, handleInstall } = usePWAInstall();
   // Check both the email whitelist AND the real Firebase custom claim —
   // isAdmin(email) alone missed any user granted admin access dynamically
@@ -138,21 +135,6 @@ export function Navbar() {
               <NotificationDropdown />
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Open shopping cart"
-              className="relative h-12 w-12 rounded-2xl border border-black/5 hover:border-primary/20 transition-all"
-              onClick={() => setIsCartOpen(true)}
-            >
-              <ShoppingCart className="h-5 w-5 text-textPrimary" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center rounded-full bg-primary px-1.5 text-[9px] font-black text-white shadow-lg shadow-primary/20">
-                  {totalItems}
-                </span>
-              )}
-            </Button>
-            
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

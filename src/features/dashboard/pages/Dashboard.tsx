@@ -324,7 +324,7 @@ const Dashboard = () => {
             <h1 className="text-4xl md:text-7xl font-black text-textPrimary tracking-tight italic uppercase leading-none pr-4">
               {viewingAsAdmin ? `${managedUserName || "User"} ` : "My "}<span className="text-gradient pr-4 inline-block">Dashboard</span>
             </h1>
-            <p className="text-[11px] font-bold text-textMuted uppercase tracking-widest opacity-60 italic max-w-md">{viewingAsAdmin ? "Admin can manage this user’s listings with the same controls available to the user." : "Manage your listings, orders, and campus presence from one high-fidelity interface."}</p>
+            <p className="text-[11px] font-bold text-textMuted uppercase tracking-widest opacity-60 italic max-w-md">{viewingAsAdmin ? "Admin can manage this user’s listings with the same controls available to the user." : "Manage your listings and campus presence from one high-fidelity interface."}</p>
           </div>
           <Link to={viewingAsAdmin ? `/dashboard/new?ownerId=${encodeURIComponent(managedUserId)}&ownerName=${encodeURIComponent(managedUserName)}` : "/dashboard/new"}>
             <Button className="h-16 px-10 rounded-[1.5rem] bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all gap-3">

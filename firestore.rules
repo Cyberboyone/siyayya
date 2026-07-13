@@ -227,14 +227,10 @@ service cloud.firestore {
       }
     }
     
-    // 🔴 Orders & Payments
-    match /orders/{orderId} {
-      // Buyers can read their own orders
-      allow read: if isAuthenticated() && (resource.data.buyerId == request.auth.uid || isAdmin());
-      // Buyers can create an order, initially in 'pending' status
-      allow create: if isAuthenticated() && request.resource.data.buyerId == request.auth.uid && request.resource.data.status == 'pending';
-      // Buyers cannot update order status directly to prevent payment bypass
-      allow update: if isAdmin(); // Only webhook/admin can update order status
-    }
+    // 🔴 Orders & Payments — REMOVED (cart/checkout/Paystack payment flow was
+    // fully removed from the app; the marketplace is a browse-and-contact-
+    // seller-directly model until a future subscription feature ships). No
+    // match block here means all reads/writes to /orders/{orderId} now fall
+    // through to the default-deny rule at the bottom of this file.
   }
 }

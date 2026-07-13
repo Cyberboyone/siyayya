@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Fragment } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Users, Package, Flag, Loader2,
-  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, ShoppingBag, ChevronDown, BarChart3, Gift, Download, Printer, Shield, Mail
+  Trash2, Ban, CheckCircle, Search, RefreshCw, ExternalLink, Edit, X, BarChart3, Gift, Download, Printer, Shield, Mail
 } from "lucide-react";
 
 import { ADMIN_EMAILS, isSuperAdmin } from "@/lib/config";
@@ -25,26 +25,23 @@ const AdminDashboard = () => {
   // admins can manage everything else, but must never be able to promote
   // or demote anyone (including themselves).
   const isCurrentUserSuperAdmin = isSuperAdmin(currentUser?.email);
-  const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "orders" | "analytics" | "referrals" | "messages">("analytics");
+  const [activeTab, setActiveTab] = useState<"users" | "listings" | "reports" | "analytics" | "referrals" | "messages">("analytics");
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [usersSnap, productsSnap, servicesSnap, reportsSnap, ordersSnap, referralsSnap, messagesSnap] = await Promise.all([
+      const [usersSnap, productsSnap, servicesSnap, reportsSnap, referralsSnap, messagesSnap] = await Promise.all([
         getDocs(collection(db, "users")),
         getDocs(collection(db, "products")),
         getDocs(collection(db, "services")),
         getDocs(collection(db, "reports")),
-        getDocs(collection(db, "orders")),
         getDocs(collection(db, "referrals")),
         getDocs(collection(db, "contact_messages")),
       ]);
@@ -63,12 +60,6 @@ const AdminDashboard = () => {
       setListings(allListings);
       setReports(reportsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       setReferrals(referralsSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-        return (dateB as any) - (dateA as any);
-      }));
-      
-      setOrders(ordersSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => {
         const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
         const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
         return (dateB as any) - (dateA as any);
@@ -309,17 +300,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
-    if (!checkAdmin()) return;
-    try {
-      await updateDoc(doc(db, "orders", orderId), { status: newStatus });
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      toast.success(`Order status updated to ${newStatus}`);
-    } catch (e) {
-      toast.error("Failed to update order status");
-    }
-  };
-
   const activeUsers7d = users.filter((u: any) => {
     const raw = u.lastActive || u.lastLoginAt || u.updatedAt || u.joinedAt;
     const date = raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null;
@@ -476,7 +456,6 @@ const AdminDashboard = () => {
     { id: "users" as const, label: `Users (${users.length})`, icon: Users },
     { id: "listings" as const, label: `Listings (${listings.length})`, icon: Package },
     { id: "reports" as const, label: `Reports (${reports.length})`, icon: Flag },
-    { id: "orders" as const, label: `Orders (${orders.length})`, icon: ShoppingBag },
     { id: "referrals" as const, label: `Referrals (${referrals.length})`, icon: Gift },
     { id: "messages" as const, label: `Messages (${contactMessages.filter(m => m.status !== 'resolved').length})`, icon: Mail },
   ];
@@ -958,239 +937,6 @@ const AdminDashboard = () => {
                         );
                       })}
                    </div>
-                )}
-
-                {activeTab === 'orders' && orders.length === 0 && (
-                  <div className="p-20 text-center text-textSecondary font-bold italic">No orders yet</div>
-                )}
-                {activeTab === 'orders' && orders.length > 0 && (
-                  <div>
-                    {/* Mobile order cards */}
-                    <div className="flex flex-col gap-3 md:hidden p-4">
-                      {orders.filter(o =>
-                        o.buyerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        o.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        o.buyerEmail?.toLowerCase().includes(searchQuery.toLowerCase())
-                      ).map(o => {
-                        const orderDate = o.createdAt?.toDate ? o.createdAt.toDate() : (o.createdAt ? new Date(o.createdAt) : null);
-                        const items = o.items || o.products || [];
-                        return (
-                          <div key={o.id} className="rounded-2xl border border-black/5 bg-muted/10 p-4 space-y-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <p className="font-black text-textPrimary text-sm">{o.buyerName || 'Unknown'}</p>
-                                <p className="text-[10px] text-textSecondary truncate">{o.buyerEmail}</p>
-                                <p className="text-[9px] font-mono text-textMuted mt-0.5">#{o.id.slice(0,8)}</p>
-                              </div>
-                              <div className="text-right shrink-0">
-                                <p className="font-black text-primary tabular-nums">₦{o.totalAmount?.toLocaleString()}</p>
-                                <p className="text-[9px] text-textSecondary">{items.length} item{items.length !== 1 ? 's' : ''}</p>
-                              </div>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${o.status === 'delivered' ? 'bg-green-100 text-green-600' : o.status === 'cancelled' ? 'bg-red-100 text-red-600' : o.status === 'processing' ? 'bg-yellow-100 text-yellow-600' : o.status === 'shipped' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
-                                {o.status || 'paid'}
-                              </span>
-                              <span className="text-[9px] text-textMuted">{orderDate ? orderDate.toLocaleDateString() : 'N/A'}</span>
-                            </div>
-                            <div className="pt-1 border-t border-black/5">
-                              <select
-                                className="w-full text-[10px] font-black uppercase bg-muted/50 border border-black/5 rounded-xl px-3 py-2 outline-none"
-                                value={o.status || 'paid'}
-                                onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
-                              >
-                                <option value="paid">Paid</option>
-                                <option value="processing">Processing</option>
-                                <option value="shipped">Shipped</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="cancelled">Cancelled</option>
-                              </select>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Desktop orders table */}
-                  <div className="hidden md:block overflow-x-auto">
-                  <table className="min-w-[900px] w-full text-left border-collapse">
-                    <thead className="bg-muted/30 border-b border-black/5">
-                      <tr>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest w-8"></th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Order ID</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Buyer</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Items</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Amount</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Status</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Date</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orders.filter(o => 
-                        o.buyerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        o.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        o.buyerEmail?.toLowerCase().includes(searchQuery.toLowerCase())
-                      ).map(o => {
-                        const isExpanded = expandedOrderId === o.id;
-                        const orderDate = o.createdAt?.toDate ? o.createdAt.toDate() : (o.createdAt ? new Date(o.createdAt) : null);
-                        const items = o.items || o.products || [];
-                        return (
-                          <Fragment key={o.id}>
-                            <tr className={`border-b border-black/5 hover:bg-muted/10 transition-colors cursor-pointer ${isExpanded ? 'bg-muted/10' : ''}`} onClick={() => setExpandedOrderId(isExpanded ? null : o.id)}>
-                              <td className="pl-6 py-4">
-                                <ChevronDown className={`h-4 w-4 text-textMuted transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
-                              </td>
-                              <td className="px-6 py-4 font-mono text-sm text-textPrimary">{o.id.slice(0,8)}</td>
-                              <td className="px-6 py-4">
-                                <p className="font-bold text-textPrimary text-sm">{o.buyerName || 'Unknown'}</p>
-                                <p className="text-[10px] text-textSecondary">{o.buyerEmail}</p>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className="text-sm font-bold text-textPrimary">{items.length} item{items.length !== 1 ? 's' : ''}</span>
-                              </td>
-                              <td className="px-6 py-4 font-black text-primary">₦{o.totalAmount?.toLocaleString()}</td>
-                              <td className="px-6 py-4">
-                                <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${o.status === 'delivered' ? 'bg-green-100 text-green-600' : o.status === 'cancelled' ? 'bg-red-100 text-red-600' : o.status === 'processing' ? 'bg-yellow-100 text-yellow-600' : o.status === 'shipped' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
-                                  {o.status || 'paid'}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-xs text-textSecondary">
-                                {orderDate ? orderDate.toLocaleDateString() : 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                                 <div className="flex justify-end gap-1">
-                                    <select 
-                                      className="text-[10px] font-black uppercase bg-muted/50 border-none rounded px-2 py-1 outline-none cursor-pointer"
-                                      value={o.status || 'paid'}
-                                      onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value)}
-                                    >
-                                      <option value="paid">Paid</option>
-                                      <option value="processing">Processing</option>
-                                      <option value="shipped">Shipped</option>
-                                      <option value="delivered">Delivered</option>
-                                      <option value="cancelled">Cancelled</option>
-                                    </select>
-                                 </div>
-                              </td>
-                            </tr>
-                            {isExpanded && (
-                              <tr>
-                                <td colSpan={8} className="px-0 py-0">
-                                  <div className="bg-muted/5 border-b border-black/5 px-12 py-6">
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                      {/* Buyer Details */}
-                                      <div className="bg-surface rounded-2xl p-5 border border-black/5">
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-3">Buyer Details</h4>
-                                        <div className="space-y-2">
-                                          <p className="text-sm font-bold text-textPrimary">{o.buyerName || 'Unknown'}</p>
-                                          <p className="text-xs text-textSecondary">{o.buyerEmail || 'No email'}</p>
-                                          {o.buyerPhone && <p className="text-xs text-textSecondary">📞 {o.buyerPhone}</p>}
-                                          {o.buyerId && (
-                                            <Link to={`/user/${o.buyerId}`} className="text-xs text-primary font-bold hover:underline inline-flex items-center gap-1 mt-1">
-                                              View Profile <ExternalLink className="h-3 w-3" />
-                                            </Link>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      {/* Delivery Info */}
-                                      <div className="bg-surface rounded-2xl p-5 border border-black/5">
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-3">Delivery Info</h4>
-                                        <div className="space-y-2">
-                                          {o.deliveryAddress ? (
-                                            <p className="text-sm text-textPrimary">{o.deliveryAddress}</p>
-                                          ) : o.address ? (
-                                            <p className="text-sm text-textPrimary">{o.address}</p>
-                                          ) : (
-                                            <p className="text-xs text-textMuted italic">No delivery address provided</p>
-                                          )}
-                                          {o.deliveryMethod && <p className="text-xs text-textSecondary">Method: <span className="font-bold">{o.deliveryMethod}</span></p>}
-                                          {o.campusId && <p className="text-xs text-textSecondary">Campus: <span className="font-bold">{o.campusId}</span></p>}
-                                          {o.notes && <p className="text-xs text-textMuted italic mt-2">Notes: {o.notes}</p>}
-                                        </div>
-                                      </div>
-
-                                      {/* Order Summary */}
-                                      <div className="bg-surface rounded-2xl p-5 border border-black/5">
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-3">Order Summary</h4>
-                                        <div className="space-y-2">
-                                          <div className="flex justify-between text-sm">
-                                            <span className="text-textSecondary">Subtotal</span>
-                                            <span className="font-bold text-textPrimary">₦{(o.subtotal || o.totalAmount)?.toLocaleString()}</span>
-                                          </div>
-                                          {o.deliveryFee != null && (
-                                            <div className="flex justify-between text-sm">
-                                              <span className="text-textSecondary">Delivery Fee</span>
-                                              <span className="font-bold text-textPrimary">₦{o.deliveryFee?.toLocaleString()}</span>
-                                            </div>
-                                          )}
-                                          <div className="flex justify-between text-sm border-t border-black/5 pt-2 mt-2">
-                                            <span className="font-black text-textPrimary">Total</span>
-                                            <span className="font-black text-primary">₦{o.totalAmount?.toLocaleString()}</span>
-                                          </div>
-                                          {o.paymentMethod && (
-                                            <p className="text-[10px] text-textMuted uppercase tracking-widest mt-2">Payment: {o.paymentMethod}</p>
-                                          )}
-                                          {o.paymentReference && (
-                                            <p className="text-[10px] text-textMuted font-mono mt-1">Ref: {o.paymentReference}</p>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {/* Order Items */}
-                                    {items.length > 0 && (
-                                      <div className="mt-6">
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-textSecondary mb-3">Items ({items.length})</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                          {items.map((item: any, idx: number) => (
-                                            <div key={idx} className="flex items-center gap-3 bg-surface rounded-xl p-3 border border-black/5 hover:border-primary/20 transition-colors">
-                                              <div className="h-14 w-14 rounded-lg bg-muted overflow-hidden flex-shrink-0 border border-black/5">
-                                                {(item.image || item.imageUrl) && (
-                                                  <img src={item.image || item.imageUrl} alt={item.title || item.name || ''} className="h-full w-full object-cover" />
-                                                )}
-                                              </div>
-                                              <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-bold text-textPrimary truncate">{item.title || item.name || 'Untitled'}</p>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                  <span className="text-xs font-black text-primary">₦{(item.price)?.toLocaleString()}</span>
-                                                  {item.quantity && item.quantity > 1 && (
-                                                    <span className="text-[10px] text-textMuted font-bold">×{item.quantity}</span>
-                                                  )}
-                                                </div>
-                                                {(item.sellerName || item.ownerName) && (
-                                                  <p className="text-[10px] text-textSecondary mt-0.5">Seller: {item.sellerName || item.ownerName}</p>
-                                                )}
-                                              </div>
-                                              {(item.productId || item.id) && (
-                                                <Link to={`/product/${item.productId || item.id}`} className="flex-shrink-0 text-primary hover:text-primary/80 transition-colors" onClick={(e) => e.stopPropagation()}>
-                                                  <ExternalLink className="h-4 w-4" />
-                                                </Link>
-                                              )}
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* No items fallback */}
-                                    {items.length === 0 && (
-                                      <div className="mt-6 bg-surface rounded-2xl p-5 border border-black/5">
-                                        <p className="text-sm text-textMuted italic text-center">No item details available for this order</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </Fragment>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                  </div>
-                  </div>
                 )}
 
                 {activeTab === 'referrals' && referrals.length === 0 && (
