@@ -173,11 +173,11 @@ service cloud.firestore {
 
     // 🔴 In-App Notifications
     // Actual per-user subcollection used by the app: users/{userId}/notifications/{notificationId}
-    // (NotificationDropdown, NotificationsPage, notificationService.ts). This was previously
-    // missing its own rule entirely — Firestore subcollections do NOT inherit the parent
-    // /users/{userId} rules, so every read/write here silently fell through to "denied" for
-    // normal users (only the global admin wildcard matched), meaning the notification bell
-    // and notifications page never worked for any non-admin user.
+    // (navbar account-menu notification badge/list, NotificationsPage, notificationService.ts).
+    // This was previously missing its own rule entirely — Firestore subcollections do NOT
+    // inherit the parent /users/{userId} rules, so every read/write here silently fell through
+    // to "denied" for normal users (only the global admin wildcard matched), meaning
+    // notifications never worked for any non-admin user.
     match /users/{userId}/notifications/{notificationId} {
       // Only the notification's owner can read their own notifications
       allow read: if isOwner(userId);
