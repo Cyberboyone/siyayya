@@ -18,6 +18,7 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MediaRenderer } from "@/components/MediaRenderer";
+import { ADMIN_EMAILS } from "@/lib/config";
 
 type ListingType = "product" | "service" | "request";
 
@@ -73,7 +74,15 @@ export default function NewListing() {
   const targetOwnerId = searchParams.get("ownerId") || "";
   const targetOwnerName = searchParams.get("ownerName") || "";
   
-  const { user, isAuthenticated, isLoading, isAdmin } = useAuth();
+  const { user, isAuthenticated, isLoading, isAdmin: isContextAdmin } = useAuth();
+  // Combine the real-time Firebase custom claim with the Firestore/email
+  // whitelist checks (same defense-in-depth pattern as EditListing.tsx) —
+  // relying on isContextAdmin alone silently broke "post as user" for any
+  // admin whose access comes from account_type/isAdmin in Firestore or the
+  // ADMIN_EMAILS whitelist rather than an explicitly granted custom claim,
+  // since a stale/losing async claim check in AuthContext could report
+  // isContextAdmin as false a moment after login.
+  const isAdmin = isContextAdmin || !!(user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
   const postingForOtherUser = isAdmin && !!targetOwnerId && targetOwnerId !== user?.id;
   const dashboardReturnPath = postingForOtherUser
     ? `/dashboard?tab=listings&userId=${encodeURIComponent(targetOwnerId)}&userName=${encodeURIComponent(targetOwnerName)}`

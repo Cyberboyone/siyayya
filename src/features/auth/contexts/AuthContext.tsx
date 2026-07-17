@@ -135,8 +135,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       syncToServerBackground(idToken);
     }).catch(() => {});
 
+    // Merge with (never overwrite) whatever loadUserFromFirestore already
+    // determined. This async claim check resolves after the Firestore-based
+    // check above and used to call setIsAdmin(...) unconditionally — for any
+    // admin promoted via account_type/isAdmin in Firestore or the
+    // ADMIN_EMAILS whitelist (i.e. anyone who was never explicitly granted a
+    // Firebase custom claim through /api/admin/set-claim), that overwrite
+    // silently flipped isAdmin back to false a moment after login. This is
+    // exactly what caused "admin posting as user" to silently attribute the
+    // listing to the admin's own account: NewListing.tsx trusts isAdmin
+    // alone to decide whether to send `ownerId` to the API, so the race
+    // losing meant the override was dropped without any visible error.
     firebaseUser.getIdTokenResult().then(result => {
-      setIsAdmin(!!result.claims.admin);
+      setIsAdmin(prev => prev || !!result.claims.admin);
     }).catch(() => {});
 
     return { user: firebaseUser, isNewUser };
@@ -214,9 +225,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Returning session — load from Firestore directly (fast path)
             await loadUserFromFirestore(firebaseUser);
 
-            // Check admin claim without blocking — runs after user is set
+            // Check admin claim without blocking — runs after user is set.
+            // Merged with (never overwrites) the Firestore-based result
+            // above — see completeGoogleSession's identical fix for the
+            // full explanation of the race this was silently losing.
             firebaseUser.getIdTokenResult().then(result => {
-              setIsAdmin(!!result.claims.admin);
+              setIsAdmin(prev => prev || !!result.claims.admin);
             }).catch(() => {});
           }
         } else {
