@@ -508,7 +508,7 @@ const AdminDashboard = () => {
         </aside>
 
         <main className="flex-grow p-4 md:p-8 bg-muted/20 min-w-0">
-          <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+          <div className="w-full max-w-[1800px] mx-auto space-y-4 md:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h1 className="text-lg md:text-2xl font-black text-textPrimary capitalize">{activeTab} Management</h1>
               <div className="relative w-full sm:w-64">
