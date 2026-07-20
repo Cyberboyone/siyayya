@@ -611,7 +611,7 @@ const AdminDashboard = () => {
                             <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Verification</th>
                             <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Activity</th>
                             <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Status</th>
-                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest text-right">Actions</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest text-right sticky right-0 bg-muted/30">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -632,21 +632,21 @@ const AdminDashboard = () => {
                                   {u.isBanned ? 'Banned' : 'Active'}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button variant="ghost" size="sm" className={`${u.isVerified ? 'text-gray-400' : 'text-green-600'} hover:bg-muted`} onClick={() => handleToggleVerify(u.id, u.isVerified ?? false)}>
+                              <td className="px-6 py-4 text-right sticky right-0 bg-surface">
+                                <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="sm" title={u.isVerified ? 'Unverify user' : 'Verify user'} className={`${u.isVerified ? 'text-gray-400' : 'text-green-600'} hover:bg-muted`} onClick={() => handleToggleVerify(u.id, u.isVerified ?? false)}>
                                     <CheckCircle className={`h-4 w-4 ${u.isVerified ? 'fill-green-600 text-white' : ''}`} />
                                   </Button>
-                                  <Button variant="ghost" size="sm" className={`${u.isBanned ? 'text-blue-600' : 'text-error'} hover:bg-muted`} onClick={() => handleToggleBan(u.id, u.isBanned ?? false, u.email)}>
+                                  <Button variant="ghost" size="sm" title={u.isBanned ? 'Unban user' : 'Ban user'} className={`${u.isBanned ? 'text-blue-600' : 'text-error'} hover:bg-muted`} onClick={() => handleToggleBan(u.id, u.isBanned ?? false, u.email)}>
                                     <Ban className="h-4 w-4" />
                                   </Button>
-                                  <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10" onClick={() => openUserDashboard(u)}><ExternalLink className="h-4 w-4 mr-2" />Dashboard</Button>
+                                  <Button variant="ghost" size="sm" title="View user's dashboard" className="text-primary hover:bg-primary/10" onClick={() => openUserDashboard(u)}><ExternalLink className="h-4 w-4" /></Button>
                                   {isCurrentUserSuperAdmin && (
                                     <Button variant="ghost" size="sm" title={u.account_type === 'admin' || u.isAdmin ? 'Revoke admin access' : 'Grant admin access'} className={`${u.account_type === 'admin' || u.isAdmin ? 'text-amber-600' : 'text-textMuted'} hover:bg-muted`} onClick={() => handleToggleAdmin(u.id, u.account_type === 'admin' || !!u.isAdmin, u.email)}>
                                       <Shield className="h-4 w-4" />
                                     </Button>
                                   )}
-                                  <Button variant="ghost" size="sm" className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(u.id, u.email)}>
+                                  <Button variant="ghost" size="sm" title="Delete user" className="text-error hover:bg-error/10" onClick={() => handleDeleteUser(u.id, u.email)}>
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
@@ -708,7 +708,7 @@ const AdminDashboard = () => {
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Status</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Type</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest">Owner</th>
-                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest text-right">Actions</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase text-textSecondary tracking-widest text-right sticky right-0 bg-muted/30">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -739,11 +739,12 @@ const AdminDashboard = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-textSecondary text-xs font-medium">{l.ownerName || 'Unknown'}</td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-6 py-4 text-right sticky right-0 bg-surface">
                              <div className="flex justify-end gap-1">
                                <Button 
                                  variant="ghost" 
                                  size="sm" 
+                                 title="Edit listing"
                                  className="text-primary hover:bg-primary/10" 
                                  onClick={() => {
                                    const routeType = l.type === 'product' ? 'products' : 'services';
@@ -755,6 +756,7 @@ const AdminDashboard = () => {
                                <Button 
                                  variant="ghost" 
                                  size="sm" 
+                                 title="Approve listing"
                                  className={`${l.status === 'approved' ? 'text-gray-300' : 'text-green-600'} hover:bg-green-50`} 
                                  onClick={() => handleUpdateStatus(l.id, l.type, 'approved')}
                                >
@@ -763,6 +765,7 @@ const AdminDashboard = () => {
                                <Button 
                                  variant="ghost" 
                                  size="sm" 
+                                 title="Remove listing"
                                  className={`${l.status === 'removed' ? 'text-gray-300' : 'text-error'} hover:bg-red-50`} 
                                  onClick={() => handleUpdateStatus(l.id, l.type, 'removed')}
                                >
@@ -771,6 +774,7 @@ const AdminDashboard = () => {
                                <Button 
                                  variant="ghost" 
                                  size="sm" 
+                                 title={l.isFeatured ? 'Unfeature listing' : 'Feature listing'}
                                  className={`${l.isFeatured ? 'text-primary fill-primary' : 'text-textMuted'} hover:bg-muted`}
                                  onClick={() => handleToggleFeature(l.id, l.type, !!l.isFeatured)}
                                >
@@ -779,6 +783,7 @@ const AdminDashboard = () => {
                                <Button 
                                  variant="ghost" 
                                  size="sm" 
+                                 title="Delete listing"
                                  className="text-error hover:bg-error/10" 
                                  onClick={() => handleDeleteListing(l.id, l.type)}
                                 >
