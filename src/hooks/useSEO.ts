@@ -11,12 +11,43 @@ interface SEOProps {
   twitterCard?: "summary" | "summary_large_image";
 }
 
+// The canonical production host. Search Console flagged every indexed URL
+// as "Page with redirect" because siyayya.com (no www) actually 307s to
+// www.siyayya.com, but every canonical tag, the sitemap, robots.txt, and
+// structured data all declared the non-www URL as canonical — Google was
+// being told "this is the real page" while that exact URL only ever serves
+// a redirect. Vercel's domain settings are being changed to make siyayya.com
+// (no www) primary again; in the meantime (and afterwards, defensively),
+// every URL written into the page's SEO tags is force-normalized to this
+// host so the app is never the source of a www/non-www mismatch regardless
+// of which hostname actually served the request.
+const CANONICAL_HOST = "siyayya.com";
+
+// Only rewrites the hostname for relative URLs and URLs already on
+// siyayya.com/www.siyayya.com — external asset URLs (Cloudinary product
+// photos, third-party avatars, etc., which several pages pass as ogImage)
+// must be left completely untouched, or the rewrite would silently break
+// every one of those image previews by pointing them at siyayya.com.
+const toCanonicalUrl = (url: string): string => {
+  try {
+    const parsed = new URL(url, `https://${CANONICAL_HOST}`);
+    const isOwnDomain = parsed.hostname === CANONICAL_HOST || parsed.hostname === `www.${CANONICAL_HOST}`;
+    if (!isOwnDomain) return url;
+    parsed.protocol = "https:";
+    parsed.hostname = CANONICAL_HOST;
+    parsed.port = "";
+    return parsed.toString();
+  } catch {
+    return `https://${CANONICAL_HOST}/`;
+  }
+};
+
 export const useSEO = ({
   title,
   description,
   canonical,
   ogType = "website",
-  ogImage = "https://siyayya.com/og-image.png",
+  ogImage = `https://${CANONICAL_HOST}/og-image.png`,
   noindex = false,
   structuredData,
   twitterCard = "summary_large_image",
@@ -38,22 +69,26 @@ export const useSEO = ({
     }
     metaDescription.setAttribute('content', description || defaultDescription);
 
-    // Update Canonical
+    // Update Canonical — always forced onto the canonical apex host, even
+    // when a caller passes window.location.href (several detail pages do),
+    // so a visitor who happens to land on www.siyayya.com never causes this
+    // tag to declare www as canonical.
+    const canonicalUrl = toCanonicalUrl(canonical || window.location.href);
     let linkCanonical = document.querySelector('link[rel="canonical"]');
     if (!linkCanonical) {
       linkCanonical = document.createElement('link');
       linkCanonical.setAttribute('rel', 'canonical');
       document.head.appendChild(linkCanonical);
     }
-    linkCanonical.setAttribute('href', canonical || window.location.href);
+    linkCanonical.setAttribute('href', canonicalUrl);
 
     // Update OG Tags
     const ogTags = {
       'og:title': fullTitle,
       'og:description': description || defaultDescription,
       'og:type': ogType,
-      'og:url': window.location.href,
-      'og:image': ogImage,
+      'og:url': canonicalUrl,
+      'og:image': toCanonicalUrl(ogImage),
       'og:site_name': siteName,
     };
 
@@ -72,7 +107,7 @@ export const useSEO = ({
       'twitter:card': twitterCard,
       'twitter:title': fullTitle,
       'twitter:description': description || defaultDescription,
-      'twitter:image': ogImage,
+      'twitter:image': toCanonicalUrl(ogImage),
     };
 
     Object.entries(twitterTags).forEach(([name, content]) => {
