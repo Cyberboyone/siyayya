@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { categories, CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
 import { Youtube, Info, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { CloudinaryUpload } from "@/components/CloudinaryUpload";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { extractYouTubeId } from "@/lib/utils";
@@ -113,6 +114,15 @@ export default function NewListing() {
   const [showGuestSuccessModal, setShowGuestSuccessModal] = useState(false);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
 
+  // When an admin is posting on behalf of a managed user, the listing's
+  // contact details/campus must come from THAT user's profile, not the
+  // admin's own — previously this was never fetched at all, so the phone/
+  // WhatsApp fields silently prefilled with the admin's own `user.phone`
+  // and the listing was submitted with the admin's own campusId, meaning
+  // every "post as user" listing showed the admin's personal contact info
+  // to buyers instead of the managed user's.
+  const [targetOwnerProfile, setTargetOwnerProfile] = useState<{ phone?: string; campusId?: string } | null>(null);
+
   useEffect(() => {
     if (type === "request") {
       setCaptchaNum1(Math.floor(Math.random() * 10) + 1);
@@ -126,11 +136,41 @@ export default function NewListing() {
         navigate(`/signin?from=${encodeURIComponent("/dashboard/new")}`);
       }
     }
-    if (user && !contactPhone) {
-      setContactPhone(user.phone || "");
-      setWhatsapp(user.phone || "");
+  }, [isAuthenticated, isLoading, navigate, type]);
+
+  useEffect(() => {
+    if (!postingForOtherUser || !targetOwnerId) {
+      setTargetOwnerProfile(null);
+      return;
     }
-  }, [isAuthenticated, isLoading, navigate, user, contactPhone, type]);
+    let cancelled = false;
+    getDoc(doc(db, "users", targetOwnerId)).then((snap) => {
+      if (cancelled) return;
+      const data = snap.exists() ? snap.data() : {};
+      setTargetOwnerProfile({ phone: data?.phone || "", campusId: data?.campusId || "" });
+    }).catch(() => {
+      if (!cancelled) setTargetOwnerProfile({});
+    });
+    return () => { cancelled = true; };
+  }, [postingForOtherUser, targetOwnerId]);
+
+  // Prefill contact/WhatsApp from whichever profile actually owns this
+  // listing — the managed user's when posting-for-other-user, otherwise
+  // the logged-in admin/seller's own profile.
+  useEffect(() => {
+    if (contactPhone) return;
+    if (postingForOtherUser) {
+      if (targetOwnerProfile?.phone) {
+        setContactPhone(targetOwnerProfile.phone);
+        setWhatsapp(targetOwnerProfile.phone);
+      }
+      return;
+    }
+    if (user?.phone) {
+      setContactPhone(user.phone);
+      setWhatsapp(user.phone);
+    }
+  }, [user, contactPhone, postingForOtherUser, targetOwnerProfile]);
 
   if (isLoading) return null;
 
@@ -155,7 +195,15 @@ export default function NewListing() {
        toast.error("Please wait for your photo upload to finish.");
        return;
     }
-    if (isAuthenticated && !user?.campusId) {
+    // When posting for another user, campus completeness is about THEIR
+    // profile, not the admin's own — checking user?.campusId here would
+    // wrongly block/redirect the admin based on their own profile state.
+    if (postingForOtherUser) {
+      if (!targetOwnerProfile?.campusId) {
+        toast.error("This user hasn't completed their campus profile yet, so a listing can't be posted for them.");
+        return;
+      }
+    } else if (isAuthenticated && !user?.campusId) {
        toast.error("Please complete your campus profile before posting.");
        navigate(`/complete-signup?from=${encodeURIComponent("/dashboard/new")}`);
        return;
@@ -265,7 +313,12 @@ export default function NewListing() {
             properties,
             videoId: videoId || null,
             youtubeUrl,
-            campusId: user?.campusId,
+            // The server independently looks up the actual owner's campusId
+            // from Firestore and prefers that — this is only a fallback for
+            // older profiles missing the field — but it must still reflect
+            // the correct owner's campus, not the admin's own, when posting
+            // on someone else's behalf.
+            campusId: postingForOtherUser ? targetOwnerProfile?.campusId : user?.campusId,
             // Only meaningful when the caller is an admin managing another
             // user's dashboard — the server verifies admin status independently
             // before honoring this, so a non-admin can't spoof ownership.
