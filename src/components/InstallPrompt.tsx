@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Share, PlusSquare } from 'lucide-react';
+import { X, Share, PlusSquare, MoreVertical } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 export function InstallPrompt() {
   const { isInstallable, isInstalled, isIOS, canPromptInstall, handleInstall } = usePWAInstall();
   const [showPrompt, setShowPrompt] = useState(false);
+  // True once we know there's no native one-tap prompt available (and it's
+  // not iOS, which already gets its own dedicated instructions) — Android/
+  // desktop Chrome only ever grants a real prompt once its own opaque
+  // engagement heuristic decides to fire `beforeinstallprompt`, which can
+  // simply never happen on a given visit. Without this fallback the button
+  // rendered (thanks to isInstallable now always being true when not
+  // installed) but tapping "Install Now" would silently no-op.
+  const showManualAndroidSteps = !isIOS && !canPromptInstall;
 
   useEffect(() => {
     // Do not prompt when the app is already installed or running as a PWA.
@@ -104,6 +112,17 @@ export function InstallPrompt() {
                 Scroll down and tap <PlusSquare className="h-3.5 w-3.5 inline mx-0.5" /> "Add to Home Screen"
               </div>
             </div>
+          ) : showManualAndroidSteps ? (
+            <div className="mt-4 rounded-2xl bg-black/5 p-4 space-y-2.5">
+              <div className="flex items-center gap-2.5 text-xs font-bold text-textPrimary">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white text-[10px] font-black">1</span>
+                Tap the <MoreVertical className="h-3.5 w-3.5 inline mx-0.5" /> menu (⋮) in your browser toolbar
+              </div>
+              <div className="flex items-center gap-2.5 text-xs font-bold text-textPrimary">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-white text-[10px] font-black">2</span>
+                Tap "Install app" or "Add to Home screen"
+              </div>
+            </div>
           ) : null}
           
           <div className="flex gap-3 mt-5">
@@ -113,7 +132,7 @@ export function InstallPrompt() {
             >
               Maybe Later
             </button>
-            {!isIOS && (
+            {!isIOS && !showManualAndroidSteps && (
               <button
                 onClick={onInstallClick}
                 className="flex-1 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest text-white bg-primary hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all"

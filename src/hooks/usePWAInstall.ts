@@ -149,12 +149,27 @@ export function usePWAInstall() {
   };
 
   // `canPromptInstall` = the browser gave us a real native install prompt
-  // (Chrome/Edge/Android). `isIOS` = no native prompt exists on this
-  // platform at all, so the UI must fall back to manual instructions.
-  // `isInstallable` stays true for either case so any existing "should I
-  // show an install CTA at all" check keeps working without changes.
+  // (Chrome/Edge/Android/Desktop) we can trigger directly. `isIOS` = no
+  // native prompt exists on this platform at all, so the UI must fall back
+  // to manual Share -> Add to Home Screen instructions.
+  //
+  // `isInstallable` is now ALWAYS true when the app isn't installed —
+  // previously it required `!!deferredPrompt || isIOS`, so on Android/
+  // Chrome the Install button/prompt only ever appeared if Chrome had
+  // already decided (via its own internal, undocumented "engagement
+  // heuristic" — roughly: the user must have tapped the page at least once
+  // AND spent ~30s on the domain, but the exact scoring is opaque and can
+  // simply never fire for a given visit) to dispatch
+  // `beforeinstallprompt`. If that event never fired, the button silently
+  // never showed up anywhere, with no fallback — exactly the bug reported
+  // ("install button not visible on my phone"). Now the button/prompt is
+  // always shown once not installed; if a real native prompt is available
+  // it's used (one-tap install), and if not (Android Chrome that hasn't
+  // fired the event yet, or any other browser), manual "tap the browser
+  // menu -> Install app" instructions are shown instead — so there is
+  // always some way to install, regardless of Chrome's internal timing.
   return {
-    isInstallable: !isInstalled && (!!deferredPrompt || isIOS),
+    isInstallable: !isInstalled,
     canPromptInstall: !isInstalled && !!deferredPrompt,
     isIOS: !isInstalled && isIOS,
     isInstalled,

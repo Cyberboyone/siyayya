@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Plus, User as UserIcon, Menu, X, Home, ShoppingBag, Wrench, LayoutDashboard, LogOut, Package, Heart, Shield, Download, Bell, Share, PlusSquare } from "lucide-react";
+import { Search, Plus, User as UserIcon, Menu, X, Home, ShoppingBag, Wrench, LayoutDashboard, LogOut, Package, Heart, Shield, Download, Bell, Share, PlusSquare, MoreVertical } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
@@ -45,8 +45,9 @@ export function Navbar() {
   const { user, isAuthenticated, logout, isAdmin: hasAdminClaim } = useAuth();
   const navigate = useNavigate();
   
-  const { isInstallable, isInstalled, isIOS, handleInstall } = usePWAInstall();
+  const { isInstallable, isInstalled, isIOS, canPromptInstall, handleInstall } = usePWAInstall();
   const [iosInstallHelpOpen, setIosInstallHelpOpen] = useState(false);
+  const [androidInstallHelpOpen, setAndroidInstallHelpOpen] = useState(false);
   const unreadCount = useUnreadNotifications();
   // Check both the email whitelist AND the real Firebase custom claim —
   // isAdmin(email) alone missed any user granted admin access dynamically
@@ -74,9 +75,23 @@ export function Navbar() {
   // programmatic install API there at all, so tapping "Install App" used to
   // silently do nothing on iPhones/iPads. It now opens a short instructions
   // dialog (Share -> Add to Home Screen) instead of a no-op.
+  //
+  // On Android/other browsers, Chrome only hands us a real one-tap prompt
+  // (`canPromptInstall`) once it decides — via its own opaque, undocumented
+  // "engagement heuristic" — that the visit qualifies. That can simply never
+  // happen on a given visit, which is exactly why the Install button was
+  // reported as "not visible" on a real phone: the button used to only
+  // render at all once that event had already fired, with no fallback. Now
+  // the button always renders, and if there's no native prompt available
+  // yet, tapping it shows manual "menu -> Install app" instructions instead
+  // of doing nothing.
   const handleInstallClick = () => {
     if (isIOS) {
       setIosInstallHelpOpen(true);
+      return;
+    }
+    if (!canPromptInstall) {
+      setAndroidInstallHelpOpen(true);
       return;
     }
     handleInstall();
@@ -300,6 +315,27 @@ export function Navbar() {
             <div className="flex items-center gap-3 text-sm font-bold text-textPrimary">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white text-xs font-black">2</span>
               Scroll down and tap <PlusSquare className="h-4 w-4 inline mx-1" /> "Add to Home Screen"
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={androidInstallHelpOpen} onOpenChange={setAndroidInstallHelpOpen}>
+        <DialogContent className="rounded-[2rem] border-black/5 bg-surface p-8 shadow-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-textPrimary italic tracking-tighter">Install Siyayya</DialogTitle>
+            <DialogDescription className="text-textSecondary font-medium">
+              Your browser hasn't offered the one-tap install yet — add Siyayya from its menu instead:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 rounded-2xl bg-black/5 p-4 space-y-3">
+            <div className="flex items-center gap-3 text-sm font-bold text-textPrimary">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white text-xs font-black">1</span>
+              Tap the <MoreVertical className="h-4 w-4 inline mx-1" /> menu (⋮) in your browser toolbar
+            </div>
+            <div className="flex items-center gap-3 text-sm font-bold text-textPrimary">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-white text-xs font-black">2</span>
+              Tap "Install app" or "Add to Home screen"
             </div>
           </div>
         </DialogContent>
