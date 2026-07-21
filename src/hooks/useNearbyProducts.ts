@@ -53,8 +53,7 @@ export const useNearbyProducts = (
   const { lat, lng, isLoading: isLocationLoading, source } = useGeolocation();
   const { data: allProducts = [], isLoading: isProductsLoading } = useProducts();
 
-  const nearbyCampuses = useMemo
-    (() => {
+  const nearbyCampuses = useMemo(() => {
       const campuses = getNearestCampuses(lat, lng, 50);
       console.log("[useNearbyProducts] Distances:", campuses.slice(0,5).map(c => `${c.shortName}: ${c.distanceKm.toFixed(1)}km`).join(", "));
       return campuses;

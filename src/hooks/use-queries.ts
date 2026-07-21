@@ -5,7 +5,7 @@ import { Product, Service, ProductRequest } from "@/lib/mock-data";
 
 /** Normalize campusId: Default to 'fuk' if missing, and ensure lowercase */
 const normalizeCampusId = (data: any) => {
-  let campusId = data.campusId || data.university || "fuk";
+  const campusId = data.campusId || data.university || "fuk";
   return String(campusId).toLowerCase();
 };
 
