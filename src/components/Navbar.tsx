@@ -138,7 +138,9 @@ export function Navbar() {
                 <Button 
                   onClick={handleInstallClick}
                   size="sm" 
-                  className="bg-primary/10 hover:bg-primary/20 text-primary h-12 px-4 sm:px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] flex transition-all active:scale-95"
+                  aria-label="Install Siyayya app"
+                  title="Install Siyayya app"
+                  className="bg-primary/10 hover:bg-primary/20 text-primary h-12 w-12 sm:w-auto px-0 sm:px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center transition-all active:scale-95"
                 >
                   <Download className="h-4 w-4 sm:mr-2 stroke-[3px]" />
                   <span className="hidden sm:inline">Install App</span>
