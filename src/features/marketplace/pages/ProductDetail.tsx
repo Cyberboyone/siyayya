@@ -358,7 +358,7 @@ const ProductDetail = () => {
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <p className="text-3xl md:text-4xl font-black text-primary tracking-tight tabular-nums">{formatPrice(product.price)}</p>
+                <p className="font-price text-3xl md:text-4xl font-black text-primary tracking-tight tabular-nums">{formatPrice(product.price)}</p>
                 {product.condition === "Used" && (
                   <span className="text-xs font-medium text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">Used Item</span>
                 )}

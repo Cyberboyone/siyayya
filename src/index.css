@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Space+Mono:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -129,6 +129,25 @@
   
   .hero-gradient {
     @apply bg-gradient-to-br from-primary/5 via-transparent to-accent/5;
+  }
+
+  /* Three-font system, matching the reference listing-card mockup:
+     1. Plus Jakarta Sans / Outfit (body/headings, set above) — everyday UI.
+     2. Fraunces (this) — a bold, high-contrast serif display face used
+        exclusively for prices, giving them the "editorial price tag" look
+        from the mockup (₦70,000 in a heavy serif) instead of blending into
+        the surrounding sans-serif UI.
+     3. Space Mono (below) — used for small uppercase tags/labels (badges,
+        pills, footer "siyayya.com" watermark) to match the mockup's
+        monospace "VERIFIED LISTING" / "TOP DEAL" / "FIXED PRICE" styling. */
+  .font-price {
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-variation-settings: 'SOFT' 0, 'WONK' 0;
+  }
+
+  .font-tag {
+    font-family: 'Space Mono', monospace;
   }
   
   .bg-size-200 {

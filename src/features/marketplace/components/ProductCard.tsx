@@ -97,7 +97,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
           
           {product.isSold && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-              <span className="rounded-full bg-white px-4 py-1.5 text-[10px] font-black tracking-widest text-black shadow-xl">SOLD</span>
+              <span className="font-tag rounded-full bg-white px-4 py-1.5 text-[10px] font-black tracking-widest text-black shadow-xl">SOLD</span>
             </div>
           )}
 
@@ -106,7 +106,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
               {displayOwnerName?.charAt(0)}
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[10px] font-black uppercase tracking-widest truncate max-w-[100px]">{displayOwnerName}</span>
+              <span className="font-tag text-[10px] font-black uppercase tracking-widest truncate max-w-[100px]">{displayOwnerName}</span>
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
           </h3>
           
           <div className="mt-1">
-            <p className="text-sm font-black text-textPrimary tabular-nums tracking-tighter leading-none">
+            <p className="font-price text-sm font-black text-textPrimary tabular-nums tracking-tighter leading-none">
               {formatPrice(product.price)}
             </p>
           </div>

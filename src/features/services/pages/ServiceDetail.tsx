@@ -310,7 +310,7 @@ const ServiceDetail = () => {
           <div className="mt-2 mb-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-textSecondary opacity-40 mb-1">{service.priceLabel || "Starting from"}</p>
             <div className="flex items-center gap-3">
-              <p className="text-3xl font-black text-primary tabular-nums tracking-tighter">{formatPrice(service.price)}</p>
+              <p className="font-price text-3xl font-black text-primary tabular-nums tracking-tighter">{formatPrice(service.price)}</p>
               <span className="text-[10px] font-black text-textPrimary bg-muted border border-black/5 px-3 py-1 rounded-full uppercase tracking-widest">{service.category}</span>
             </div>
             <h1 className="mt-3 text-2xl md:text-3xl font-black text-textPrimary tracking-tight italic uppercase">{service.title}</h1>

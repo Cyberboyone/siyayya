@@ -15,7 +15,7 @@ export function Footer() {
             </p>
           </div>
           <div>
-            <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-textSecondary opacity-40 mb-5">Marketplace</h3>
+            <h3 className="font-tag font-black text-[10px] uppercase tracking-[0.2em] text-textSecondary opacity-40 mb-5">Marketplace</h3>
             <ul className="space-y-2.5 text-sm text-textSecondary font-bold">
               <li><Link to="/marketplace" className="hover:text-primary transition-colors">Products</Link></li>
               <li><Link to="/services" className="hover:text-primary transition-colors">Services</Link></li>
@@ -24,7 +24,7 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-textSecondary mb-5">Support</h3>
+            <h3 className="font-tag font-black text-[10px] uppercase tracking-[0.2em] text-textSecondary mb-5">Support</h3>
             <ul className="space-y-2.5 text-sm text-textSecondary font-bold">
               <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
@@ -33,14 +33,14 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-textSecondary mb-5">Legal</h3>
+            <h3 className="font-tag font-black text-[10px] uppercase tracking-[0.2em] text-textSecondary mb-5">Legal</h3>
             <ul className="space-y-2.5 text-sm text-textSecondary font-bold">
               <li><Link to="/contact" className="hover:text-primary transition-colors">Terms of Service</Link></li>
               <li><Link to="/contact" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
         </div>
-        <div className="mt-12 pt-8 border-t border-black/5 text-center text-[10px] font-black uppercase tracking-widest text-textMuted">
+        <div className="font-tag mt-12 pt-8 border-t border-black/5 text-center text-[10px] font-black uppercase tracking-widest text-textMuted">
           <p>© {new Date().getFullYear()} Siyayya — Your Campus Marketplace</p>
         </div>
       </div>

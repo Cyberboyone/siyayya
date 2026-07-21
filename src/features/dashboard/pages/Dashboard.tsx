@@ -546,7 +546,7 @@ const Dashboard = () => {
                                   <div className="flex justify-between items-start">
                                     <div>
                                       <h4 className="text-lg font-black text-textPrimary uppercase italic leading-none mb-2">{p.title}</h4>
-                                      <p className="text-xl font-black text-primary italic tabular-nums">₦{p.price.toLocaleString()}</p>
+                                      <p className="font-price text-xl font-black text-primary italic tabular-nums">₦{p.price.toLocaleString()}</p>
                                     </div>
                                     {p.isSold && <Badge className="bg-black text-white rounded-full px-3 py-1 text-[8px] font-black uppercase tracking-widest">SOLD</Badge>}
                                   </div>
@@ -606,7 +606,7 @@ const Dashboard = () => {
                                 <img src={s.image || ""} className="h-20 w-20 rounded-2xl object-cover shadow-2xl shrink-0 bg-black/5" />
                                 <div className="flex-1 w-full min-w-0">
                                   <h4 className="text-lg font-black text-textPrimary uppercase italic leading-none mb-2">{s.title}</h4>
-                                  <p className="text-xl font-black text-primary italic tabular-nums">₦{s.price.toLocaleString()}</p>
+                                  <p className="font-price text-xl font-black text-primary italic tabular-nums">₦{s.price.toLocaleString()}</p>
                                   <div className="mt-4 rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-3">
                                     <div className="flex items-center justify-between gap-3">
                                       <p className="text-[9px] font-black uppercase tracking-widest text-textMuted">Listing Quality</p>

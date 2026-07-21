@@ -70,10 +70,10 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
                 {displayOwnerName?.charAt(0)}
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest leading-none">{displayOwnerName}</p>
+                <p className="font-tag text-[10px] font-black uppercase tracking-widest leading-none">{displayOwnerName}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   {service.ownerIsVerified && <VerifiedBadge className="h-2.5 w-2.5" />}
-                  <span className="text-[8px] font-bold text-white/60 uppercase tracking-tighter">Verified Provider</span>
+                  <span className="font-tag text-[8px] font-bold text-white/60 uppercase tracking-tighter">Verified Provider</span>
                 </div>
               </div>
             </div>
@@ -89,8 +89,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
 
           <div className="mt-auto flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-[9px] font-bold text-textMuted uppercase tracking-widest mb-1 opacity-60">Starting From</span>
-              <p className="text-lg font-black text-primary tabular-nums tracking-tighter leading-none">
+              <span className="font-tag text-[9px] font-bold text-textMuted uppercase tracking-widest mb-1 opacity-60">Starting From</span>
+              <p className="font-price text-lg font-black text-primary tabular-nums tracking-tighter leading-none">
                 {formatPrice(service.price)}
               </p>
             </div>
