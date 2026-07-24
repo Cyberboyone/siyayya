@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { MapPin, ChevronDown, Globe, Navigation, Building2, Search, X } from "lucide-react";
 import { getNorthernCampuses, Campus } from "@/lib/campus";
-import { FeedMode } from "@/hooks/useNearbyProducts";
+import { FeedMode } from "@/hooks/useDiscoveryFeed";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface CampusSwitcherProps {
