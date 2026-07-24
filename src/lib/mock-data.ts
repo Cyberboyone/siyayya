@@ -79,6 +79,11 @@ export interface Service {
   priceLabel: string;
   image?: string;
   images?: string[];
+  // EditListing.tsx writes this field to Firestore alongside `image` when a
+  // service listing is edited (see updateData.mediaUrl there); it wasn't
+  // declared here, so any read-side consumer typed as `Service` (e.g.
+  // CommandMenu.tsx's image fallback) failed to compile against it.
+  mediaUrl?: string;
   category: string;
   campusId: string;
 

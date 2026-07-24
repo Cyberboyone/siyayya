@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 interface FeedSectionProps {
   icon: string;
@@ -13,7 +13,12 @@ interface FeedSectionProps {
   className?: string;
 }
 
-const sectionVariants = {
+// Typed explicitly as `Variants` (rather than left to plain object-literal
+// inference) so the `ease` cubic-bezier tuple below is treated as framer-
+// motion's `Easing` type instead of widening to a generic `number[]`, which
+// TypeScript otherwise rejects when the object is later passed as the
+// `variants` prop.
+const sectionVariants: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: {
     opacity: 1,

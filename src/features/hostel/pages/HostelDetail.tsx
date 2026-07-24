@@ -40,7 +40,7 @@ export default function HostelDetail() {
             limit(40)
           );
           const snap = await getDocs(q);
-          let docs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          let docs = snap.docs.map((doc): any => ({ id: doc.id, ...doc.data() }));
 
           // Apply client-side filtering for Male/Female if requested
           if (hostelType) {

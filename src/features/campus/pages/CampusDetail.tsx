@@ -51,7 +51,11 @@ export default function CampusDetail() {
             limit(4)
           );
           const businessesSnap = await getDocs(businessesQuery);
-          setBusinesses(businessesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(u => u.businessName));
+          setBusinesses(
+            businessesSnap.docs
+              .map((doc): any => ({ id: doc.id, ...doc.data() }))
+              .filter((u: any) => u.businessName)
+          );
 
         } catch (error) {
           console.error("Error loading campus listings:", error);

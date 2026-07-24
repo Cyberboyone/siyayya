@@ -87,12 +87,26 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    target: 'es2020',
+    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+          if (!id.includes('node_modules')) return undefined;
+          // React + React DOM (and anything importing straight off "react")
+          // MUST stay together in the exact same chunk as every other React
+          // dependent (react-router, framer-motion, radix, react-query,
+          // etc.) — grouping React alone caused "invalid hook call"/multiple
+          // React instance bugs when this was tried previously and briefly
+          // reverted (see commit b38f4d3). Fix this time: keep React itself
+          // UNGROUPED (falls through to the default 'vendor' chunk below)
+          // so every consumer resolves the exact same React module id,
+          // instead of forcing it into its own separate chunk.
+          if (id.includes('firebase')) return 'vendor-firebase';
+          if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
+          if (id.includes('flexsearch')) return 'vendor-search';
+          if (id.includes('html-to-image')) return 'vendor-html-to-image';
+          return 'vendor';
         },
       },
     },
