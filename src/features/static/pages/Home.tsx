@@ -125,7 +125,7 @@ const Home = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="relative max-w-7xl mx-auto px-4 pt-10 md:pt-16 pb-12 md:pb-20 overflow-visible">
+      <div className="relative max-w-7xl mx-auto px-4 pt-6 md:pt-16 pb-12 md:pb-20 overflow-visible">
         {/* Abstract Background Mesh Gradients */}
         <div className="absolute top-[-12%] left-1/2 -translate-x-1/2 w-[900px] h-[520px] rounded-full blur-[110px] -z-10 pointer-events-none mix-blend-multiply dark:mix-blend-screen opacity-45">
           <div className="absolute top-4 left-[22%] w-[420px] h-[420px] bg-primary/30 rounded-full mix-blend-multiply filter blur-[85px] animate-blob" />
@@ -161,10 +161,10 @@ const Home = () => {
                 on Campus
               </span>
             </h1>
-            <p className="text-base md:text-xl text-slate-600 dark:text-slate-300 mt-6 max-w-2xl mx-auto font-medium leading-relaxed">
+            <p className="text-base md:text-xl text-slate-600 dark:text-slate-300 mt-4 sm:mt-6 max-w-2xl mx-auto font-medium leading-relaxed">
               Find phones, laptops, fashion, hostels, services and more from trusted students around your campus.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="mt-5 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link to="/marketplace" className="w-full sm:w-auto inline-flex items-center justify-center rounded-full bg-primary px-7 py-3.5 text-sm font-extrabold text-white shadow-[0_16px_35px_-18px_rgba(255,92,0,0.9)] hover:bg-primaryDark hover:-translate-y-0.5 transition-all">
                 Start Shopping
               </Link>
@@ -179,7 +179,7 @@ const Home = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-3xl mx-auto px-4 mt-9 relative z-20"
+            className="w-full max-w-3xl mx-auto px-4 mt-6 sm:mt-9 relative z-20"
           >
             <SearchBar className="h-16 md:h-20 bg-white/80 dark:bg-surface/80 backdrop-blur-2xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-none border-2 border-white/60 dark:border-white/10 rounded-[2.5rem] overflow-hidden focus-within:ring-4 focus-within:ring-primary/30 transition-all duration-500" />
             <div className="mt-6 flex justify-center">
