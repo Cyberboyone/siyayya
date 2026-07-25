@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowRight, LayoutDashboard } from "lucide-react";
+import { ArrowRight, LayoutDashboard, ChevronDown } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import AuthRedirect from "@/components/AuthRedirect";
 import { useReferralProgram } from "@/hooks/useReferralProgram";
@@ -16,6 +16,7 @@ const SignIn = () => {
     noindex: true,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showTroubleshooting, setShowTroubleshooting] = useState(false);
   const { loginWithGoogle, isLoading: authLoading, user } = useAuth();
   const { claimStoredReferral } = useReferralProgram();
 
@@ -114,9 +115,6 @@ const SignIn = () => {
             </div>
             
             <div className="text-center space-y-2">
-              <p className="text-[10px] text-muted-foreground">
-                Google sign-in now stays in the browser. If Android opens the installed app, remove the old Siyayya app icon and sign in from <span className="text-primary font-bold">Chrome</span>.
-              </p>
               {(isLoading || authLoading) && (
                 <button 
                   onClick={() => window.location.reload()}
@@ -124,6 +122,29 @@ const SignIn = () => {
                 >
                   Stuck? Click here to refresh
                 </button>
+              )}
+
+              {/* Collapsed by default: this Android/installed-app note is
+                  only relevant to a small subset of users hitting a specific
+                  edge case, so it used to sit permanently under the button
+                  as dense troubleshooting copy every visitor saw regardless
+                  of whether it applied to them. Tucked behind a disclosure
+                  toggle instead — the primary sign-in view now stays clean,
+                  and anyone who's actually stuck can still find the exact
+                  same guidance in one tap. */}
+              <button
+                type="button"
+                onClick={() => setShowTroubleshooting((v) => !v)}
+                className="inline-flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors mx-auto"
+                aria-expanded={showTroubleshooting}
+              >
+                Trouble signing in?
+                <ChevronDown className={`h-3 w-3 transition-transform ${showTroubleshooting ? "rotate-180" : ""}`} />
+              </button>
+              {showTroubleshooting && (
+                <p className="text-[10px] text-muted-foreground pt-1 px-2">
+                  Google sign-in now stays in the browser. If Android opens the installed app, remove the old Siyayya app icon and sign in from <span className="text-primary font-bold">Chrome</span>.
+                </p>
               )}
             </div>
           </div>

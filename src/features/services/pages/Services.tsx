@@ -1,31 +1,25 @@
 import { Navbar } from "@/components/Navbar";
 import { ServiceCard } from "../components/ServiceCard";
 import { SearchBar } from "@/components/SearchBar";
-import { Service } from "@/lib/mock-data";
-import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
-import { useState, useMemo, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
+import { useServices } from "@/hooks/use-queries";
+import { Button } from "@/components/ui/button";
 
 const Services = () => {
   const [search, setSearch] = useState("");
-  const [services, setServices] = useState<Service[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const snap = await getDocs(collection(db, "services"));
-        setServices(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Service)));
-      } catch (error) {
-        console.error("Error fetching services:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchServices();
-  }, []);
+  // Switched from this page's own one-off `getDocs` call to the shared
+  // `useServices()` react-query hook (already used by Home/Marketplace/
+  // MarketCampus) for two concrete reasons found during a UI/UX review:
+  // 1. The old fetch had no error state at all — a failed/slow Firestore
+  //    call (offline, permission issue, network hiccup) left `isLoading`
+  //    stuck `true` forever with only a bare spinner and no way out short
+  //    of a manual page reload.
+  // 2. react-query gives this page the same automatic retry-with-backoff,
+  //    caching, and shared cache-key behavior every other listing page
+  //    already relies on, instead of a separate/duplicated fetch path.
+  const { data: services = [], isLoading, isError, refetch, isFetching } = useServices();
 
   const filtered = useMemo(() => {
     if (!search) return services;
@@ -55,6 +49,21 @@ const Services = () => {
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
+        ) : isError ? (
+          <div className="text-center py-16 px-4 flex flex-col items-center">
+            <AlertTriangle className="h-10 w-10 text-amber-500 mb-3" />
+            <p className="text-lg font-bold text-textPrimary">Couldn't load services</p>
+            <p className="text-sm text-textSecondary mt-1 max-w-xs">
+              Check your connection and try again.
+            </p>
+            <Button
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="mt-5 rounded-2xl font-black uppercase tracking-widest text-[10px] px-8"
+            >
+              {isFetching ? "Retrying..." : "Try Again"}
+            </Button>
+          </div>
         ) : (
           <>
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -75,3 +84,4 @@ const Services = () => {
 };
 
 export default Services;
+
