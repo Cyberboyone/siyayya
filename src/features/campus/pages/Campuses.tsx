@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
 import { getNorthernCampuses } from "@/lib/campus";
 import { useSEO } from "@/hooks/useSEO";
 
@@ -51,7 +50,6 @@ const Campuses = () => {
           ))}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

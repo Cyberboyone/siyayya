@@ -116,7 +116,15 @@ const MarketCampus = () => {
                   <span className="text-primary">.</span>
                 </h1>
                 <p className="text-sm text-textMuted mt-1 max-w-md">
-                  {campus.name} — Browse {campusProducts.length} products from campus students
+                  {/* While products are still loading, allProducts defaults to
+                      an empty array, so campusProducts.length briefly reads 0
+                      -- rendering "Browse 0 products" directly above a grid
+                      of loading skeletons, which contradicts itself (0 items
+                      vs. "still loading"). Hide the count until isLoading
+                      resolves, matching the pattern already used for the
+                      "X items" subtitle just below in the FeedSection. */}
+                  {campus.name}{" "}
+                  {isLoading ? "— Loading products..." : `— Browse ${campusProducts.length} products from campus students`}
                 </p>
               </div>
             </div>
