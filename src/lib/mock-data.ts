@@ -176,6 +176,18 @@ export const categories = [
   { id: "hostel", label: "Hostel Items", icon: "🏠" },
   { id: "food", label: "Food", icon: "🍛" },
   { id: "services", label: "Services", icon: "🔧" },
+  // Added: relevant additional categories for a Nigerian campus marketplace,
+  // covering common items students actually buy/sell that didn't previously
+  // have a home in the existing 8 categories (they were all being dumped
+  // into "Electronics"/"Fashion" or left uncategorized entirely).
+  { id: "furniture", label: "Furniture & Appliances", icon: "🛋️" },
+  { id: "beauty", label: "Beauty & Personal Care", icon: "💄" },
+  { id: "sports", label: "Sports & Fitness", icon: "🏀" },
+  { id: "gaming", label: "Gaming", icon: "🎮" },
+  { id: "stationery", label: "Stationery & School Supplies", icon: "✏️" },
+  { id: "tickets", label: "Tickets & Events", icon: "🎟️" },
+  { id: "vehicles", label: "Vehicles & Auto Parts", icon: "🚗" },
+  { id: "pets", label: "Pets & Accessories", icon: "🐾" },
 ];
 
 export const CATEGORY_ATTRIBUTES: Record<string, any[]> = {
@@ -204,8 +216,42 @@ export const CATEGORY_ATTRIBUTES: Record<string, any[]> = {
   hostel: [
     { id: "duration", label: "Usage Duration", type: "text", placeholder: "e.g. 1 Year" },
     { id: "negotiable", label: "Negotiable", type: "select", options: ["Yes", "No"] }
+  ],
+  furniture: [
+    { id: "brand", label: "Brand", type: "text", placeholder: "e.g. LG, Binatone" },
+    { id: "material", label: "Material", type: "text", placeholder: "e.g. Wood, Metal, Plastic" },
+    { id: "condition", label: "Working Condition", type: "select", options: ["Excellent", "Good", "Fair", "Needs Repair"] }
+  ],
+  beauty: [
+    { id: "brand", label: "Brand", type: "text" },
+    { id: "sealed", label: "Sealed/Unopened", type: "select", options: ["Yes", "No"] }
+  ],
+  sports: [
+    { id: "brand", label: "Brand", type: "text", placeholder: "e.g. Nike, Adidas" },
+    { id: "size", label: "Size", type: "text" }
+  ],
+  gaming: [
+    { id: "platform", label: "Platform", type: "select", options: ["PS5", "PS4", "Xbox", "PC", "Nintendo Switch", "Other"] },
+    { id: "accessoriesIncluded", label: "Accessories Included", type: "text", placeholder: "e.g. 2 controllers, charging dock" }
+  ],
+  stationery: [
+    { id: "quantity", label: "Quantity", type: "text", placeholder: "e.g. Set of 5" }
+  ],
+  tickets: [
+    { id: "eventDate", label: "Event Date", type: "text", placeholder: "e.g. 25th Dec 2026" },
+    { id: "venue", label: "Venue", type: "text" }
+  ],
+  vehicles: [
+    { id: "brand", label: "Brand/Make", type: "text", placeholder: "e.g. Honda, Toyota" },
+    { id: "year", label: "Year", type: "text", placeholder: "e.g. 2015" },
+    { id: "mileage", label: "Mileage", type: "text", unit: "km" }
+  ],
+  pets: [
+    { id: "breed", label: "Breed", type: "text" },
+    { id: "age", label: "Age", type: "text", placeholder: "e.g. 6 months" }
   ]
 };
+
 
 export function formatPrice(price: number): string {
   return "₦" + price.toLocaleString();

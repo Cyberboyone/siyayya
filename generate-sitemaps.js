@@ -51,7 +51,15 @@ const CATEGORIES = [
   'fashion',
   'hostel',
   'food',
-  'services'
+  'services',
+  'furniture',
+  'beauty',
+  'sports',
+  'gaming',
+  'stationery',
+  'tickets',
+  'vehicles',
+  'pets'
 ];
 
 function generateMainSitemap() {
