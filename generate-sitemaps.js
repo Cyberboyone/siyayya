@@ -59,7 +59,8 @@ const CATEGORIES = [
   'stationery',
   'tickets',
   'vehicles',
-  'pets'
+  'pets',
+  'smart-devices'
 ];
 
 function generateMainSitemap() {

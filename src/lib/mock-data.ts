@@ -188,6 +188,12 @@ export const categories = [
   { id: "tickets", label: "Tickets & Events", icon: "🎟️" },
   { id: "vehicles", label: "Vehicles & Auto Parts", icon: "🚗" },
   { id: "pets", label: "Pets & Accessories", icon: "🐾" },
+  // Added: "Smart Devices" — headphones/earbuds, smartwatches, fitness
+  // bands, and other wearables/accessories were previously being lumped
+  // into the general "Electronics" category with no dedicated attributes
+  // (e.g. no way to specify connectivity or device type). Split out into
+  // its own category since these are extremely common campus resale items.
+  { id: "smart-devices", label: "Smart Devices", icon: "⌚" },
 ];
 
 export const CATEGORY_ATTRIBUTES: Record<string, any[]> = {
@@ -249,6 +255,12 @@ export const CATEGORY_ATTRIBUTES: Record<string, any[]> = {
   pets: [
     { id: "breed", label: "Breed", type: "text" },
     { id: "age", label: "Age", type: "text", placeholder: "e.g. 6 months" }
+  ],
+  "smart-devices": [
+    { id: "deviceType", label: "Device Type", type: "select", options: ["Headphones/Earbuds", "Smartwatch", "Fitness Band", "Speaker", "Other"] },
+    { id: "brand", label: "Brand", type: "text", placeholder: "e.g. Apple, Samsung, JBL" },
+    { id: "connectivity", label: "Connectivity", type: "select", options: ["Bluetooth", "Wired", "Both"] },
+    { id: "batteryHealth", label: "Battery Health", type: "text", unit: "%" }
   ]
 };
 
