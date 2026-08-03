@@ -14,6 +14,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useSEO } from "@/hooks/useSEO";
 import SchemaMarkup from "@/components/SchemaMarkup";
 import { MediaRenderer } from "@/components/MediaRenderer";
+import { getVideoThumbnailUrl } from "@/lib/cloudinary-utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -291,9 +292,15 @@ const ServiceDetail = () => {
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
 
-          {service.image ? (
+          {/* `image` is already set to the video's auto-generated thumbnail
+              server-side whenever a super admin posts a video with no real
+              photos (see api/listings/create.ts and EditListing.tsx) —
+              getVideoThumbnailUrl() here only matters as a fallback for any
+              older/edge-case record that somehow has a videoUrl but an
+              empty image field. */}
+          {(service.image || getVideoThumbnailUrl(service.videoUrl)) ? (
             <MediaRenderer 
-              url={service.image} 
+              url={service.image || getVideoThumbnailUrl(service.videoUrl)} 
               alt={service.title}
               containerClassName="rounded-2xl shadow-sm mb-6"
               objectFit="contain"

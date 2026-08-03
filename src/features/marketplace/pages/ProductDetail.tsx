@@ -18,6 +18,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useSEO } from "@/hooks/useSEO";
 import { getProductSchema, getBreadcrumbSchema } from "@/components/SEOStructuredData";
 import { MediaRenderer } from "@/components/MediaRenderer";
+import { getVideoThumbnailUrl } from "@/lib/cloudinary-utils";
 import { useAuth } from "../../auth/contexts/AuthContext";
 import {
   AlertDialog,
@@ -307,7 +308,13 @@ const ProductDetail = () => {
         <div className="space-y-3">
           <div className={`relative ${product.isSold ? "opacity-60 grayscale-[50%]" : ""}`}>
             <MediaRenderer 
-              url={(product.images?.length ? product.images : [product.image])[currentImageIndex]} 
+              // `image`/`images[0]` are already set to the video's
+              // auto-generated thumbnail server-side whenever a super admin
+              // posts a video with no real photos (see api/listings/create.ts
+              // and EditListing.tsx) — the getVideoThumbnailUrl() fallback
+              // here only matters for any older/edge-case record that
+              // somehow has a videoUrl but an empty image field.
+              url={(product.images?.length ? product.images : [product.image || getVideoThumbnailUrl(product.videoUrl)])[currentImageIndex]} 
               alt={product.title}
               containerClassName="rounded-2xl shadow-sm"
               className="transition-transform duration-700"

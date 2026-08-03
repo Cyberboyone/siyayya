@@ -5,7 +5,7 @@ import { formatPrice } from "@/lib/mock-data";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { motion } from "framer-motion";
 import { Service } from "@/lib/mock-data";
-import { getOptimizedUrl } from "@/lib/cloudinary-utils";
+import { getOptimizedUrl, getVideoThumbnailUrl } from "@/lib/cloudinary-utils";
 
 export interface ServiceCardProps {
   service: Service;
@@ -29,6 +29,11 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
     'Untitled Service'
   );
 
+  // See ProductCard.tsx's identical comment: listings created/edited with a
+  // super-admin video already have `image` set server-side to the video's
+  // thumbnail; this is defense-in-depth for any older/edge-case record.
+  const displayImage = service.image || getVideoThumbnailUrl((service as any).videoUrl);
+
   return (
     <motion.div
       ref={cardRef}
@@ -50,7 +55,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index = 0 }) 
       >
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-muted/20">
           <motion.img 
-            src={getOptimizedUrl(service.image, { width: 600 })} 
+            src={getOptimizedUrl(displayImage, { width: 600 })} 
             alt={displayTitle} 
             crossOrigin="anonymous"
             className="h-full w-full object-cover" 

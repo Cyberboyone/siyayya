@@ -12,6 +12,7 @@ import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { CloudinaryUpload } from "@/components/CloudinaryUpload";
 import { ListingVideoUpload } from "@/components/ListingVideoUpload";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
+import { getVideoThumbnailUrl } from "@/lib/cloudinary-utils";
 import { extractYouTubeId } from "@/lib/utils";
 import { ProductListingSchema, ServiceListingSchema, RequestListingSchema, sanitizeText } from "@/lib/validations";
 import { ADMIN_EMAILS, isSuperAdmin } from "@/lib/config";
@@ -198,6 +199,17 @@ const EditListing = () => {
          updateData.videoUrl = videoUpload?.url || null;
          updateData.videoPublicId = videoUpload?.publicId || null;
        }
+
+       // When there are no real photos but the super admin has a video
+       // attached, fall back to the video's auto-generated still-frame
+       // thumbnail for image/images[0] — same derivation used in
+       // api/listings/create.ts and getVideoThumbnailUrl() — so every
+       // existing image-consumer (ProductCard, ServiceCard, share previews,
+       // etc.) keeps working unchanged instead of showing a blank image.
+       const videoThumbnailUrl = isSuperAdminUser && videoUpload?.url
+         ? getVideoThumbnailUrl(videoUpload.url)
+         : "";
+       const effectiveImages = images.length > 0 ? images : (videoThumbnailUrl ? [videoThumbnailUrl] : []);
        
        if (type === "products") {
          updateData.price = Number(price) || 0;
@@ -205,8 +217,8 @@ const EditListing = () => {
          updateData.ownerIsVerified = isAdmin && listingOwnerId !== user?.id ? ownerIsVerified : (user?.isVerified || false);
          updateData.ownerPhone = contactPhone;
          updateData.condition = condition;
-         updateData.images = images;
-         updateData.image = images.length > 0 ? images[0] : "";
+         updateData.images = effectiveImages;
+         updateData.image = effectiveImages.length > 0 ? effectiveImages[0] : "";
          updateData.mediaData = mediaData;
          updateData.mediaType = mediaData.length > 0 ? mediaData[mediaData.length - 1].resourceType : "image";
        } else if (type === "services") {
@@ -214,10 +226,10 @@ const EditListing = () => {
          updateData.ownerName = isAdmin && listingOwnerId !== user?.id ? listingOwnerName : (user?.businessName || user?.name || "Unknown");
          updateData.ownerIsVerified = isAdmin && listingOwnerId !== user?.id ? ownerIsVerified : (user?.isVerified || false);
          updateData.ownerPhone = contactPhone;
-         updateData.images = images;
-         updateData.image = images.length > 0 ? images[0] : "";
+         updateData.images = effectiveImages;
+         updateData.image = effectiveImages.length > 0 ? effectiveImages[0] : "";
          updateData.mediaData = mediaData;
-         updateData.mediaUrl = images.length > 0 ? images[0] : "";
+         updateData.mediaUrl = effectiveImages.length > 0 ? effectiveImages[0] : "";
          updateData.mediaType = mediaData.length > 0 ? mediaData[mediaData.length - 1].resourceType : "image";
        } else {
          updateData.budget = Number(price) || 0;

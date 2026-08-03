@@ -37,6 +37,7 @@ const getListingChecklist = ({
   category,
   images,
   contactPhone,
+  hasVideoInsteadOfImage = false,
 }: {
   type: ListingType;
   title: string;
@@ -45,6 +46,10 @@ const getListingChecklist = ({
   category: string;
   images: string[];
   contactPhone: string;
+  // True only for the super admin, only when a video is attached in place
+  // of a photo — counts the "photo" checklist item as satisfied since the
+  // video's auto-generated thumbnail takes that role instead.
+  hasVideoInsteadOfImage?: boolean;
 }): ListingChecklistItem[] => {
   const numericPrice = Number(price) || 0;
   return [
@@ -52,7 +57,7 @@ const getListingChecklist = ({
     { id: "description", label: "Clear description", done: description.trim().length >= 40 },
     { id: "category", label: "Category selected", done: !!category.trim() },
     { id: "price", label: type === "request" ? "Budget added" : "Price added", done: type === "request" ? numericPrice >= 0 : numericPrice > 0 },
-    { id: "images", label: type === "product" ? "At least 1 photo" : "Photo added", done: type === "request" ? true : images.length >= 1 },
+    { id: "images", label: type === "product" ? "At least 1 photo" : "Photo added", done: type === "request" ? true : (images.length >= 1 || hasVideoInsteadOfImage) },
     { id: "contact", label: "Contact phone ready", done: contactPhone.trim().length >= 10 },
   ];
 };
@@ -193,6 +198,7 @@ export default function NewListing() {
     category,
     images,
     contactPhone,
+    hasVideoInsteadOfImage: isSuperAdminUser && !!videoUpload,
   });
   const qualityScore = getListingQualityScore(checklist);
   const completedChecklistCount = checklist.filter((item) => item.done).length;
@@ -235,7 +241,12 @@ export default function NewListing() {
        toast.error("Price cannot be negative.");
        return;
     }
-    if (type === "product" && images.length === 0) {
+    // The at-least-one-photo requirement is waived only when the super
+    // admin has attached a video instead — everyone else (and every other
+    // scenario) still needs a real photo. api/listings/create.ts enforces
+    // this exact same exception server-side, re-verified from the caller's
+    // own auth token rather than trusting this client-side flag.
+    if (type === "product" && images.length === 0 && !(isSuperAdminUser && videoUpload)) {
        toast.error("Please upload at least one image for your product.");
        return;
     }
@@ -480,7 +491,14 @@ export default function NewListing() {
             {/* Media Upload */}
             {(type === "product" || type === "service") && (
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Photos</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">
+                  {/* Only the super admin can substitute a video for the
+                      required photo (see the video upload section further
+                      down + isSuperAdminUser-gated image-required check in
+                      handleSubmit) — everyone else always needs a real
+                      photo, so this label only changes for that account. */}
+                  {isSuperAdminUser ? "Photos (optional if you add a video below)" : "Photos"}
+                </h3>
                 <div className="rounded-[2rem] border-2 border-dashed border-black/5 bg-black/[0.02] p-6">
                    <CloudinaryUpload 
                     onUpload={(data) => {

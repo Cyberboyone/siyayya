@@ -34,3 +34,38 @@ export function getOptimizedUrl(
 
   return url.replace("/upload/", `/upload/${transformations}/`);
 }
+
+/**
+ * Derives a still-frame JPG thumbnail URL from a Cloudinary-hosted video
+ * URL. Cloudinary generates this automatically for any video resource —
+ * requesting the exact same /video/upload/ delivery path with the file
+ * extension swapped to .jpg returns a real, cacheable image (a frame
+ * pulled from partway into the video), with no separate upload or backend
+ * work required.
+ *
+ * Used so a listing that has a super-admin-uploaded video but no photos
+ * still has a normal, real image URL to show in card grids/search
+ * results/share previews — every existing consumer of `product.image` /
+ * `service.image` keeps working completely unchanged, since this is
+ * assigned to that same field at listing creation/edit time rather than
+ * requiring every image-consumer in the app to special-case "no image,
+ * but there's a video" itself.
+ *
+ * Returns "" if the URL isn't a Cloudinary video delivery URL at all,
+ * so callers can safely fall back to their own default/placeholder.
+ */
+export function getVideoThumbnailUrl(videoUrl: string | undefined | null): string {
+  if (!videoUrl) return "";
+  if (!videoUrl.includes("cloudinary.com") || !videoUrl.includes("/video/upload/")) return "";
+
+  const [pathPart, queryPart] = videoUrl.split("?");
+  // Swap whatever video extension is present for .jpg. If for some reason
+  // the URL has no recognizable extension at all, append .jpg instead of
+  // silently returning the (unplayable-as-an-<img>) video URL unchanged.
+  const withJpgExtension = /\.[a-zA-Z0-9]+$/.test(pathPart)
+    ? pathPart.replace(/\.[a-zA-Z0-9]+$/, ".jpg")
+    : `${pathPart}.jpg`;
+
+  return queryPart ? `${withJpgExtension}?${queryPart}` : withJpgExtension;
+}
+

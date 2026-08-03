@@ -123,12 +123,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (numericPrice < 0) return res.status(400).json({ message: 'Price cannot be negative.' });
     if (listingType !== 'request' && numericPrice <= 0) return res.status(400).json({ message: 'Price is required for listings.' });
     if (!Array.isArray(images) || images.length > 5) return res.status(400).json({ message: 'You can upload up to 5 images.' });
-    if (listingType === 'product' && images.length === 0) return res.status(400).json({ message: 'Please upload at least one image for your product.' });
-
-    const campusId = String(user.campusId || req.body.campusId || '').trim().toLowerCase();
-    if (!campusId) {
-      return res.status(400).json({ message: 'Please complete your campus profile before posting.' });
-    }
 
     // Direct-upload video fields are only ever honored if the caller is
     // verified (via their own decoded auth token, not a client-supplied
@@ -138,6 +132,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // EditListing.tsx. Also validated as a real Cloudinary video URL (not
     // an arbitrary attacker-supplied URL) since this bypasses Cloudinary's
     // own upload_preset validation once it's just a string in the request body.
+    // Computed before the image-required check below since a super admin
+    // video counts as satisfying that requirement in place of a photo.
     let videoUrl: string | null = null;
     let videoPublicId: string | null = null;
     if (callerIsSuperAdmin && typeof rawVideoUrl === 'string' && rawVideoUrl.trim()) {
@@ -147,6 +143,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         videoPublicId = typeof rawVideoPublicId === 'string' ? rawVideoPublicId.trim() : null;
       }
     }
+
+    // A product normally requires at least one photo — waived only when the
+    // super admin has attached a valid video instead (see videoUrl above),
+    // since the video's auto-generated thumbnail takes the photo's place
+    // everywhere a card/grid needs an image (see getVideoThumbnailUrl()
+    // usage on the client, and the image/images fallback a few lines down).
+    if (listingType === 'product' && images.length === 0 && !videoUrl) {
+      return res.status(400).json({ message: 'Please upload at least one image for your product.' });
+    }
+
+    const campusId = String(user.campusId || req.body.campusId || '').trim().toLowerCase();
+    if (!campusId) {
+      return res.status(400).json({ message: 'Please complete your campus profile before posting.' });
+    }
+
+    // When there are no real photos but a super admin video is present, the
+    // video's Cloudinary-generated still-frame thumbnail (same derivation
+    // getVideoThumbnailUrl() uses on the client) becomes the listing's
+    // `image`/`images[0]` — every existing image-consumer across the app
+    // (ProductCard, ServiceCard, search results, share/OG previews, etc.)
+    // keeps working completely unchanged, with zero special-casing needed
+    // anywhere else, since they just see a normal-looking image URL.
+    const videoThumbnailUrl = videoUrl
+      ? videoUrl.replace(/\.(mp4|webm|mov|m4v|avi|mkv|ogg|ogv|3gp)(\?.*)?$/i, '.jpg')
+      : null;
+    const effectiveImages = images.length > 0 ? images : (videoThumbnailUrl ? [videoThumbnailUrl] : []);
 
     const ownerName = user.businessName || user.name || decoded.name || 'Unknown';
     const slug = makeSlug(title);
@@ -177,8 +199,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ownerPhone: contactPhone,
         ownerRating: user.rating || 5.0,
         condition: condition || 'New',
-        images,
-        image: images[0] || '',
+        images: effectiveImages,
+        image: effectiveImages[0] || '',
         mediaData: Array.isArray(mediaData) ? mediaData : [],
         isSold: false,
         isFeatured: false,
@@ -190,10 +212,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ownerRating: user.rating || 5.0,
         rating: 0,
         reviews: 0,
-        images,
-        image: images[0] || '',
+        images: effectiveImages,
+        image: effectiveImages[0] || '',
         mediaData: Array.isArray(mediaData) ? mediaData : [],
-        mediaUrl: images[0] || '',
+        mediaUrl: effectiveImages[0] || '',
         mediaType: 'image',
         priceLabel: 'Starting from',
         isFeatured: false,

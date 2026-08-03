@@ -6,7 +6,7 @@ import { formatPrice } from "@/lib/mock-data";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Product } from "@/lib/mock-data";
-import { getOptimizedUrl } from "@/lib/cloudinary-utils";
+import { getOptimizedUrl, getVideoThumbnailUrl } from "@/lib/cloudinary-utils";
 
 export interface ProductCardProps {
   product: Product;
@@ -41,6 +41,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
     ((product as any).productName && (product as any).productName !== displayOwnerName ? (product as any).productName : '') ||
     'Untitled Listing'
   );
+
+  // Listings created/edited with a super-admin video already have `image`
+  // set server-side to the video's auto-generated thumbnail, so this is
+  // mainly defense-in-depth for any older/edge-case record that somehow
+  // has a videoUrl but no image field populated yet.
+  const displayImage = product.image || getVideoThumbnailUrl((product as any).videoUrl);
 
   const handleContact = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -84,7 +90,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
       >
         <div className="relative aspect-[4/5] sm:aspect-square w-full overflow-hidden bg-muted/20">
           <motion.img
-            src={getOptimizedUrl(product.image, { width: 500 })}
+            src={getOptimizedUrl(displayImage, { width: 500 })}
             alt={displayTitle}
             crossOrigin="anonymous"
             className="h-full w-full object-cover"
