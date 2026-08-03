@@ -59,6 +59,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       properties = {},
       videoId = null,
       youtubeUrl = '',
+      videoUrl: rawVideoUrl = null,
+      videoPublicId: rawVideoPublicId = null,
       ownerId: requestedOwnerId,
     } = req.body || {};
 
@@ -78,6 +80,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const callerIsAdmin = decoded.admin === true
       || (decoded.email || '').toLowerCase() === 'muhammadmusab372@gmail.com'
       || adminEmails.includes((decoded.email || '').toLowerCase());
+
+    // Direct-upload video (videoUrl/videoPublicId, distinct from the legacy
+    // videoId/youtubeUrl fields which remain open to everyone) is restricted
+    // to this single account — matching firestore.rules' touchesVideoUploadFields()
+    // enforcement for the direct-Firestore-write path used by EditListing.tsx.
+    // Hardcoded rather than reading from the ADMIN_EMAILS list since that list
+    // can contain multiple people, but only the super admin may upload videos.
+    const callerIsSuperAdmin = (decoded.email || '').toLowerCase() === 'muhammadmusab372@gmail.com';
 
     // Admins managing another user's dashboard can post on that user's
     // behalf (ownerId is passed from NewListing.tsx's admin posting mode).
@@ -120,6 +130,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ message: 'Please complete your campus profile before posting.' });
     }
 
+    // Direct-upload video fields are only ever honored if the caller is
+    // verified (via their own decoded auth token, not a client-supplied
+    // flag) to be the super admin — anyone else's videoUrl/videoPublicId is
+    // silently dropped rather than saved, mirroring firestore.rules'
+    // identical restriction on the direct-Firestore-write path used by
+    // EditListing.tsx. Also validated as a real Cloudinary video URL (not
+    // an arbitrary attacker-supplied URL) since this bypasses Cloudinary's
+    // own upload_preset validation once it's just a string in the request body.
+    let videoUrl: string | null = null;
+    let videoPublicId: string | null = null;
+    if (callerIsSuperAdmin && typeof rawVideoUrl === 'string' && rawVideoUrl.trim()) {
+      const isValidCloudinaryVideoUrl = /^https:\/\/res\.cloudinary\.com\/[\w-]+\/video\/upload\//.test(rawVideoUrl.trim());
+      if (isValidCloudinaryVideoUrl) {
+        videoUrl = rawVideoUrl.trim();
+        videoPublicId = typeof rawVideoPublicId === 'string' ? rawVideoPublicId.trim() : null;
+      }
+    }
+
     const ownerName = user.businessName || user.name || decoded.name || 'Unknown';
     const slug = makeSlug(title);
     const collectionName = listingType === 'product' ? 'products' : listingType === 'service' ? 'services' : 'requests';
@@ -135,6 +163,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       properties: typeof properties === 'object' && properties !== null ? properties : {},
       videoId: videoId || null,
       youtubeUrl: sanitizeText(youtubeUrl, 300),
+      ...(videoUrl ? { videoUrl, videoPublicId } : {}),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       campusId,
       ownerId: uid,

@@ -41,6 +41,22 @@ service cloud.firestore {
         request.auth.token.email.lower() == 'muhammadmusab372@gmail.com';
     }
 
+    // True if this write is attempting to set/change the direct-upload video
+    // fields (videoUrl/videoPublicId). Kept separate from the legacy
+    // videoId/youtubeUrl fields (any user may still set those, unchanged) —
+    // direct video file uploads to Cloudinary are restricted to the super
+    // admin account only, per product requirement, since video storage/
+    // bandwidth is a cost the super admin controls deliberately rather than
+    // opening it to every user.
+    function touchesVideoUploadFields() {
+      return request.resource != null && (
+        ('videoUrl' in request.resource.data &&
+           (resource == null || request.resource.data.videoUrl != resource.data.videoUrl)) ||
+        ('videoPublicId' in request.resource.data &&
+           (resource == null || request.resource.data.videoPublicId != resource.data.videoPublicId))
+      );
+    }
+
     // True if this write is attempting to change admin-escalation fields.
     // request.resource is null on delete, so that's never treated as an
     // escalation attempt here (deletion is governed separately below).
@@ -58,8 +74,13 @@ service cloud.firestore {
       allow read: if isAdmin();
       // Regular admins retain full write access for moderation, EXCEPT they
       // can never change account_type/isAdmin on any document — only the
-      // super admin account can grant or revoke admin privileges.
-      allow write: if isAdmin() && (!touchesAdminFields() || isSuperAdminToken());
+      // super admin account can grant or revoke admin privileges. They also
+      // cannot set/change the direct-upload video fields (videoUrl/
+      // videoPublicId) on listings — only the super admin may upload videos
+      // — otherwise a regular admin editing a listing through this global
+      // rule would silently bypass the per-collection restriction below.
+      allow write: if isAdmin() && (!touchesAdminFields() || isSuperAdminToken())
+                   && (!touchesVideoUploadFields() || isSuperAdminToken());
     }
 
     // 🔴 User Profiles
@@ -88,15 +109,21 @@ service cloud.firestore {
       // Anyone can view products
       allow read: if true;
       
-      // Authenticated users who are not banned can create products, maximum 5 images
+      // Authenticated users who are not banned can create products, maximum 5 images.
+      // Direct-upload video fields (videoUrl/videoPublicId) can only ever be
+      // set by the super admin account — everyone else's create request is
+      // rejected if they're present at all (the legacy videoId/youtubeUrl
+      // fields remain unrestricted for all users).
       allow create: if canWrite() && request.resource.data.ownerId == request.auth.uid &&
-                    (!('images' in request.resource.data) || request.resource.data.images.size() <= 5);
+                    (!('images' in request.resource.data) || request.resource.data.images.size() <= 5) &&
+                    (!touchesVideoUploadFields() || isSuperAdminToken());
                     
       // Owners can update their own products, but cannot change the ownerId or status to approved if it was removed
       allow update: if isOwner(resource.data.ownerId) && canWrite() && 
                     request.resource.data.ownerId == resource.data.ownerId &&
                     (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'isFeatured', 'ownerId'])) &&
-                    (!('images' in request.resource.data) || request.resource.data.images.size() <= 5);
+                    (!('images' in request.resource.data) || request.resource.data.images.size() <= 5) &&
+                    (!touchesVideoUploadFields() || isSuperAdminToken());
                     
       allow delete: if isOwner(resource.data.ownerId);
     }
@@ -104,11 +131,13 @@ service cloud.firestore {
     match /services/{serviceId} {
       allow read: if true;
       allow create: if canWrite() && request.resource.data.ownerId == request.auth.uid &&
-                    (!('images' in request.resource.data) || request.resource.data.images.size() <= 5);
+                    (!('images' in request.resource.data) || request.resource.data.images.size() <= 5) &&
+                    (!touchesVideoUploadFields() || isSuperAdminToken());
       allow update: if isOwner(resource.data.ownerId) && canWrite() && 
                     request.resource.data.ownerId == resource.data.ownerId &&
                     (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'isFeatured', 'ownerId'])) &&
-                    (!('images' in request.resource.data) || request.resource.data.images.size() <= 5);
+                    (!('images' in request.resource.data) || request.resource.data.images.size() <= 5) &&
+                    (!touchesVideoUploadFields() || isSuperAdminToken());
       allow delete: if isOwner(resource.data.ownerId);
     }
     

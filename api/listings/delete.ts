@@ -75,6 +75,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await deleteCloudinaryAsset(listing.public_id, listing.resource_type || 'image');
     }
 
+    // Direct-upload video (super-admin-only feature) — clean up its
+    // Cloudinary asset the same way the other media above is cleaned up,
+    // so deleting a listing never leaves an orphaned video in storage.
+    if (typeof listing.videoPublicId === 'string' && listing.videoPublicId) {
+      await deleteCloudinaryAsset(listing.videoPublicId, 'video');
+    }
+
     await listingRef.delete();
 
     const reviewsSnap = await db.collection('reviews')

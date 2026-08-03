@@ -139,6 +139,12 @@ async function runListingCleanup(
         if (typeof data.public_id === 'string' && data.public_id) {
           await deleteCloudinaryAsset(data.public_id, data.resource_type || 'image');
         }
+        // Direct-upload video (super-admin-only feature) — clean up the
+        // same way as the image assets above so an expired listing never
+        // leaves an orphaned video in Cloudinary storage.
+        if (typeof data.videoPublicId === 'string' && data.videoPublicId) {
+          await deleteCloudinaryAsset(data.videoPublicId, 'video');
+        }
         summary.imagesDeleted += mediaData.length;
 
         if (collectionName !== 'requests') {

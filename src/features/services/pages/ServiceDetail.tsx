@@ -342,18 +342,31 @@ const ServiceDetail = () => {
             </div>
           )}
 
-          {service.videoId && (
+          {/* videoUrl (direct Cloudinary upload, super-admin-only) takes
+              priority over the legacy videoId (YouTube link) — existing
+              listings with only a videoId keep displaying exactly as
+              before. */}
+          {(service.videoUrl || service.videoId) && (
             <div className="mt-8 border-t border-border/50 pt-6">
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
                 <Youtube className="h-5 w-5 text-[#FF0000]" />
                 Service Showcase
               </h2>
-              <MediaRenderer 
-                url={`https://www.youtube.com/watch?v=${service.videoId}`} 
-                type="youtube"
-                alt={`${service.title} video`}
-                containerClassName="rounded-2xl shadow-2xl border border-border/50"
-              />
+              {service.videoUrl ? (
+                <MediaRenderer 
+                  url={service.videoUrl} 
+                  type="video"
+                  alt={`${service.title} video`}
+                  containerClassName="rounded-2xl shadow-2xl border border-border/50"
+                />
+              ) : (
+                <MediaRenderer 
+                  url={`https://www.youtube.com/watch?v=${service.videoId}`} 
+                  type="youtube"
+                  alt={`${service.title} video`}
+                  containerClassName="rounded-2xl shadow-2xl border border-border/50"
+                />
+              )}
             </div>
           )}
 

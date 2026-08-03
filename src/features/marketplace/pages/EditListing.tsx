@@ -10,10 +10,11 @@ import { toast } from "sonner";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { CloudinaryUpload } from "@/components/CloudinaryUpload";
+import { ListingVideoUpload } from "@/components/ListingVideoUpload";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { extractYouTubeId } from "@/lib/utils";
 import { ProductListingSchema, ServiceListingSchema, RequestListingSchema, sanitizeText } from "@/lib/validations";
-import { ADMIN_EMAILS } from "@/lib/config";
+import { ADMIN_EMAILS, isSuperAdmin } from "@/lib/config";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -49,6 +50,13 @@ const EditListing = () => {
   const [properties, setProperties] = useState<Record<string, any>>({});
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const videoId = extractYouTubeId(youtubeUrl);
+  // Direct-upload video (super admin only) — see NewListing.tsx for the
+  // full explanation of why this is separate from the legacy YouTube flow
+  // above and gated both here and server-side (firestore.rules, since this
+  // page writes directly to Firestore rather than through an API route).
+  const [videoUpload, setVideoUpload] = useState<{ url: string; publicId: string } | null>(null);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const isSuperAdminUser = isSuperAdmin(user?.email);
   
   // Admin-only fields
   const [status, setStatus] = useState("approved");
@@ -100,6 +108,9 @@ const EditListing = () => {
           if (data.videoId) {
             setYoutubeUrl(`https://www.youtube.com/watch?v=${data.videoId}`);
           }
+          if (data.videoUrl) {
+            setVideoUpload({ url: data.videoUrl, publicId: data.videoPublicId || "" });
+          }
           
           setStatus(data.status || "approved");
           setIsFeatured(data.isFeatured || false);
@@ -130,6 +141,10 @@ const EditListing = () => {
   }
 
   const handleSubmit = async () => {
+    if (isUploadingVideo) {
+       toast.error("Please wait for your video upload to finish.");
+       return;
+    }
     if (!title || !description || !category || !contactPhone) {
        toast.error("Please fill in all required fields (Title, Description, Category, Phone).");
        return;
@@ -173,6 +188,16 @@ const EditListing = () => {
          videoId: videoId || null,
          updatedAt: serverTimestamp(),
        };
+       // Only ever included when the current user is the super admin — the
+       // upload UI itself is hidden from everyone else. firestore.rules
+       // independently rejects these fields from any non-super-admin writer
+       // regardless of what the client sends, so this is not the actual
+       // security boundary, just keeps a non-super-admin's update from
+       // trying (and failing) to touch fields they can't see anyway.
+       if (isSuperAdminUser) {
+         updateData.videoUrl = videoUpload?.url || null;
+         updateData.videoPublicId = videoUpload?.publicId || null;
+       }
        
        if (type === "products") {
          updateData.price = Number(price) || 0;
@@ -386,11 +411,17 @@ const EditListing = () => {
             </div>
           )}
 
-          {(type === "products" || type === "services") && (
+          {/* Legacy YouTube-link field: only shown (and editable) if this
+              listing already has one from before direct video upload was
+              added — kept working exactly as before for existing listings.
+              New listings/videos can no longer be added this way by anyone,
+              including the super admin, who uses the upload option below
+              instead. */}
+          {(type === "products" || type === "services") && !!youtubeUrl && (
             <div className="space-y-3 pt-4 border-t border-border/50">
               <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
                 <Youtube className="h-4 w-4 text-[#FF0000]" />
-                Product Video (YouTube URL)
+                Product Video (YouTube URL) — legacy
               </label>
               <Input
                 type="text"
@@ -408,6 +439,31 @@ const EditListing = () => {
                   />
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Direct video upload — super admin only, both in the UI here
+              and independently enforced server-side via firestore.rules
+              (touchesVideoUploadFields()), since this page writes straight
+              to Firestore rather than through an API route. */}
+          {(type === "products" || type === "services") && isSuperAdminUser && (
+            <div className="space-y-3 pt-4 border-t border-border/50">
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                Video (Super Admin Only)
+              </label>
+              <ListingVideoUpload
+                value={videoUpload}
+                onChange={(next) => {
+                  if (!next && videoUpload?.publicId && auth.currentUser) {
+                    auth.currentUser.getIdToken()
+                      .then((idToken) => deleteFromCloudinary(videoUpload.publicId, 'video', idToken))
+                      .catch(() => {});
+                  }
+                  setVideoUpload(next);
+                }}
+                onUploadingChange={setIsUploadingVideo}
+                maxSizeMB={10}
+              />
             </div>
           )}
 
@@ -495,9 +551,9 @@ const EditListing = () => {
           <Button
             className="w-full h-12 mt-6 bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-transform font-medium"
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploadingVideo}
           >
-            {isSubmitting ? "Saving Changes..." : "Save Changes"}
+            {isUploadingVideo ? "Uploading video..." : isSubmitting ? "Saving Changes..." : "Save Changes"}
           </Button>
         </div>
       </div>

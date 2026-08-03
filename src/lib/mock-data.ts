@@ -21,7 +21,18 @@ export interface Product {
   ownerRating: number;
   ownerIsVerified?: boolean;
   properties?: Record<string, any>;
+  // Legacy field: a YouTube video ID, settable by any user. Kept for
+  // backward compatibility with existing listings — no longer settable
+  // from the listing form (see videoUrl below), but still rendered on the
+  // detail page if present.
   videoId?: string;
+  // Direct-upload video (stored in Cloudinary, not YouTube) — restricted to
+  // the super admin account only, both in the UI (NewListing/EditListing)
+  // and server-side (api/listings/create.ts + firestore.rules). videoUrl is
+  // the playable Cloudinary video URL; videoPublicId is the Cloudinary
+  // public_id needed to delete the asset if the video is later removed.
+  videoUrl?: string;
+  videoPublicId?: string;
   createdAt: any; // Allow Firestore Timestamp or string
   isSold: boolean;
   isFeatured: boolean;
@@ -95,7 +106,13 @@ export interface Service {
 
   ownerIsVerified?: boolean;
   properties?: Record<string, any>;
+  // See Product's identical fields above for the full explanation: videoId
+  // is the legacy YouTube-link field (any user, unchanged); videoUrl/
+  // videoPublicId are the new direct-upload-to-Cloudinary fields, settable
+  // by the super admin account only.
   videoId?: string;
+  videoUrl?: string;
+  videoPublicId?: string;
   createdAt: any;
 }
 

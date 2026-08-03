@@ -417,18 +417,31 @@ const ProductDetail = () => {
           </div>
         )}
 
-        {product.videoId && (
+        {/* videoUrl (direct Cloudinary upload, super-admin-only) takes
+            priority over the legacy videoId (YouTube link) — a listing can
+            only ever have one or the other going forward, but existing
+            listings with only a videoId keep displaying exactly as before. */}
+        {(product.videoUrl || product.videoId) && (
           <div className="mt-8 border-t border-border/50 pt-6">
             <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
               <Youtube className="h-5 w-5 text-[#FF0000]" />
               Video Demonstration
             </h2>
-            <MediaRenderer 
-              url={`https://www.youtube.com/watch?v=${product.videoId}`} 
-              type="youtube"
-              alt={`${product.title} video`}
-              containerClassName="rounded-2xl shadow-2xl border border-border/50"
-            />
+            {product.videoUrl ? (
+              <MediaRenderer 
+                url={product.videoUrl} 
+                type="video"
+                alt={`${product.title} video`}
+                containerClassName="rounded-2xl shadow-2xl border border-border/50"
+              />
+            ) : (
+              <MediaRenderer 
+                url={`https://www.youtube.com/watch?v=${product.videoId}`} 
+                type="youtube"
+                alt={`${product.title} video`}
+                containerClassName="rounded-2xl shadow-2xl border border-border/50"
+              />
+            )}
           </div>
         )}
 

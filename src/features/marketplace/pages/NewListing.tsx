@@ -5,11 +5,12 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categories, CATEGORY_ATTRIBUTES } from "@/lib/mock-data";
-import { Youtube, Info, ArrowLeft } from "lucide-react";
+import { Info, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { CloudinaryUpload } from "@/components/CloudinaryUpload";
+import { ListingVideoUpload } from "@/components/ListingVideoUpload";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { extractYouTubeId } from "@/lib/utils";
 import { ProductListingSchema, ServiceListingSchema, RequestListingSchema } from "@/lib/validations";
@@ -18,8 +19,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MediaRenderer } from "@/components/MediaRenderer";
-import { ADMIN_EMAILS } from "@/lib/config";
+import { ADMIN_EMAILS, isSuperAdmin } from "@/lib/config";
 
 type ListingType = "product" | "service" | "request";
 
@@ -84,6 +84,12 @@ export default function NewListing() {
   // since a stale/losing async claim check in AuthContext could report
   // isContextAdmin as false a moment after login.
   const isAdmin = isContextAdmin || !!(user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
+  // Direct video-file upload (stored in Cloudinary, not a YouTube link) is
+  // restricted to the super admin account only — see firestore.rules and
+  // api/listings/create.ts for the matching server-side enforcement, since
+  // hiding the UI alone would not stop a non-super-admin from posting the
+  // request directly.
+  const isSuperAdminUser = isSuperAdmin(user?.email);
   const postingForOtherUser = isAdmin && !!targetOwnerId && targetOwnerId !== user?.id;
   const dashboardReturnPath = postingForOtherUser
     ? `/dashboard?tab=listings&userId=${encodeURIComponent(targetOwnerId)}&userName=${encodeURIComponent(targetOwnerName)}`
@@ -104,6 +110,11 @@ export default function NewListing() {
   const [properties, setProperties] = useState<Record<string, any>>({});
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const videoId = extractYouTubeId(youtubeUrl);
+  // Direct-upload video (super admin only) — a single Cloudinary-hosted
+  // video file, capped at 10MB, completely separate from the legacy
+  // YouTube-link flow above.
+  const [videoUpload, setVideoUpload] = useState<{ url: string; publicId: string } | null>(null);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
   // Guest state
   const [guestName, setGuestName] = useState("");
@@ -193,6 +204,10 @@ export default function NewListing() {
     }
     if (isUploadingMedia) {
        toast.error("Please wait for your photo upload to finish.");
+       return;
+    }
+    if (isUploadingVideo) {
+       toast.error("Please wait for your video upload to finish.");
        return;
     }
     // When posting for another user, campus completeness is about THEIR
@@ -313,6 +328,13 @@ export default function NewListing() {
             properties,
             videoId: videoId || null,
             youtubeUrl,
+            // Only ever sent when the current user is the super admin (the
+            // upload UI itself is hidden from everyone else, see the
+            // isSuperAdminUser-gated render above) — the server independently
+            // re-verifies this from the caller's own auth token before
+            // accepting these fields, so this client-side condition is a UX
+            // nicety, not the actual security boundary.
+            ...(isSuperAdminUser && videoUpload ? { videoUrl: videoUpload.url, videoPublicId: videoUpload.publicId } : {}),
             // The server independently looks up the actual owner's campusId
             // from Firestore and prefers that — this is only a fallback for
             // older profiles missing the field — but it must still reflect
@@ -585,26 +607,33 @@ export default function NewListing() {
             )}
 
             {/* Video & Extras */}
-            {(type === "product" || type === "service") && (
+            {/* Direct video upload (Cloudinary-hosted) is exclusive to the
+                super admin account per product requirement — everyone else
+                sees no video option at all on this form (YouTube links were
+                removed for all users, not just replaced). Enforced here in
+                the UI AND independently server-side (api/listings/create.ts
+                verifies the caller's token email, firestore.rules blocks
+                the videoUrl/videoPublicId fields for anyone else), since
+                hiding a form field is not real access control on its own. */}
+            {(type === "product" || type === "service") && isSuperAdminUser && (
               <div className="space-y-6 pt-6 border-t border-black/5">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Optional Video</h3>
-                <div className="space-y-4">
-                   <div className="relative group">
-                    <Youtube className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-[#FF0000] z-10" />
-                    <Input
-                      type="text"
-                      placeholder="YouTube Video Link..."
-                      className="bg-black/5 dark:bg-white/5 rounded-2xl h-16 border-none shadow-inner pl-16 pr-8 text-xs font-bold"
-                      value={youtubeUrl}
-                      onChange={(e) => setYoutubeUrl(e.target.value)}
-                    />
-                  </div>
-                  {videoId && (
-                    <div className="rounded-[2rem] overflow-hidden border-2 border-primary/10 shadow-2xl">
-                      <MediaRenderer url={youtubeUrl} type="youtube" containerClassName="w-full" />
-                    </div>
-                  )}
-                </div>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-textSecondary opacity-40">Optional Video (Super Admin Only)</h3>
+                <ListingVideoUpload
+                  value={videoUpload}
+                  onChange={(next) => {
+                    // Clean up the orphaned Cloudinary asset if the video is
+                    // removed before the listing is ever submitted — same
+                    // pattern already used for photo removal above.
+                    if (!next && videoUpload?.publicId && auth.currentUser) {
+                      auth.currentUser.getIdToken()
+                        .then((idToken) => deleteFromCloudinary(videoUpload.publicId, 'video', idToken))
+                        .catch(() => {});
+                    }
+                    setVideoUpload(next);
+                  }}
+                  onUploadingChange={setIsUploadingVideo}
+                  maxSizeMB={10}
+                />
               </div>
             )}
 
@@ -686,9 +715,9 @@ export default function NewListing() {
             <Button
               className="w-full h-20 rounded-[2rem] bg-[#111] hover:bg-black text-white shadow-2xl font-black uppercase tracking-[0.25em] text-xs transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50"
               onClick={handleSubmit}
-              disabled={isSubmitting || isUploadingMedia}
+              disabled={isSubmitting || isUploadingMedia || isUploadingVideo}
             >
-              {isUploadingMedia ? "Uploading photos..." : isSubmitting ? "Posting..." : "Post Listing"}
+              {isUploadingMedia ? "Uploading photos..." : isUploadingVideo ? "Uploading video..." : isSubmitting ? "Posting..." : "Post Listing"}
             </Button>
           </div>
         </div>
