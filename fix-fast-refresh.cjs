@@ -14,13 +14,17 @@ const files = [
 ];
 
 files.forEach(file => {
-  if (fs.existsSync(file)) {
-    const content = fs.readFileSync(file, 'utf8');
-    if (!content.includes('eslint-disable react-refresh/only-export-components')) {
-      fs.writeFileSync(file, '/* eslint-disable react-refresh/only-export-components */\n' + content);
-      console.log('Fixed ' + file);
+  try {
+    if (fs.existsSync(file)) {
+      const content = fs.readFileSync(file, 'utf8');
+      if (!content.includes('eslint-disable react-refresh/only-export-components')) {
+        fs.writeFileSync(file, '/* eslint-disable react-refresh/only-export-components */\n' + content);
+        console.log('Fixed ' + file);
+      }
+    } else {
+      console.log('Not found: ' + file);
     }
-  } else {
-    console.log('Not found: ' + file);
+  } catch (error) {
+    console.error(`Error processing ${file}:`, error.message);
   }
 });

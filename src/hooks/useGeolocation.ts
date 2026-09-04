@@ -104,8 +104,8 @@ export const useGeolocation = (): GeolocationState => {
       };
     }
     return {
-      lat: selectedCampus?.lat || DEFAULT_LAT,
-      lng: selectedCampus?.lng || DEFAULT_LNG,
+      lat: selectedCampus?.lat ?? DEFAULT_LAT,
+      lng: selectedCampus?.lng ?? DEFAULT_LNG,
       isLoading: true,
       error: null,
       source: "default",

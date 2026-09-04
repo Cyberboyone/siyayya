@@ -33,24 +33,32 @@ async function clearDemoData() {
   
   for (const collName of collectionsToClean) {
     console.log(`Checking collection: ${collName}`);
-    const snapshot = await db.collection(collName).get();
+
+    let snapshot;
+    try {
+      snapshot = await db.collection(collName).get();
+    } catch (error) {
+      console.error(`Failed to query collection ${collName}:`, error);
+      continue;
+    }
     
     let deletedCount = 0;
-    const batch = db.batch();
+    let batch = db.batch();
     
-    snapshot.forEach((doc) => {
+    for (const doc of snapshot.docs) {
       const data = doc.data();
       // Delete documents representing old schema or missing ownerId
-      if (!data.ownerId || data.sellerId || data.providerId || data.userId) {
+      if (!data.ownerId || data.sellerId || data.providerId) {
         batch.delete(doc.ref);
         deletedCount++;
+
+        // Commit in chunks of 480 to stay safely under the 500-op batch limit
+        if (deletedCount % 480 === 0) {
+          await batch.commit();
+          batch = db.batch();
+        }
       }
-      
-      // We process batches in chunks of 500 if the database is huge
-      if (deletedCount >= 500) {
-        console.warn("Too many old docs, batch limit reached! Will only delete 500 in this run.");
-      }
-    });
+    }
     
     if (deletedCount > 0) {
       await batch.commit();

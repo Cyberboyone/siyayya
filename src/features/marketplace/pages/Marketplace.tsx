@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { Fragment, useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { SlidersHorizontal, X, Loader2, SearchX, Plus, FileText, Flame, Star } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -18,6 +18,8 @@ import { ProductCardSkeleton } from "../components/ProductCardSkeleton";
 import { ServiceCardSkeleton } from "@/features/services/components/ServiceCardSkeleton";
 import { useSearchIndex } from "@/hooks/use-search-index";
 import { getWebsiteSchema, getBreadcrumbSchema } from "@/components/SEOStructuredData";
+import { InFeedAd } from "@/components/ads";
+import { getInFeedAdPositions, ADS_CONFIG } from "@/config/ads";
 
 const Marketplace = () => {
   const navigate = useNavigate();
@@ -155,6 +157,16 @@ const Marketplace = () => {
     setSearch("");
     navigate("/marketplace");
   };
+
+  // Positions (0-based listing indices) at which in-feed ads are inserted.
+  const combinedAdPositions = useMemo(
+    () => (ADS_CONFIG.enabled && ADS_CONFIG.inFeed.enabled ? getInFeedAdPositions(combinedResults.length) : []),
+    [combinedResults.length]
+  );
+  const productsAdPositions = useMemo(
+    () => (ADS_CONFIG.enabled && ADS_CONFIG.inFeed.enabled ? getInFeedAdPositions(filteredProducts.length) : []),
+    [filteredProducts.length]
+  );
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#050505] pb-32 md:pb-0">
@@ -404,7 +416,9 @@ const Marketplace = () => {
                     className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3"
                   >
                     {combinedResults.map((item: any, i) => (
-                      item.type === 'product' ? (
+                      <Fragment key={item.id}>
+                      {combinedAdPositions.includes(i) && <InFeedAd />}
+                      {item.type === 'product' ? (
                         <ProductCard
                           key={item.id}
                           product={item}
@@ -414,7 +428,8 @@ const Marketplace = () => {
                         />
                       ) : (
                         <ServiceCard key={item.id} service={item} index={i} />
-                      )
+                      )}
+                      </Fragment>
                     ))}
                   </motion.div>
                 ) : (
@@ -428,13 +443,15 @@ const Marketplace = () => {
                         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3"
                       >
                         {filteredProducts.map((product, i) => (
+                          <Fragment key={product.id}>
+                          {productsAdPositions.includes(i) && <InFeedAd />}
                           <ProductCard
-                            key={product.id}
                             product={product}
                             index={i}
                             isSaved={isSaved(product.id)}
                             onToggleSave={toggle}
                           />
+                          </Fragment>
                         ))}
                       </motion.div>
                     )}

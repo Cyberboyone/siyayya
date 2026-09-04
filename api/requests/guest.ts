@@ -13,7 +13,7 @@ const GuestRequestSchema = z.object({
   email: z.string().email().max(200),
   name: z.string().min(2).max(100),
   captchaAnswer: z.number().int().min(2).max(20),
-  honeypot: z.string().max(0, 'Bot detected').optional(),
+  honeypot: z.string().optional(),
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -75,7 +75,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     return res.status(200).json({ success: true, id: docRef.id });
-  } catch {
+  } catch (error) {
+    console.error('[Guest Request] Failed:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }

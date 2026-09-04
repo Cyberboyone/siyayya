@@ -18,8 +18,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     auth = getAdminAuth();
     db = getAdminDb();
-  } catch {
-    return res.status(200).json({ skipped: true, message: 'Admin not configured' });
+  } catch (error) {
+    console.error('[Google Auth] Admin not configured:', error);
+    return res.status(503).json({ skipped: true, message: 'Admin not configured' });
   }
 
   try {
@@ -77,10 +78,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         );
         await batch.commit();
       }
-    } catch { /* non-critical */ }
+    } catch (error) {
+      console.error('[Google Auth] Claim guest requests skipped:', error);
+    }
 
     return res.status(200).json({ uid, email, isNewUser });
-  } catch {
+  } catch (error) {
+    console.error('[Google Auth] Authentication failed:', error);
     return res.status(401).json({ message: 'Authentication failed' });
   }
 }

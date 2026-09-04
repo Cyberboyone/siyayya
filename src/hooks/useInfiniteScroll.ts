@@ -55,7 +55,7 @@ export const useInfiniteScroll = ({
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, loadMore, rootMargin]);
+  }, [hasMore, loadMore, rootMargin, totalItems]);
 
   // Reset when totalItems changes significantly (e.g., filter change)
   useEffect(() => {

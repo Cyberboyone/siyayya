@@ -19,7 +19,7 @@ export const useFCM = () => {
   const [messaging, setMessaging] = useState<Messaging | null>(null);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [permission, setPermission] = useState<NotificationPermission>(
-    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+    () => typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
 
   useEffect(() => {
@@ -123,11 +123,12 @@ export const useFCM = () => {
       const title = payload.notification?.title || 'New Notification';
       const body = payload.notification?.body || '';
       
+      const link = payload.data?.link;
       toast(title, {
         description: body,
-        action: payload.data?.link ? {
+        action: link ? {
           label: 'View',
-          onClick: () => window.location.href = payload.data!.link!
+          onClick: () => { window.location.href = link; }
         } : undefined
       });
     });

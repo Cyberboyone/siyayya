@@ -51,7 +51,7 @@ export function SearchBar({ value = "", onChange, onSubmit, placeholder = "What 
           onChange?.(val);
         }
       }
-      onSubmit?.(localValue);
+      onSubmit?.(localValue.trim());
     }
   };
 

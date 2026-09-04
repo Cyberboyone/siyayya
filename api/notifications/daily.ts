@@ -38,7 +38,13 @@ const getLagosDateKey = () =>
   }).format(new Date());
 
 const getDailyMessage = () => {
-  const day = new Date().getUTCDate();
+  const day = parseInt(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Lagos',
+      day: '2-digit',
+    }).format(new Date()),
+    10
+  );
   return DAILY_MESSAGES[day % DAILY_MESSAGES.length];
 };
 
@@ -279,7 +285,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const messaging = getAdminMessaging();
   const todayKey = getLagosDateKey();
   const message = getDailyMessage();
-  const maxUsers = Math.min(Number(req.query.limit || 1000), 5000);
+  const maxUsers = Math.min(Math.max(1, Number(req.query.limit) || 1000), 5000);
 
   try {
     const usersSnap = await db.collection('users').limit(maxUsers).get();
@@ -353,36 +359,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // the daily digest push rendering twice (once auto-displayed by the
       // browser from a `notification` payload, once from our SW's
       // onBackgroundMessage handler).
-      const response = await messaging.sendEachForMulticast({
-        data: {
-          title: message.title,
-          body: message.body,
-          link: '/',
-          notificationType: 'announcement',
-          campaign: 'daily_engagement',
-          dateKey: todayKey,
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
-          tag: `siyayya-daily-${todayKey}`,
-        },
-        webpush: {
-          fcmOptions: { link: '/' },
-        },
-        tokens: tokenChunk,
-      });
+      try {
+        const response = await messaging.sendEachForMulticast({
+          data: {
+            title: message.title,
+            body: message.body,
+            link: '/',
+            notificationType: 'announcement',
+            campaign: 'daily_engagement',
+            dateKey: todayKey,
+            icon: '/pwa-192x192.png',
+            badge: '/pwa-192x192.png',
+            tag: `siyayya-daily-${todayKey}`,
+          },
+          webpush: {
+            fcmOptions: { link: '/' },
+          },
+          tokens: tokenChunk,
+        });
 
-      successCount += response.successCount;
-      failureCount += response.failureCount;
+        successCount += response.successCount;
+        failureCount += response.failureCount;
 
-      response.responses.forEach((r, i) => {
-        if (
-          !r.success &&
-          (r.error?.code === 'messaging/invalid-registration-token' ||
-            r.error?.code === 'messaging/registration-token-not-registered')
-        ) {
-          invalidTokens.push(tokenChunk[i]);
-        }
-      });
+        response.responses.forEach((r, i) => {
+          if (
+            !r.success &&
+            (r.error?.code === 'messaging/invalid-registration-token' ||
+              r.error?.code === 'messaging/registration-token-not-registered')
+          ) {
+            invalidTokens.push(tokenChunk[i]);
+          }
+        });
+      } catch (chunkError) {
+        console.error('[Daily Notifications] Chunk send failed:', chunkError);
+        failureCount += tokenChunk.length;
+      }
     }
 
     await Promise.all(notificationWrites.map(batch => batch.commit()));

@@ -29,7 +29,7 @@ const CompleteSignup = () => {
     if (!user) return;
     if (!businessName) setBusinessName(user.businessName || user.name || "");
     if (!campusId) setCampusId(user.campusId || "");
-  }, [user, businessName, campusId]);
+  }, [user]);
 
   useEffect(() => {
     const trimmed = businessName.trim();
@@ -95,7 +95,7 @@ const CompleteSignup = () => {
       const fromPath = searchParams.get("from");
       const isWhitelisted = isAdmin(user?.email);
       
-      const redirectPath = fromPath ? fromPath : (isWhitelisted ? "/admin" : "/");
+      const redirectPath = fromPath ? fromPath : (isWhitelisted ? "/admin" : "/dashboard");
       navigate(redirectPath, { replace: true });
     } catch (error: any) {
       console.error(error);

@@ -54,7 +54,7 @@ export const notificationService = {
 
       // 2. Dispatch push notification via backend API
       if (idToken && targetUserIds.length > 0) {
-        await fetch('/api/notifications/send', {
+        const response = await fetch('/api/notifications/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -72,6 +72,10 @@ export const notificationService = {
             }
           })
         });
+
+        if (!response.ok) {
+          console.warn(`[NotificationService] Push notification API returned ${response.status}`);
+        }
       }
 
       return true;

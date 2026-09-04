@@ -239,8 +239,7 @@ export const useDiscoveryFeed = (
       // Allow max 2 consecutive items from same seller in a block of 5
       if (sellerCounts[ownerId] > 2) {
         overflow.push(p.product);
-        // Reset count slowly
-        if (Math.random() > 0.5) sellerCounts[ownerId]--; 
+        sellerCounts[ownerId]--;
       } else {
         finalFeed.push(p.product);
       }

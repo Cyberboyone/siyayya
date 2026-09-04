@@ -38,8 +38,10 @@ export function useSavedItems() {
   }, [isAuthenticated, user]);
 
   const toggle = useCallback(async (id: string) => {
+    let isCurrentlySaved: boolean;
+
     setSavedIds((prev) => {
-      const isCurrentlySaved = prev.includes(id);
+      isCurrentlySaved = prev.includes(id);
       const next = isCurrentlySaved ? prev.filter((x) => x !== id) : [...prev, id];
       
       // Update Local Storage
@@ -52,15 +54,14 @@ export function useSavedItems() {
     if (isAuthenticated && user) {
       try {
         const userRef = doc(db, "users", user.id);
-        const isCurrentlySaved = savedIds.includes(id);
         await updateDoc(userRef, {
-          savedItems: isCurrentlySaved ? arrayRemove(id) : arrayUnion(id)
+          savedItems: isCurrentlySaved! ? arrayRemove(id) : arrayUnion(id)
         });
       } catch (error) {
         console.error("Error updating saved items in Firestore:", error);
       }
     }
-  }, [isAuthenticated, user, savedIds]);
+  }, [isAuthenticated, user]);
 
   const isSaved = useCallback((id: string) => savedIds.includes(id), [savedIds]);
 

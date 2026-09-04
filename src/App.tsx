@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
   import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-  import { BrowserRouter, Route, Routes } from "react-router-dom";
+  import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
   import { Toaster as Sonner } from "@/components/ui/sonner";
   import { Toaster } from "@/components/ui/toaster";
   import { TooltipProvider } from "@/components/ui/tooltip";
@@ -85,8 +85,8 @@ import { lazy, Suspense } from "react";
                         <Route path="/campus/:campusSlug" element={<CampusDetail />} />
                         <Route path="/campuses" element={<Campuses />} />
                         <Route path="/business/:businessSlug" element={<BusinessDetail />} />
-                        <Route path="/hostels/:campus" element={<HostelDetail />} />
                         <Route path="/hostels/:campus/:hostelType" element={<HostelDetail />} />
+                        <Route path="/hostels/:campus" element={<HostelDetail />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/user/:username" element={<UserProfile />} />
                         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
@@ -94,7 +94,7 @@ import { lazy, Suspense } from "react";
                         <Route path="/dashboard/new" element={<ListingRoute><NewListing /></ListingRoute>} />
                         <Route path="/dashboard/edit/:type/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
                         <Route path="/signin" element={<PublicRoute><SignIn /></PublicRoute>} />
-                        <Route path="/signup" element={<PublicRoute><SignIn /></PublicRoute>} />
+                        <Route path="/signup" element={<Navigate to="/signin" replace />} />
                         <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
                         <Route path="/admin" element={<AdminRoute><ErrorBoundary><Admin /></ErrorBoundary></AdminRoute>} />
                         <Route path="/contact" element={<ContactUs />} />

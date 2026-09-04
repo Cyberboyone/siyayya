@@ -20,9 +20,8 @@ export const useProducts = () => {
         const snap = await getDocs(q);
         return snap.docs.map(d => {
           const data = d.data();
-          data.campusId = normalizeCampusId(data);
-          data.university = data.campusId;
-          return { id: d.id, _id: d.id, ...data } as unknown as Product;
+          const campusId = normalizeCampusId(data);
+          return { id: d.id, _id: d.id, ...data, campusId, university: campusId } as unknown as Product;
         });
       } catch (error: any) {
         console.error("[Queries] Error fetching products:", error);
@@ -46,9 +45,8 @@ export const useServices = () => {
         const snap = await getDocs(q);
         return snap.docs.map(d => {
           const data = d.data();
-          data.campusId = normalizeCampusId(data);
-          data.university = data.campusId;
-          return { id: d.id, _id: d.id, ...data } as unknown as Service;
+          const campusId = normalizeCampusId(data);
+          return { id: d.id, _id: d.id, ...data, campusId, university: campusId } as unknown as Service;
         });
       } catch (error: any) {
         console.error("[Queries] Error fetching services:", error);
@@ -69,9 +67,8 @@ export const useRequests = () => {
         const snap = await getDocs(q);
         return snap.docs.map(d => {
           const data = d.data();
-          data.campusId = normalizeCampusId(data);
-          data.university = data.campusId;
-          return { id: d.id, _id: d.id, ...data } as unknown as ProductRequest;
+          const campusId = normalizeCampusId(data);
+          return { id: d.id, _id: d.id, ...data, campusId, university: campusId } as unknown as ProductRequest;
         });
       } catch (error: any) {
         console.error("[Queries] Error fetching requests:", error);

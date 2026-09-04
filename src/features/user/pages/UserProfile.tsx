@@ -264,7 +264,7 @@ const UserProfile = () => {
 
 
   // Compile reputation badges lists
-  const reputationBadges = [];
+  const reputationBadges: { label: string; desc: string; emoji: string }[] = [];
   if (userInfo.isVerified) reputationBadges.push({ label: "Verified Peer", desc: "Authentic student status", emoji: "🎓" });
   if (userInfo.isAdmin) reputationBadges.push({ label: "Campus Ambassador", desc: "Campus moderator & guide", emoji: "🛡️" });
 

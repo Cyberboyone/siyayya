@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment, type Ref } from "react";
 import { useParams, Link } from "react-router-dom";
 import { MapPin, ArrowLeft, Share2, Loader2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -14,6 +14,8 @@ import { useSEO } from "@/hooks/useSEO";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { getNumericDate } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { InFeedAd } from "@/components/ads";
+import { getInFeedAdPositions, ADS_CONFIG } from "@/config/ads";
 
 const MarketCampus = () => {
   const { campusSlug } = useParams<{ campusSlug: string }>();
@@ -37,6 +39,11 @@ const MarketCampus = () => {
   });
 
   const visibleProducts = campusProducts.slice(0, visibleCount);
+
+  const adPositions = useMemo(
+    () => (ADS_CONFIG.enabled && ADS_CONFIG.inFeed.enabled ? getInFeedAdPositions(visibleProducts.length) : []),
+    [visibleProducts.length]
+  );
 
   // Related campuses (same region, excluding current)
   const relatedCampuses = useMemo(
@@ -174,13 +181,15 @@ const MarketCampus = () => {
               className="pt-4"
             >
               {visibleProducts.map((product, i) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  index={i}
-                  isSaved={savedIds.includes(product.id)}
-                  onToggleSave={handleToggleSave}
-                />
+                <Fragment key={product.id}>
+                  {adPositions.includes(i) && <InFeedAd />}
+                  <ProductCard
+                    product={product}
+                    index={i}
+                    isSaved={savedIds.includes(product.id)}
+                    onToggleSave={handleToggleSave}
+                  />
+                </Fragment>
               ))}
               {visibleProducts.length === 0 && (
                 <div className="col-span-full py-16 text-center">
@@ -192,7 +201,7 @@ const MarketCampus = () => {
             </FeedSection>
 
             {hasMore && (
-              <div ref={sentinelRef} className="flex items-center justify-center py-8">
+              <div ref={sentinelRef as Ref<HTMLDivElement>} className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
               </div>
             )}

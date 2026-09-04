@@ -24,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ message: 'Unauthorized.' });
   }
 
-  const idToken = authHeader.split('Bearer ')[1];
+  const idToken = authHeader.replace('Bearer ', '').trim();
 
   try {
     const auth = getAdminAuth();
@@ -58,7 +58,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       message: `Admin claim set to ${makeAdmin} for user ${targetUid}`,
     });
-  } catch {
+  } catch (error) {
+    console.error('[Set Claim] Failed:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 }

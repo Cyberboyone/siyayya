@@ -10,6 +10,8 @@ import { z } from 'zod';
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       .replace(/<[^>]+>/g, '')
       .replace(/javascript:/gi, '')
+      .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+      .replace(/data:/gi, '')
       .slice(0, 2000);
   }
 

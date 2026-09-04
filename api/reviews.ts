@@ -13,7 +13,7 @@ async function verifyToken(req: VercelRequest): Promise<admin.auth.DecodedIdToke
   if (!authHeader?.startsWith('Bearer ')) {
     throw Object.assign(new Error('Missing token'), { status: 401 });
   }
-  return getAdminAuth().verifyIdToken(authHeader.split('Bearer ')[1]);
+  return getAdminAuth().verifyIdToken(authHeader.replace('Bearer ', '').trim());
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -49,7 +49,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return res.status(200).json({ message: 'Review updated.' });
-    } catch {
+    } catch (error) {
+      console.error('[Reviews] Update failed:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   }
@@ -73,7 +74,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       await reviewRef.delete();
       return res.status(200).json({ message: 'Review deleted.' });
-    } catch {
+    } catch (error) {
+      console.error('[Reviews] Delete failed:', error);
       return res.status(500).json({ message: 'Internal Server Error' });
     }
   }

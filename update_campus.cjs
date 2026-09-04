@@ -1,5 +1,8 @@
 const fs = require('fs');
-const content = fs.readFileSync('src/lib/campus.ts', 'utf8');
+const path = require('path');
+
+const campusFile = path.resolve(__dirname, 'src/lib/campus.ts');
+const content = fs.readFileSync(campusFile, 'utf8');
 
 const stateMap = {
   abu: 'Kaduna', buk: 'Kano', unimaid: 'Borno', udus: 'Sokoto', unilorin: 'Kwara',
@@ -17,15 +20,22 @@ const stateMap = {
   nile: 'FCT', veritas: 'FCT', salem: 'Kogi', kwararafa: 'Taraba', ccuk: 'Kano', maaun: 'Kano'
 };
 
-let newContent = content.replace('type: "federal" | "state" | "private";', 'type: "federal" | "state" | "private";\n  state?: string;');
+const marker = 'type: "federal" | "state" | "private";';
+let newContent = content.replace(marker, 'type: "federal" | "state" | "private";\n  state?: string;');
+
+if (!newContent.includes('state?: string;')) {
+  console.error(`Marker '${marker}' not found in campus.ts. No changes made.`);
+  process.exit(1);
+}
 
 newContent = newContent.replace(/\{ id: "([^"]+)"(.*?)\}/g, (match, id, rest) => {
   const state = stateMap[id.toLowerCase()];
   if (state) {
+    if (rest.includes('state:')) return match;
     return `{ id: "${id}"${rest}, state: "${state}" }`;
   }
   return match;
 });
 
-fs.writeFileSync('src/lib/campus.ts', newContent);
+fs.writeFileSync(campusFile, newContent);
 console.log('Updated campus.ts with state field');

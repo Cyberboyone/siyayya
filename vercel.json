@@ -9,7 +9,7 @@
       "destination": "/robots.txt"
     },
     {
-      "source": "/((?!api/|assets/|_next/|static/|favicon.ico).*)",
+      "source": "/((?!api/|assets/|static/|favicon.ico).*)",
       "destination": "/index.html"
     }
   ],

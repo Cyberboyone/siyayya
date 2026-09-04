@@ -16,8 +16,9 @@ export function PageTracker() {
     const currentViews = parseInt(sessionStorage.getItem('siyayya_page_views') || '0', 10);
     sessionStorage.setItem('siyayya_page_views', (currentViews + 1).toString());
 
-    const uid = auth.currentUser?.uid;
+    const uid = auth?.currentUser?.uid;
     if (!uid) return;
+    if (!db) return;
 
     const lastTracked = Number(sessionStorage.getItem('siyayya_last_active_tracked') || '0');
     if (Date.now() - lastTracked < 5 * 60 * 1000) return;

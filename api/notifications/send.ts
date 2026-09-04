@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let decoded: admin.auth.DecodedIdToken;
   try {
-    decoded = await getAdminAuth().verifyIdToken(authHeader.split('Bearer ')[1]);
+    decoded = await getAdminAuth().verifyIdToken(authHeader.replace('Bearer ', '').trim());
   } catch {
     return res.status(401).json({ message: 'Unauthorized. Invalid token.' });
   }
@@ -111,7 +111,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       successCount: response.successCount,
       failureCount: response.failureCount,
     });
-  } catch {
+  } catch (error) {
+    console.error('[Notifications] Send failed:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 }

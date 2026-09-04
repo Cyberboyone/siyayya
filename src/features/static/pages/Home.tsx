@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type Ref } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, TrendingUp, Sparkles, Clock, Tag, ChevronRight, Loader2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -18,6 +18,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { getOptimizedUrl } from "@/lib/cloudinary-utils";
+import { BannerAd } from "@/components/ads";
 
 const Home = () => {
   const { user, isAuthenticated } = useAuth();
@@ -236,6 +237,11 @@ const Home = () => {
         </div>
       </div>
 
+      {/* Homepage Banner (between hero/categories and marketplace feed) */}
+      <div className="max-w-7xl mx-auto px-4 mt-2">
+        <BannerAd />
+      </div>
+
       {/* Loading State */}
       {isLoading && (
         <div className="max-w-7xl mx-auto px-4 py-12">
@@ -421,7 +427,7 @@ const Home = () => {
 
           {/* Infinite scroll sentinel */}
           {hasMore && (
-            <div ref={sentinelRef} className="flex items-center justify-center py-8">
+            <div ref={sentinelRef as Ref<HTMLDivElement>} className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
             </div>
           )}
