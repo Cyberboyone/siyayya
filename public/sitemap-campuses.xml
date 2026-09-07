@@ -6,11 +6,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/buk</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/buk</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -19,11 +14,6 @@
     <loc>https://siyayya.com/campus/abu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/abu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/abu</loc>
@@ -36,11 +26,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/atbu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/atbu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -49,11 +34,6 @@
     <loc>https://siyayya.com/campus/unimaid</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/unimaid</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/unimaid</loc>
@@ -66,11 +46,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/futminna</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/futminna</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -79,11 +54,6 @@
     <loc>https://siyayya.com/campus/udus</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/udus</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/udus</loc>
@@ -96,11 +66,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/nsuk</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/nsuk</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -109,11 +74,6 @@
     <loc>https://siyayya.com/campus/kust</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/kust</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/kust</loc>
@@ -126,11 +86,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/yumsuk</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/yumsuk</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -139,11 +94,6 @@
     <loc>https://siyayya.com/campus/gsu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/gsu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/gsu</loc>
@@ -156,11 +106,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/fudma</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/fudma</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -169,11 +114,6 @@
     <loc>https://siyayya.com/campus/fuk</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/fuk</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/fuk</loc>
@@ -186,11 +126,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/tsu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/tsu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -199,11 +134,6 @@
     <loc>https://siyayya.com/campus/mau</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/mau</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/mau</loc>
@@ -216,11 +146,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/unijos</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/unijos</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -229,11 +154,6 @@
     <loc>https://siyayya.com/campus/uniabuja</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/uniabuja</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/uniabuja</loc>
@@ -246,11 +166,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/nda</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/nda</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -259,11 +174,6 @@
     <loc>https://siyayya.com/campus/fubk</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/fubk</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/fubk</loc>
@@ -276,11 +186,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/fugusau</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/fugusau</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -289,11 +194,6 @@
     <loc>https://siyayya.com/campus/fuwukari</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/fuwukari</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/fuwukari</loc>
@@ -306,11 +206,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/kasu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/kasu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -319,11 +214,6 @@
     <loc>https://siyayya.com/campus/umyu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/umyu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/umyu</loc>
@@ -336,11 +226,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/fud</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/fud</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -349,11 +234,6 @@
     <loc>https://siyayya.com/campus/slu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/slu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/slu</loc>
@@ -366,11 +246,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/basug</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/basug</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -379,11 +254,6 @@
     <loc>https://siyayya.com/campus/bosu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/bosu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/bosu</loc>
@@ -396,11 +266,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/fuga</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/fuga</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -409,11 +274,6 @@
     <loc>https://siyayya.com/campus/adsu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/adsu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/adsu</loc>
@@ -426,11 +286,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/aun</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/aun</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -439,11 +294,6 @@
     <loc>https://siyayya.com/campus/ksusta</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/ksusta</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/ksusta</loc>
@@ -456,11 +306,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/ssu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/ssu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -469,11 +314,6 @@
     <loc>https://siyayya.com/campus/zasu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/zasu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/zasu</loc>
@@ -486,11 +326,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/plasu</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/plasu</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -499,11 +334,6 @@
     <loc>https://siyayya.com/campus/nile</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/nile</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/nile</loc>
@@ -516,11 +346,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://siyayya.com/forum/baze</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://siyayya.com/hostels/baze</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -529,11 +354,6 @@
     <loc>https://siyayya.com/campus/alqalam</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://siyayya.com/forum/alqalam</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://siyayya.com/hostels/alqalam</loc>

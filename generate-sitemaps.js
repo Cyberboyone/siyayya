@@ -67,7 +67,6 @@ function generateMainSitemap() {
   const urls = [
     { loc: '/', changefreq: 'daily', priority: '1.0' },
     { loc: '/marketplace', changefreq: 'daily', priority: '0.9' },
-    { loc: '/forum', changefreq: 'daily', priority: '0.9' },
     { loc: '/about', changefreq: 'weekly', priority: '0.5' },
     { loc: '/contact', changefreq: 'weekly', priority: '0.5' }
   ];
@@ -100,14 +99,7 @@ function generateCampusesSitemap() {
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>`;
-    // 2. Forum Category
-    xml += `
-  <url>
-    <loc>${SITE_URL}/forum/${campus.slug}</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>`;
-    // 3. Hostels landing
+    // 2. Hostels landing
     xml += `
   <url>
     <loc>${SITE_URL}/hostels/${campus.id}</loc>
