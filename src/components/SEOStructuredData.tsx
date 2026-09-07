@@ -20,6 +20,7 @@ export function getWebsiteSchema() {
   return {
     "@type": "WebSite",
     "name": "Siyayya",
+    "alternateName": "siyayya.com",
     "url": window.location.origin,
     "potentialAction": {
       "@type": "SearchAction",

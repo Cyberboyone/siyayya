@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       manifest: {
-        name: 'Siyayya : Your Campus Marketplace',
+        name: 'Siyayya',
         short_name: 'Siyayya',
         description: 'Campus Deals & Marketplace',
         theme_color: '#000000',

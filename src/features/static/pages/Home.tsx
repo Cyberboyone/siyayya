@@ -54,14 +54,13 @@ const Home = () => {
 
   // SEO
   // No `title` override here — useSEO's own fallback already renders exactly
-  // "Siyayya : Your Campus Marketplace" (matching index.html's static
-  // <title>, which is what search engines see before JS runs). Passing that
-  // same string in as `title` used to make useSEO append " | Siyayya" again
-  // (title ? `${title} | ${siteName}` : ...), producing the malformed
-  // "Siyayya : Your Campus Marketplace | Siyayya" once React mounted and
-  // overwrote document.title — which is very likely why Google's indexed
-  // title looked stale/wrong even though the (unrelated) favicon updated
-  // fine, since Google indexes the post-render title for a JS app like this.
+  // "Siyayya" (matching index.html's static <title>, which is what search
+  // engines see before JS runs). Passing that same string in as `title`
+  // used to make useSEO append " | Siyayya" again (title ? `${title} |
+  // ${siteName}` : ...), producing the malformed "Siyayya | Siyayya" once
+  // React mounted and overwrote document.title. Leaving `title` out lets the
+  // homepage (and any other page without a page-specific title) resolve to
+  // the clean site-wide fallback "Siyayya".
   useSEO({
     description: `Buy, sell, and discover products near ${nearestCampus?.name || "your campus"}. Electronics, fashion, books & more across Nigerian university campuses.`,
   });
