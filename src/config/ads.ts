@@ -12,7 +12,7 @@
  */
 
 /** Current AdSense publisher ID (site-level, set once in index.html). */
-export const ADSENSE_PUBLISHER_ID = "ca-pub-8553781028945288";
+export const ADSENSE_PUBLISHER_ID = "ca-pub-9529770421530115";
 
 /** Global AdSense module flags. */
 export const ADS_CONFIG = {
