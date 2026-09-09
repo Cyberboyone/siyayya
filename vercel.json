@@ -9,6 +9,10 @@
       "destination": "/robots.txt"
     },
     {
+      "source": "/ads.txt",
+      "destination": "/ads.txt"
+    },
+    {
       "source": "/((?!api/|assets/|static/|favicon.ico).*)",
       "destination": "/index.html"
     }
