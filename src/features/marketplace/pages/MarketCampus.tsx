@@ -14,8 +14,6 @@ import { useSEO } from "@/hooks/useSEO";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { getNumericDate } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { InFeedAd } from "@/components/ads";
-import { getInFeedAdPositions, ADS_CONFIG } from "@/config/ads";
 
 const MarketCampus = () => {
   const { campusSlug } = useParams<{ campusSlug: string }>();
@@ -39,11 +37,6 @@ const MarketCampus = () => {
   });
 
   const visibleProducts = campusProducts.slice(0, visibleCount);
-
-  const adPositions = useMemo(
-    () => (ADS_CONFIG.enabled && ADS_CONFIG.inFeed.enabled ? getInFeedAdPositions(visibleProducts.length) : []),
-    [visibleProducts.length]
-  );
 
   // Related campuses (same region, excluding current)
   const relatedCampuses = useMemo(
@@ -182,7 +175,6 @@ const MarketCampus = () => {
             >
               {visibleProducts.map((product, i) => (
                 <Fragment key={product.id}>
-                  {adPositions.includes(i) && <InFeedAd />}
                   <ProductCard
                     product={product}
                     index={i}

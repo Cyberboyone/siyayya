@@ -18,7 +18,6 @@ import { useSEO } from "@/hooks/useSEO";
 import { useAuth } from "@/features/auth/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { getOptimizedUrl } from "@/lib/cloudinary-utils";
-import { BannerAd } from "@/components/ads";
 
 const Home = () => {
   const { user, isAuthenticated } = useAuth();
@@ -234,11 +233,6 @@ const Home = () => {
             </Link>
           ))}
         </div>
-      </div>
-
-      {/* Homepage Banner (between hero/categories and marketplace feed) */}
-      <div className="max-w-7xl mx-auto px-4 mt-2">
-        <BannerAd />
       </div>
 
       {/* Loading State */}
