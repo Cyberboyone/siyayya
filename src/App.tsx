@@ -34,6 +34,7 @@ import { lazy, Suspense } from "react";
   const UserProfile = lazy(() => import("./features/user/pages/UserProfile.tsx"));
   const About = lazy(() => import("./features/static/pages/About.tsx"));
   const ContactUs = lazy(() => import("./features/static/pages/ContactUs.tsx"));
+  const PrivacyPolicy = lazy(() => import("./features/static/pages/PrivacyPolicy.tsx"));
   const NotFound = lazy(() => import("./features/static/pages/NotFound.tsx"));
   const CampusDetail = lazy(() => import("./features/campus/pages/CampusDetail.tsx"));
   const Campuses = lazy(() => import("./features/campus/pages/Campuses.tsx"));
@@ -98,6 +99,7 @@ import { lazy, Suspense } from "react";
                         <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
                         <Route path="/admin" element={<AdminRoute><ErrorBoundary><Admin /></ErrorBoundary></AdminRoute>} />
                         <Route path="/contact" element={<ContactUs />} />
+                        <Route path="/privacy" element={<PrivacyPolicy />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>

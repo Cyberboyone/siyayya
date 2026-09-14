@@ -68,7 +68,8 @@ function generateMainSitemap() {
     { loc: '/', changefreq: 'daily', priority: '1.0' },
     { loc: '/marketplace', changefreq: 'daily', priority: '0.9' },
     { loc: '/about', changefreq: 'weekly', priority: '0.5' },
-    { loc: '/contact', changefreq: 'weekly', priority: '0.5' }
+    { loc: '/contact', changefreq: 'weekly', priority: '0.5' },
+    { loc: '/privacy', changefreq: 'monthly', priority: '0.4' }
   ];
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
